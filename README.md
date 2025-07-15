@@ -1,21 +1,20 @@
-# Color Palette Library
+# Color Palette Generator
 
 A comprehensive color palette generation library with support for color scales, combinations, and transparency.
 
 ## Features
 
 - 🎨 **Color Palette Generation**: Generate complete color palettes from a single base color
-- 🔀 **Color Combinations**: Create harmonious color combinations (complementary, triadic, analogous, etc.)
-- 🌈 **Hue Shifting**: Advanced hue shifting algorithms for dynamic color variations
 - 💧 **Transparency Support**: Generate transparent color variants
-- 🎯 **Lightness Control**: Precise control over color lightness and contrast
 - 🎲 **Random Color Generation**: Generate random colors with customizable parameters
+- 🔀 **Color Combinations**: Create harmonious color combinations (complementary, triadic, analogous, etc.)
+- 🎯 **Lightness Control**: Precise control over color lightness and contrast
 - 🔧 **Utility Functions**: Comprehensive color conversion utilities (HEX, RGB, HSL)
 
 ## Installation
 
 ```bash
-npm install @your-username/color-palette-lib
+npm install @14ch/color-palette-generator
 ```
 
 ## Usage
@@ -23,9 +22,9 @@ npm install @your-username/color-palette-lib
 ### Basic Palette Generation
 
 ```typescript
-import { generateColorPalette } from "@your-username/color-palette-lib";
+import { generateColorPalette } from "@14ch/color-palette-generator";
 
-// Generate a color palette from a base color
+// Generate a color palette from a single base color
 const palette = generateColorPalette({
   id: "primary",
   prefix: "primary",
@@ -43,31 +42,44 @@ console.log(palette);
 //   '--primary-950': '#1e3a8a',
 //   '--primary-500-transparent': 'rgba(59, 130, 246, 1)'
 // }
+
+// Generate palettes from multiple colors
+const configs = [
+  { id: "primary", prefix: "primary", color: "#3b82f6" },
+  { id: "secondary", prefix: "secondary", color: "#10b981" },
+];
+const multiPalette = generateColorPalette(configs);
 ```
 
-### Color Combinations
+### Transparency Support
 
 ```typescript
-import { generateCombination } from "@your-username/color-palette-lib";
+import { generateColorPalette } from "@14ch/color-palette-generator";
 
-// Generate complementary colors
-const combination = generateCombination({
-  primaryColor: "#3b82f6",
-  combinationType: "complementary",
-  lightnessMethod: "hybrid",
-  baseColorStrategy: "harmonic",
+// Generate palette with transparent variants
+const paletteWithTransparency = generateColorPalette({
+  id: "primary",
+  prefix: "primary",
+  color: "#3b82f6",
+  includeTransparent: true,
+  bgColorLight: "#ffffff", // Background for light mode
+  bgColorDark: "#000000", // Background for dark mode
+  transparentOriginLevel: 500, // Base level for transparency calculation
 });
 
-console.log(combination);
-// Output: Array of ColorConfig objects for base, primary, and secondary colors
+console.log(paletteWithTransparency);
+// Output includes:
+// '--primary-500-transparent': 'rgba(59, 130, 246, 1)',
+// '--primary-400-transparent': 'rgba(96, 165, 250, 1)',
+// etc.
 ```
 
 ### Random Color Generation
 
 ```typescript
-import { generateRandomPrimaryColor } from "@your-username/color-palette-lib";
+import { generateRandomPrimaryColor } from "@14ch/color-palette-generator";
 
-// Generate a random color
+// Generate a random color with constraints
 const randomColor = generateRandomPrimaryColor({
   saturationRange: [70, 100],
   lightnessRange: [40, 60],
@@ -88,28 +100,37 @@ console.log(colorAroundBlue);
 // Output: '#5d7af7' (HEX string within blue range)
 ```
 
-### Color Utilities
+### Color Combinations
 
 ```typescript
-import {
-  hexToRGB,
-  rgbToHSL,
-  hslToRGB,
-  rgbToHex,
-  getLightness,
-  adjustToLightness,
-} from "@your-username/color-palette-lib";
+import { generateCombination } from "@14ch/color-palette-generator";
 
-// Convert between color formats
-const rgb = hexToRGB("#3b82f6");
-const hsl = rgbToHSL(rgb);
-const newRgb = hslToRGB(hsl);
-const hex = rgbToHex(newRgb);
+// Generate complementary colors
+const combination = generateCombination({
+  primaryColor: "#3b82f6",
+  combinationType: "complementary",
+  lightnessMethod: "hybrid",
+  baseColorStrategy: "harmonic",
+});
 
-console.log({ rgb, hsl, newRgb, hex });
+console.log(combination);
+// Output: Array of ColorConfig objects for base, primary, and secondary colors
 
-// Calculate lightness
-const lightness = getLightness("#3b82f6", "hybrid");
+// Available combination types:
+// "monochromatic", "analogous", "complementary", "splitComplementary",
+// "doubleComplementary", "doubleComplementaryReverse", "triadic", "tetradic"
+```
+
+### Lightness Control
+
+```typescript
+import { getLightness, adjustToLightness } from "@14ch/color-palette-generator";
+
+// Calculate lightness of a color
+const lightness = getLightness({
+  color: "#3b82f6",
+  lightnessMethod: "hybrid", // "hybrid" | "hsl" | "perceptual" | "average"
+});
 console.log(lightness); // Output: number (0-100)
 
 // Adjust color to target lightness
@@ -122,10 +143,35 @@ const adjustedColor = adjustToLightness({
 console.log(adjustedColor); // Output: '#5d8df7' (HEX string)
 ```
 
+### Utility Functions
+
+```typescript
+import {
+  hexToRGB,
+  rgbToHSL,
+  hslToRGB,
+  rgbToHex,
+} from "@14ch/color-palette-generator";
+
+// Convert between color formats
+const rgb = hexToRGB("#3b82f6");
+const hsl = rgbToHSL(rgb);
+const newRgb = hslToRGB(hsl);
+const hex = rgbToHex(newRgb);
+
+console.log({ rgb, hsl, newRgb, hex });
+// Output: {
+//   rgb: { r: 59, g: 130, b: 246 },
+//   hsl: { h: 217, s: 91, l: 60 },
+//   newRgb: { r: 59, g: 130, b: 246 },
+//   hex: '#3b82f6'
+// }
+```
+
 ### Apply to DOM
 
 ```typescript
-import { applyColorPaletteToDom } from "@your-username/color-palette-lib";
+import { applyColorPaletteToDom } from "@14ch/color-palette-generator";
 
 const palette = generateColorPalette({
   id: "primary",
@@ -136,6 +182,10 @@ const palette = generateColorPalette({
 // Apply CSS custom properties to document root
 applyColorPaletteToDom(palette);
 // Now you can use var(--primary-500) in your CSS
+
+// Example CSS usage:
+// .button { background-color: var(--primary-500); }
+// .text { color: var(--primary-700); }
 ```
 
 ## API Reference
