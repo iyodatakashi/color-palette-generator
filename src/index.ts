@@ -11,22 +11,13 @@ export { generateColorPalette, generateMultipleColorPalette } from "./palette";
 export { generateCombination } from "./combination";
 
 // Random color generation features
-export {
-  generateRandomPrimaryColor,
-  generateRandomColorAroundHue,
-} from "./randomColor";
+export { generateRandomPrimaryColor } from "./randomColor";
 
 // Lightness calculation features
 export { getLightness, adjustToLightness } from "./lightness";
 
 // Basic color utilities
 export { hexToRGB, rgbToHex, hexToHSL, hslToRGB, rgbToHSL } from "./colorUtils";
-
-// Hue shift features
-export { calculateHueShift } from "./hueShift";
-
-// Transparent color features
-export { setTransparentPalette } from "./transparentColor";
 
 // Apply to DOM
 export { applyColorPaletteToDom } from "./applyToDom";

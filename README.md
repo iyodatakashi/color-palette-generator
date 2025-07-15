@@ -23,75 +23,119 @@ npm install @your-username/color-palette-lib
 ### Basic Palette Generation
 
 ```typescript
-import { generateColorPalette } from '@your-username/color-palette-lib';
+import { generateColorPalette } from "@your-username/color-palette-lib";
 
 // Generate a color palette from a base color
 const palette = generateColorPalette({
-	baseColor: '#3b82f6',
-	lightnessMethod: 'oklch',
-	hueShiftMode: 'disabled'
+  id: "primary",
+  prefix: "primary",
+  color: "#3b82f6",
+  lightnessMethod: "hybrid",
+  hueShiftMode: "natural",
+  includeTransparent: true,
 });
 
 console.log(palette);
-// Output: { '50': '#eff6ff', '100': '#dbeafe', ..., '950': '#1e3a8a' }
+// Output: {
+//   '--primary-50': '#eff6ff',
+//   '--primary-100': '#dbeafe',
+//   ...,
+//   '--primary-950': '#1e3a8a',
+//   '--primary-500-transparent': 'rgba(59, 130, 246, 1)'
+// }
 ```
 
 ### Color Combinations
 
 ```typescript
-import { generateCombination } from '@your-username/color-palette-lib';
+import { generateCombination } from "@your-username/color-palette-lib";
 
 // Generate complementary colors
 const combination = generateCombination({
-	baseColor: '#3b82f6',
-	type: 'complementary',
-	strategy: 'hue'
+  primaryColor: "#3b82f6",
+  combinationType: "complementary",
+  lightnessMethod: "hybrid",
+  baseColorStrategy: "harmonic",
 });
 
 console.log(combination);
-// Output: { primary: '#3b82f6', secondary: '#f6823b' }
+// Output: Array of ColorConfig objects for base, primary, and secondary colors
 ```
 
 ### Random Color Generation
 
 ```typescript
-import { generateRandomPrimaryColor } from '@your-username/color-palette-lib';
+import { generateRandomPrimaryColor } from "@your-username/color-palette-lib";
 
 // Generate a random color
 const randomColor = generateRandomPrimaryColor({
-	hue: { min: 0, max: 360 },
-	saturation: { min: 70, max: 100 },
-	lightness: { min: 40, max: 60 }
+  saturationRange: [70, 100],
+  lightnessRange: [40, 60],
+  hueRange: [0, 360],
+  lightnessMethod: "hybrid",
 });
 
 console.log(randomColor);
-// Output: { hex: '#a855f7', hsl: { h: 283, s: 89, l: 65 } }
-```
+// Output: '#a855f7' (HEX string)
 
-### Transparency
-
-```typescript
-import { setTransparentPalette } from '@your-username/color-palette-lib';
-
-// Create transparent variants
-const transparentPalette = setTransparentPalette({ '500': '#3b82f6' }, { baseColor: '#3b82f6' });
-
-console.log(transparentPalette);
-// Output: { '500': 'rgba(59, 130, 246, 1)' }
+// Generate random color around specific hue (e.g., blue ±30°)
+const colorAroundBlue = generateRandomPrimaryColor({
+  hueRange: [210, 270], // Blue (240°) ±30°
+  saturationRange: [70, 100],
+  lightnessRange: [40, 60],
+});
+console.log(colorAroundBlue);
+// Output: '#5d7af7' (HEX string within blue range)
 ```
 
 ### Color Utilities
 
 ```typescript
-import { hexToRGB, rgbToHSL, hslToRGB, rgbToHex } from '@your-username/color-palette-lib';
+import {
+  hexToRGB,
+  rgbToHSL,
+  hslToRGB,
+  rgbToHex,
+  getLightness,
+  adjustToLightness,
+} from "@your-username/color-palette-lib";
 
 // Convert between color formats
-const rgb = hexToRGB('#3b82f6');
+const rgb = hexToRGB("#3b82f6");
 const hsl = rgbToHSL(rgb);
 const newRgb = hslToRGB(hsl);
 const hex = rgbToHex(newRgb);
 
 console.log({ rgb, hsl, newRgb, hex });
+
+// Calculate lightness
+const lightness = getLightness("#3b82f6", "hybrid");
+console.log(lightness); // Output: number (0-100)
+
+// Adjust color to target lightness
+const adjustedColor = adjustToLightness({
+  h: 220,
+  s: 80,
+  targetLightness: 70,
+  lightnessMethod: "hybrid",
+});
+console.log(adjustedColor); // Output: '#5d8df7' (HEX string)
+```
+
+### Apply to DOM
+
+```typescript
+import { applyColorPaletteToDom } from "@your-username/color-palette-lib";
+
+const palette = generateColorPalette({
+  id: "primary",
+  prefix: "primary",
+  color: "#3b82f6",
+});
+
+// Apply CSS custom properties to document root
+applyColorPaletteToDom(palette);
+// Now you can use var(--primary-500) in your CSS
 ```
 
 ## API Reference
@@ -100,50 +144,90 @@ console.log({ rgb, hsl, newRgb, hex });
 
 ```typescript
 interface ColorConfig {
-	baseColor: string;
-	lightnessMethod?: LightnessMethod;
-	hueShiftMode?: HueShiftMode;
+  id: string;
+  prefix: string;
+  color: string;
+  hueShiftMode?: HueShiftMode;
+  lightnessMethod?: LightnessMethod;
+  includeTransparent?: boolean;
+  bgColorLight?: string;
+  bgColorDark?: string;
+  transparentOriginLevel?: number;
 }
 
 interface Palette {
-	[key: string]: string;
+  [key: string]: string;
 }
 
-type LightnessMethod = 'oklch' | 'hsl' | 'lab';
-type HueShiftMode = 'disabled' | 'slight' | 'moderate' | 'strong';
+interface RGB {
+  r: number;
+  g: number;
+  b: number;
+}
+
+interface HSL {
+  h: number;
+  s: number;
+  l: number;
+}
+
+interface CombinationConfig {
+  primaryColor: string;
+  combinationType?: CombinationType;
+  lightnessMethod?: LightnessMethod;
+  baseColorStrategy?: BaseColorStrategy;
+}
+
+interface RandomColorConfig {
+  saturationRange?: [number, number];
+  lightnessRange?: [number, number];
+  lightnessMethod?: LightnessMethod;
+  hueRange?: [number, number];
+}
+
+type LightnessMethod = "hybrid" | "hsl" | "perceptual" | "average";
+type HueShiftMode = "fixed" | "natural" | "unnatural";
+type BaseColorStrategy = "harmonic" | "contrasting" | "neutral";
 type CombinationType =
-	| 'complementary'
-	| 'triadic'
-	| 'analogous'
-	| 'splitComplementary'
-	| 'tetradic';
+  | "monochromatic"
+  | "analogous"
+  | "complementary"
+  | "splitComplementary"
+  | "doubleComplementary"
+  | "doubleComplementaryReverse"
+  | "triadic"
+  | "tetradic";
 ```
 
 ### Functions
 
 #### `generateColorPalette(config: ColorConfig): Palette`
 
-Generates a complete color palette from a base color.
+Generates a complete color palette from a base color with CSS custom property names.
 
-#### `generateMultipleColorPalette(configs: ColorConfig[]): Palette[]`
+#### `generateMultipleColorPalette(configs: ColorConfig[]): Palette`
 
-Generates multiple color palettes from an array of configurations.
+Generates multiple color palettes from an array of configurations and merges them into a single palette object.
 
-#### `generateCombination(config: CombinationConfig): Combination`
+#### `generateCombination(config: CombinationConfig): ColorConfig[]`
 
-Generates color combinations based on color theory.
+Generates color combinations based on color theory, returning an array of ColorConfig objects.
 
-#### `generateRandomPrimaryColor(config?: RandomColorConfig): GeneratedColor`
+#### `generateRandomPrimaryColor(config?: RandomColorConfig): string`
 
-Generates a random color with optional constraints.
+Generates a random color with optional constraints, returning a HEX string.
 
 #### `getLightness(color: string, method?: LightnessMethod): number`
 
-Calculates the lightness of a color.
+Calculates the lightness of a color using the specified method.
 
-#### `adjustToLightness(color: string, targetLightness: number, method?: LightnessMethod): string`
+#### `adjustToLightness({ h, s, targetLightness, lightnessMethod? }): string`
 
-Adjusts a color to a target lightness.
+Adjusts HSL values to achieve a target lightness, returning a HEX string.
+
+#### `applyColorPaletteToDom(palette: Palette): void`
+
+Applies CSS custom properties to the document root element.
 
 #### Color Conversion Utilities
 
