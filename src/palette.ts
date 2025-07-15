@@ -24,25 +24,25 @@ const log = createContextLogger("Palette");
 // =============================================================================
 
 /**
- * Generate multiple color palettes at once
+ * Generate versatile color palette(s) from specified color(s)
  */
-export const generateMultipleColorPalette = (
-  colorConfigs: ColorConfig[]
+export const generateColorPalette = (
+  input: ColorConfig | ColorConfig[]
 ): Palette => {
-  const allPalette: Palette = {};
+  // Handle multiple configurations
+  if (Array.isArray(input)) {
+    const allPalette: Palette = {};
 
-  colorConfigs.forEach((config) => {
-    const palette = generateColorPalette(config);
-    Object.assign(allPalette, palette);
-  });
+    input.forEach((config) => {
+      const palette = generateColorPalette(config);
+      Object.assign(allPalette, palette);
+    });
 
-  return allPalette;
-};
+    return allPalette;
+  }
 
-/**
- * Generate versatile color palette from specified color
- */
-export const generateColorPalette = (colorConfig: ColorConfig): Palette => {
+  // Handle single configuration
+  const colorConfig = input;
   const inputRGB = hexToRGB(colorConfig.color);
   const normalizedColor = rgbToHex(inputRGB);
   const inputHSL = rgbToHSL(inputRGB);

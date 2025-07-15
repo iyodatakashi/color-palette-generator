@@ -203,11 +203,25 @@ type CombinationType =
 
 #### `generateColorPalette(config: ColorConfig): Palette`
 
-Generates a complete color palette from a base color with CSS custom property names.
+#### `generateColorPalette(configs: ColorConfig[]): Palette`
 
-#### `generateMultipleColorPalette(configs: ColorConfig[]): Palette`
+Generates a complete color palette from a base color (or multiple colors) with CSS custom property names.
 
-Generates multiple color palettes from an array of configurations and merges them into a single palette object.
+**Single configuration:**
+
+```typescript
+const palette = generateColorPalette(config);
+```
+
+**Multiple configurations:**
+
+```typescript
+const configs = [
+  { id: "primary", prefix: "primary", color: "#007bff" },
+  { id: "secondary", prefix: "secondary", color: "#6c757d" },
+];
+const palette = generateColorPalette(configs);
+```
 
 #### `generateCombination(config: CombinationConfig): ColorConfig[]`
 

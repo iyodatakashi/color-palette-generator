@@ -5,7 +5,7 @@
 // =============================================================================
 
 // Palette generation features
-export { generateColorPalette, generateMultipleColorPalette } from "./palette";
+export { generateColorPalette } from "./palette";
 
 // Color combination features
 export { generateCombination } from "./combination";
@@ -24,6 +24,8 @@ export { applyColorPaletteToDom } from "./applyToDom";
 
 // Constants
 export {
+  DEFAULT_COLOR_CONFIG,
+  DEFAULT_BASE_COLOR_CONFIG,
   SCALE_LEVELS,
   STANDARD_LIGHTNESS_SCALE,
   DEFAULT_LIGHTNESS_METHOD,

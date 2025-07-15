@@ -16,9 +16,34 @@ import type { LightnessMethod } from "./types";
 // =============================================================================
 
 /**
+ * Get lightness value from color according to lightness calculation method
+ */
+export const getLightness = ({
+  color,
+  lightnessMethod = "hybrid",
+}: {
+  color: string;
+  lightnessMethod?: LightnessMethod;
+}): number => {
+  const rgb = hexToRGB(color);
+
+  switch (lightnessMethod) {
+    case "hsl":
+      return getHSLLightness(rgb);
+    case "perceptual":
+      return getPerceptualLightness(rgb);
+    case "average":
+      return getAverageLightness(rgb);
+    case "hybrid":
+    default:
+      return getHybridLightness(rgb);
+  }
+};
+
+/**
  * Calculate perceptual lightness from RGB (CIE Lab* based)
  */
-export const getPerceptualLightness = ({
+const getPerceptualLightness = ({
   r,
   g,
   b,
@@ -56,7 +81,7 @@ export const getPerceptualLightness = ({
 /**
  * Get HSL lightness
  */
-export const getHSLLightness = ({
+const getHSLLightness = ({
   r,
   g,
   b,
@@ -72,7 +97,7 @@ export const getHSLLightness = ({
 /**
  * Get RGB average lightness
  */
-export const getAverageLightness = ({
+const getAverageLightness = ({
   r,
   g,
   b,
@@ -88,7 +113,7 @@ export const getAverageLightness = ({
 /**
  * Get hybrid lightness (weighted average of perceptual lightness + HSL lightness)
  */
-export const getHybridLightness = ({
+const getHybridLightness = ({
   r,
   g,
   b,
@@ -101,31 +126,6 @@ export const getHybridLightness = ({
   const hsl = rgbToHSL({ r, g, b });
   // Weighted average of perceptual lightness and HSL lightness
   return perceptual * 0.3 + hsl.l * 0.7;
-};
-
-/**
- * Get lightness value from color according to lightness calculation method
- */
-export const getLightness = ({
-  color,
-  lightnessMethod = "hybrid",
-}: {
-  color: string;
-  lightnessMethod?: LightnessMethod;
-}): number => {
-  const rgb = hexToRGB(color);
-
-  switch (lightnessMethod) {
-    case "hsl":
-      return getHSLLightness(rgb);
-    case "perceptual":
-      return getPerceptualLightness(rgb);
-    case "average":
-      return getAverageLightness(rgb);
-    case "hybrid":
-    default:
-      return getHybridLightness(rgb);
-  }
 };
 
 // =============================================================================

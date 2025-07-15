@@ -1,7 +1,7 @@
 // paletteGenerator.test.ts
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { generateColorPalette, generateMultipleColorPalette } from "../palette";
+import { generateColorPalette } from "../palette";
 import { applyColorPaletteToDom } from "../applyToDom";
 import type {
   ColorConfig,
@@ -239,7 +239,7 @@ describe("paletteGenerator", () => {
     });
   });
 
-  describe("generateMultipleColorPalette", () => {
+  describe("generateColorPalette (multiple configurations)", () => {
     const colorConfigs: ColorConfig[] = [
       {
         id: "blue",
@@ -268,7 +268,7 @@ describe("paletteGenerator", () => {
     ];
 
     it("複数のカラーパレットを一度に生成する", () => {
-      const result = generateMultipleColorPalette(colorConfigs);
+      const result = generateColorPalette(colorConfigs);
 
       colorConfigs.forEach((config) => {
         // color keyはCSS変数参照
@@ -291,13 +291,13 @@ describe("paletteGenerator", () => {
     });
 
     it("空の配列で空のパレットを返す", () => {
-      const result = generateMultipleColorPalette([]);
+      const result = generateColorPalette([]);
       expect(result).toEqual({});
     });
 
     it("単一設定で個別生成と同じ結果を返す", () => {
       const singleConfig = colorConfigs[0];
-      const multipleResult = generateMultipleColorPalette([singleConfig]);
+      const multipleResult = generateColorPalette([singleConfig]);
       const singleResult = generateColorPalette(singleConfig);
 
       expect(multipleResult).toEqual(singleResult);
@@ -353,7 +353,7 @@ describe("paletteGenerator", () => {
         },
       ];
 
-      const palette = generateMultipleColorPalette(complexConfigs);
+      const palette = generateColorPalette(complexConfigs);
 
       complexConfigs.forEach((config) => {
         // color keyはCSS変数参照
