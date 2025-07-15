@@ -20,11 +20,11 @@ import {
 const log = createContextLogger("Palette");
 
 // =============================================================================
-// メイン関数
+// Main Functions
 // =============================================================================
 
 /**
- * 複数のカラーパレットを一度に生成
+ * Generate multiple color palettes at once
  */
 export const generateMultipleColorPalette = (
   colorConfigs: ColorConfig[]
@@ -40,14 +40,14 @@ export const generateMultipleColorPalette = (
 };
 
 /**
- * 指定した色から汎用的なカラーパレットを生成
+ * Generate versatile color palette from specified color
  */
 export const generateColorPalette = (colorConfig: ColorConfig): Palette => {
   const inputRGB = hexToRGB(colorConfig.color);
   const normalizedColor = rgbToHex(inputRGB);
   const inputHSL = rgbToHSL(inputRGB);
 
-  // 無効な色入力の検出とログ出力
+  // Detect invalid color input and log output
   if (
     inputRGB.r === 0 &&
     inputRGB.g === 0 &&
@@ -117,11 +117,11 @@ export const generateColorPalette = (colorConfig: ColorConfig): Palette => {
 };
 
 // =============================================================================
-// パレット生成ロジック
+// Palette Generation Logic
 // =============================================================================
 
 /**
- * 基本的なカラーパレットを生成
+ * Generate basic color palette
  */
 const generateOriginalPalette = ({
   colorConfig,
@@ -164,7 +164,7 @@ const generateOriginalPalette = ({
 };
 
 /**
- * Variation Colors を設定
+ * Set Variation Colors
  */
 const setVariationColors = ({
   colorConfig,
@@ -201,10 +201,10 @@ const setVariationColors = ({
 };
 
 /**
- * Text Color を設定
- * パレット全体から明度70以下の最も番号の小さいカラーを見つけ、
- * それと入力カラーの知覚明度を比較し、より暗い方をテキストカラーとする
- * ただし、結果は必ずCSS変数参照とする
+ * Set Text Color
+ * Find the color with the smallest number that has lightness 70 or below from the entire palette,
+ * compare its perceptual lightness with the input color, and use the darker one as the text color.
+ * However, the result must always be a CSS variable reference.
  */
 const setTextColor = ({
   colorConfig,
@@ -222,7 +222,7 @@ const setTextColor = ({
     lightnessMethod: "perceptual",
   });
 
-  // パレット全体から明度70以下の最も番号の小さいカラーを取得
+  // Get the color with the smallest number that has lightness 70 or below from the entire palette
   let selectedLevel: number | null = null;
   let smallestLevel = Infinity;
 
@@ -236,7 +236,7 @@ const setTextColor = ({
         lightnessMethod: "perceptual",
       });
 
-      // 明度70以下で、かつ最も番号の小さいレベルを探す
+      // Find the level with lightness 70 or below and the smallest number
       if (perceptualLightness <= 70 && level < smallestLevel) {
         selectedLevel = level;
         smallestLevel = level;
@@ -244,7 +244,7 @@ const setTextColor = ({
     }
   });
 
-  // 入力カラーと見つかった暗いパレットカラーの知覚明度を比較
+  // Compare perceptual lightness of input color and found dark palette color
   if (selectedLevel !== null) {
     const selectedColor = palette[`--${colorConfig.prefix}-${selectedLevel}`];
     const selectedPerceptualLightness = getLightness({
@@ -252,10 +252,10 @@ const setTextColor = ({
       lightnessMethod: "perceptual",
     });
 
-    // より暗い方（知覚明度が低い方）をテキストカラーとして選択
+    // Select the darker one (lower perceptual lightness) as text color
     if (inputPerceptualLightness < selectedPerceptualLightness) {
-      // 入力カラーの方が暗い場合、入力カラーと同じ色のレベルを使用
-      // 入力カラーはnormalizedConfig.colorとして既にclosestLevelに配置されている
+      // If input color is darker, use the level of the same color as input color
+      // Input color is already placed at closestLevel as normalizedConfig.color
       const inputClosestLevel = findClosestLevel({
         inputLightness: inputPerceptualLightness,
         lightnessMethod: colorConfig.lightnessMethod,
@@ -264,13 +264,13 @@ const setTextColor = ({
         `--${colorConfig.prefix}-text-color`
       ] = `var(--${colorConfig.prefix}-${inputClosestLevel})`;
     } else {
-      // パレットカラーの方が暗い場合
+      // If palette color is darker
       palette[
         `--${colorConfig.prefix}-text-color`
       ] = `var(--${colorConfig.prefix}-${selectedLevel})`;
     }
   } else {
-    // 明度70以下のパレットカラーが見つからない場合、入力カラーのレベルを使用
+    // If no palette color with lightness 70 or below is found, use input color level
     const inputClosestLevel = findClosestLevel({
       inputLightness: inputPerceptualLightness,
       lightnessMethod: colorConfig.lightnessMethod,

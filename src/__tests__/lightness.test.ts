@@ -9,7 +9,6 @@ import {
   findClosestLevel,
   calculateEvenScale,
 } from "../lightness";
-import { hexToRGB, hslToRGB } from "../colorUtils";
 import { SCALE_LEVELS, STANDARD_LIGHTNESS_SCALE } from "../constants";
 import type { RGB, LightnessMethod } from "../types";
 

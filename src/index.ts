@@ -1,57 +1,60 @@
 // index.ts
 
 // =============================================================================
-// カラーパレット生成ライブラリ - Main Entry Point
+// Color Palette Generation Library - Main Entry Point
 // =============================================================================
 
-// パレット生成機能
-export { generateColorPalette, generateMultipleColorPalette } from './palette';
+// Palette generation features
+export { generateColorPalette, generateMultipleColorPalette } from "./palette";
 
-// カラーコンビネーション機能
-export { generateCombination } from './combination';
+// Color combination features
+export { generateCombination } from "./combination";
 
-// ランダムカラー生成機能
-export { generateRandomPrimaryColor, generateRandomColorAroundHue } from './randomColor';
-
-// 明度計算機能
-export { getLightness, adjustToLightness } from './lightness';
-
-// 基本的なカラーユーティリティ
-export { hexToRGB, rgbToHex, hexToHSL, hslToRGB, rgbToHSL } from './colorUtils';
-
-// 色相シフト機能
-export { calculateHueShift } from './hueShift';
-
-// 透過色機能
-export { setTransparentPalette } from './transparentColor';
-
-// DOMに反映
-export { applyColorPaletteToDom } from './applyToDom';
-
-// 定数
+// Random color generation features
 export {
-	SCALE_LEVELS,
-	STANDARD_LIGHTNESS_SCALE,
-	DEFAULT_LIGHTNESS_METHOD,
-	DEFAULT_HUE_SHIFT_MODE,
-	MIN_LEVEL,
-	MAX_LEVEL,
-	MIN_LIGHTNESS,
-	MAX_LIGHTNESS
-} from './constants';
+  generateRandomPrimaryColor,
+  generateRandomColorAroundHue,
+} from "./randomColor";
 
-// 型定義
+// Lightness calculation features
+export { getLightness, adjustToLightness } from "./lightness";
+
+// Basic color utilities
+export { hexToRGB, rgbToHex, hexToHSL, hslToRGB, rgbToHSL } from "./colorUtils";
+
+// Hue shift features
+export { calculateHueShift } from "./hueShift";
+
+// Transparent color features
+export { setTransparentPalette } from "./transparentColor";
+
+// Apply to DOM
+export { applyColorPaletteToDom } from "./applyToDom";
+
+// Constants
+export {
+  SCALE_LEVELS,
+  STANDARD_LIGHTNESS_SCALE,
+  DEFAULT_LIGHTNESS_METHOD,
+  DEFAULT_HUE_SHIFT_MODE,
+  MIN_LEVEL,
+  MAX_LEVEL,
+  MIN_LIGHTNESS,
+  MAX_LIGHTNESS,
+} from "./constants";
+
+// Type definitions
 export type {
-	Palette,
-	ColorConfig,
-	RGB,
-	HSL,
-	LightnessMethod,
-	HueShiftMode,
-	CombinationType,
-	BaseColorStrategy,
-	Combination,
-	CombinationConfig,
-	RandomColorConfig,
-	GeneratedColor
-} from './types';
+  Palette,
+  ColorConfig,
+  RGB,
+  HSL,
+  LightnessMethod,
+  HueShiftMode,
+  CombinationType,
+  BaseColorStrategy,
+  Combination,
+  CombinationConfig,
+  RandomColorConfig,
+  GeneratedColor,
+} from "./types";

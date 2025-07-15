@@ -6,7 +6,7 @@ import { createContextLogger } from "./logger";
 const log = createContextLogger("ColorUtils");
 
 // =============================================================================
-// RGB ⇔ HEX 変換
+// RGB ⇔ HEX Conversion
 // =============================================================================
 
 export const rgbToHex = ({ r, g, b }: RGB): string => {
@@ -46,7 +46,7 @@ export const hexToRGB = (hex: string): RGB => {
     const g = parseInt(normalizedHex.slice(3, 5), 16);
     const b = parseInt(normalizedHex.slice(5, 7), 16);
 
-    // NaNチェック
+    // NaN check
     if (isNaN(r) || isNaN(g) || isNaN(b)) {
       log.warn("Invalid hex color values detected, using black fallback", {
         hex,
@@ -65,7 +65,7 @@ export const hexToRGB = (hex: string): RGB => {
 };
 
 // =============================================================================
-// RGBA 変換
+// RGBA Conversion
 // =============================================================================
 
 export const rgbaToHex = (rgba: string): string => {
@@ -102,7 +102,7 @@ export const hexToRGBA = (hex: string, alpha: number): string => {
 };
 
 // =============================================================================
-// RGB ⇔ HSL 変換
+// RGB ⇔ HSL Conversion
 // =============================================================================
 
 export const rgbToHSL = ({ r, g, b }: RGB): HSL => {
@@ -188,7 +188,7 @@ export const hslToRGB = ({ h, s, l }: HSL): RGB => {
 };
 
 // =============================================================================
-// HEX ⇔ HSL 変換
+// HEX ⇔ HSL Conversion
 // =============================================================================
 
 export const hexToHSL = (hex: string): HSL => {

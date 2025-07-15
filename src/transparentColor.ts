@@ -14,11 +14,11 @@ import {
 const log = createContextLogger("TransparentColor");
 
 // =============================================================================
-// 透過色パレット生成
+// Transparent Color Palette Generation
 // =============================================================================
 
 /**
- * 透過色パレットを生成
+ * Generate transparent color palette
  */
 export const setTransparentPalette = ({
   colorConfig,
@@ -35,7 +35,7 @@ export const setTransparentPalette = ({
 
     if (!targetSolidColor) return;
 
-    // 入力値の正規化と検証
+    // Normalize and validate input values
     const normalizedColor = targetSolidColor.trim();
     if (
       !normalizedColor ||
@@ -48,13 +48,13 @@ export const setTransparentPalette = ({
       return;
     }
 
-    // 透過度を計算
+    // Calculate transparency
     const fixedAlpha = getAlphaForLevel({
       level,
       transparentOriginLevel: transparentOriginLevel,
     });
 
-    // 背景色を決定（originレベル以下は明るい背景、それ以上は暗い背景）
+    // Determine background color (bright background for levels below origin, dark background for levels above)
     const backgroundColor =
       level <= transparentOriginLevel
         ? colorConfig.bgColorLight
@@ -62,7 +62,7 @@ export const setTransparentPalette = ({
 
     if (!backgroundColor) return;
 
-    // 透過色を計算
+    // Calculate transparent color
     const transparentColor = calculateTransparentColor({
       targetSolidColor: normalizedColor,
       backgroundColor,
@@ -74,11 +74,11 @@ export const setTransparentPalette = ({
 };
 
 // =============================================================================
-// 透過度計算
+// Transparency Calculation
 // =============================================================================
 
 /**
- * レベルに基づいて透過度を計算
+ * Calculate transparency based on level
  */
 const getAlphaForLevel = ({
   level,
@@ -87,7 +87,7 @@ const getAlphaForLevel = ({
   level: number;
   transparentOriginLevel: number;
 }): number => {
-  // originLevel自体は常にMAX_ALPHA
+  // originLevel itself is always MAX_ALPHA
   if (level === transparentOriginLevel) {
     return MAX_ALPHA;
   }
@@ -96,7 +96,7 @@ const getAlphaForLevel = ({
   const STEP_SIZE = 50;
 
   if (level < transparentOriginLevel) {
-    // 明るい方向（50からtransparentOriginLevelまで）
+    // Bright direction (from 50 to transparentOriginLevel)
     const totalSteps = (transparentOriginLevel - MIN_LEVEL) / STEP_SIZE;
 
     if (totalSteps === 0) {
@@ -108,7 +108,7 @@ const getAlphaForLevel = ({
 
     return MIN_ALPHA + stepAlpha * currentStep;
   } else {
-    // 暗い方向（transparentOriginLevelから950まで）
+    // Dark direction (from transparentOriginLevel to 950)
     const totalSteps = (MAX_LEVEL - transparentOriginLevel) / STEP_SIZE;
 
     if (totalSteps === 0) {
@@ -123,11 +123,11 @@ const getAlphaForLevel = ({
 };
 
 // =============================================================================
-// 透過色計算
+// Transparent Color Calculation
 // =============================================================================
 
 /**
- * 固定透過度から透過色を逆算
+ * Reverse calculate transparent color from fixed transparency
  */
 const calculateTransparentColor = ({
   targetSolidColor,
@@ -138,7 +138,7 @@ const calculateTransparentColor = ({
   backgroundColor: string;
   fixedAlpha: number;
 }): string => {
-  // RGB変換とエラーハンドリング
+  // RGB conversion and error handling
   let target: { r: number; g: number; b: number };
   let bg: { r: number; g: number; b: number };
 
@@ -166,19 +166,19 @@ const calculateTransparentColor = ({
     return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
   }
 
-  // ゼロ除算の防止
+  // Prevent division by zero
   if (fixedAlpha === 0) {
     log.warn("Alpha is 0, returning background color");
     return `rgba(${bg.r}, ${bg.g}, ${bg.b}, 0.000)`;
   }
 
-  // 透過色のRGB値を逆算
+  // Reverse calculate RGB values of transparent color
   const backgroundMultiplier = 1 - fixedAlpha;
   const transparentR = (target.r - bg.r * backgroundMultiplier) / fixedAlpha;
   const transparentG = (target.g - bg.g * backgroundMultiplier) / fixedAlpha;
   const transparentB = (target.b - bg.b * backgroundMultiplier) / fixedAlpha;
 
-  // 0-255の範囲にクランプ
+  // Clamp to 0-255 range
   const clampedR = clampRGBValue(transparentR);
   const clampedG = clampRGBValue(transparentG);
   const clampedB = clampRGBValue(transparentB);
@@ -189,7 +189,7 @@ const calculateTransparentColor = ({
 };
 
 /**
- * RGB値を0-255の範囲にクランプ
+ * Clamp RGB value to 0-255 range
  */
 const clampRGBValue = (value: number): number => {
   return Math.max(0, Math.min(255, Math.round(value)));
