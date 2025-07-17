@@ -24,6 +24,7 @@ export type ColorConfig = {
   bgColorLight?: string;
   bgColorDark?: string;
   transparentOriginLevel?: number;
+  includeTextColors?: boolean;
 };
 
 export type Palette = {

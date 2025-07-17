@@ -70,6 +70,7 @@ export const generateColorPalette = (
     bgColorLight: colorConfig.bgColorLight || "#ffffff",
     bgColorDark: colorConfig.bgColorDark || "#000000",
     transparentOriginLevel: colorConfig.transparentOriginLevel || 500,
+    includeTextColors: colorConfig.includeTextColors || false,
   };
 
   const inputLightness = getLightness({
@@ -100,10 +101,12 @@ export const generateColorPalette = (
     palette,
   });
 
+  // Generate text colors separately to ensure proper order
+  const textColorPalette: Palette = {};
   setTextColor({
     colorConfig: normalizedConfig,
     inputColor: normalizedColor,
-    palette,
+    palette: textColorPalette,
   });
 
   if (colorConfig.includeTransparent) {
@@ -112,6 +115,9 @@ export const generateColorPalette = (
       colorConfig: normalizedConfig,
     });
   }
+
+  // Merge text colors at the end to ensure they appear after all other variables
+  Object.assign(palette, textColorPalette);
 
   return palette;
 };
@@ -202,9 +208,8 @@ const setVariationColors = ({
 
 /**
  * Set Text Color
- * Find the color with the smallest number that has lightness 70 or below from the entire palette,
- * compare its perceptual lightness with the input color, and use the darker one as the text color.
- * However, the result must always be a CSS variable reference.
+ * Generate appropriate text colors for both light and dark backgrounds
+ * Only generate text colors if includeTextColors is enabled
  */
 const setTextColor = ({
   colorConfig,
@@ -215,6 +220,11 @@ const setTextColor = ({
   inputColor: string;
   palette: Palette;
 }): void => {
+  // Only generate text colors if includeTextColors is enabled
+  if (!colorConfig.includeTextColors) {
+    return;
+  }
+
   const inputRGB = hexToRGB(inputColor);
   const normalizedColor = rgbToHex(inputRGB);
   const inputPerceptualLightness = getLightness({
@@ -222,9 +232,9 @@ const setTextColor = ({
     lightnessMethod: "perceptual",
   });
 
-  // Get the color with the smallest number that has lightness 70 or below from the entire palette
-  let selectedLevel: number | null = null;
-  let smallestLevel = Infinity;
+  // Find dark text color for light background (lightness <= 70)
+  let darkTextLevel: number | null = null;
+  let smallestDarkLevel = Infinity;
 
   SCALE_LEVELS.forEach((level) => {
     const colorKey = `--${colorConfig.prefix}-${level}`;
@@ -236,47 +246,99 @@ const setTextColor = ({
         lightnessMethod: "perceptual",
       });
 
-      // Find the level with lightness 70 or below and the smallest number
-      if (perceptualLightness <= 70 && level < smallestLevel) {
-        selectedLevel = level;
-        smallestLevel = level;
+      if (perceptualLightness <= 70 && level < smallestDarkLevel) {
+        darkTextLevel = level;
+        smallestDarkLevel = level;
       }
     }
   });
 
-  // Compare perceptual lightness of input color and found dark palette color
-  if (selectedLevel !== null) {
-    const selectedColor = palette[`--${colorConfig.prefix}-${selectedLevel}`];
+  // Find light text color for dark background (lightness >= 30)
+  let lightTextLevel: number | null = null;
+  let largestLightLevel = -Infinity;
+
+  SCALE_LEVELS.forEach((level) => {
+    const colorKey = `--${colorConfig.prefix}-${level}`;
+    const levelColor = palette[colorKey];
+
+    if (levelColor) {
+      const perceptualLightness = getLightness({
+        color: levelColor,
+        lightnessMethod: "perceptual",
+      });
+
+      if (perceptualLightness >= 30 && level > largestLightLevel) {
+        lightTextLevel = level;
+        largestLightLevel = level;
+      }
+    }
+  });
+
+  // Set light theme text color (dark text on light background)
+  if (darkTextLevel !== null) {
+    const selectedColor = palette[`--${colorConfig.prefix}-${darkTextLevel}`];
     const selectedPerceptualLightness = getLightness({
       color: selectedColor,
       lightnessMethod: "perceptual",
     });
 
-    // Select the darker one (lower perceptual lightness) as text color
     if (inputPerceptualLightness < selectedPerceptualLightness) {
-      // If input color is darker, use the level of the same color as input color
-      // Input color is already placed at closestLevel as normalizedConfig.color
       const inputClosestLevel = findClosestLevel({
         inputLightness: inputPerceptualLightness,
         lightnessMethod: colorConfig.lightnessMethod,
       });
       palette[
-        `--${colorConfig.prefix}-text-color`
+        `--${colorConfig.prefix}-text-color-on-light`
       ] = `var(--${colorConfig.prefix}-${inputClosestLevel})`;
     } else {
-      // If palette color is darker
       palette[
-        `--${colorConfig.prefix}-text-color`
-      ] = `var(--${colorConfig.prefix}-${selectedLevel})`;
+        `--${colorConfig.prefix}-text-color-on-light`
+      ] = `var(--${colorConfig.prefix}-${darkTextLevel})`;
     }
   } else {
-    // If no palette color with lightness 70 or below is found, use input color level
     const inputClosestLevel = findClosestLevel({
       inputLightness: inputPerceptualLightness,
       lightnessMethod: colorConfig.lightnessMethod,
     });
     palette[
-      `--${colorConfig.prefix}-text-color`
+      `--${colorConfig.prefix}-text-color-on-light`
     ] = `var(--${colorConfig.prefix}-${inputClosestLevel})`;
   }
+
+  // Set dark theme text color (light text on dark background)
+  if (lightTextLevel !== null) {
+    const selectedColor = palette[`--${colorConfig.prefix}-${lightTextLevel}`];
+    const selectedPerceptualLightness = getLightness({
+      color: selectedColor,
+      lightnessMethod: "perceptual",
+    });
+
+    if (inputPerceptualLightness > selectedPerceptualLightness) {
+      const inputClosestLevel = findClosestLevel({
+        inputLightness: inputPerceptualLightness,
+        lightnessMethod: colorConfig.lightnessMethod,
+      });
+      palette[
+        `--${colorConfig.prefix}-text-color-on-dark`
+      ] = `var(--${colorConfig.prefix}-${inputClosestLevel})`;
+    } else {
+      palette[
+        `--${colorConfig.prefix}-text-color-on-dark`
+      ] = `var(--${colorConfig.prefix}-${lightTextLevel})`;
+    }
+  } else {
+    const inputClosestLevel = findClosestLevel({
+      inputLightness: inputPerceptualLightness,
+      lightnessMethod: colorConfig.lightnessMethod,
+    });
+    palette[
+      `--${colorConfig.prefix}-text-color-on-dark`
+    ] = `var(--${colorConfig.prefix}-${inputClosestLevel})`;
+  }
+
+  // Set default text color to light theme version for backward compatibility
+  // This must be set AFTER both on-light and on-dark are defined
+  palette[
+    `--${colorConfig.prefix}-text-color`
+  ] = `var(--${colorConfig.prefix}-text-color-on-light)`;
 };
