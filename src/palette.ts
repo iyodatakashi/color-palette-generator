@@ -67,10 +67,10 @@ export const generateColorPalette = (
     lightnessMethod: colorConfig.lightnessMethod || DEFAULT_LIGHTNESS_METHOD,
     hueShiftMode: colorConfig.hueShiftMode || DEFAULT_HUE_SHIFT_MODE,
     includeTransparent: colorConfig.includeTransparent || false,
+    includeTextColors: colorConfig.includeTextColors || false,
     bgColorLight: colorConfig.bgColorLight || "#ffffff",
     bgColorDark: colorConfig.bgColorDark || "#000000",
     transparentOriginLevel: colorConfig.transparentOriginLevel || 500,
-    includeTextColors: colorConfig.includeTextColors || false,
   };
 
   const inputLightness = getLightness({
