@@ -100,12 +100,17 @@ describe("paletteGenerator", () => {
         };
 
         const result = generateColorPalette(config);
-        const textColorKey = `--${prefix}-text-color`;
 
-        expect(result).toHaveProperty(textColorKey);
-        // text colorはCSS変数参照になる（新しい構造に対応）
-        expect(result[textColorKey]).toMatch(
-          /^var\(--[^-]+-text-color-on-light\)$/
+        // text-color-on-light と text-color-on-dark が生成されることを確認
+        expect(result).toHaveProperty(`--${prefix}-text-color-on-light`);
+        expect(result).toHaveProperty(`--${prefix}-text-color-on-dark`);
+
+        // 両方ともCSS変数参照であることを確認
+        expect(result[`--${prefix}-text-color-on-light`]).toMatch(
+          /^var\(--[^-]+-\d+\)$/
+        );
+        expect(result[`--${prefix}-text-color-on-dark`]).toMatch(
+          /^var\(--[^-]+-\d+\)$/
         );
       });
     });
@@ -122,7 +127,6 @@ describe("paletteGenerator", () => {
       const result = generateColorPalette(config);
 
       // テキスト色が出力されないことを確認
-      expect(result).not.toHaveProperty("--test-text-color");
       expect(result).not.toHaveProperty("--test-text-color-on-light");
       expect(result).not.toHaveProperty("--test-text-color-on-dark");
     });
@@ -138,15 +142,11 @@ describe("paletteGenerator", () => {
 
       const result = generateColorPalette(config);
 
-      // すべてのテキスト色が出力されることを確認
-      expect(result).toHaveProperty("--test-text-color");
+      // text-color-on-light と text-color-on-dark が出力されることを確認
       expect(result).toHaveProperty("--test-text-color-on-light");
       expect(result).toHaveProperty("--test-text-color-on-dark");
 
-      // すべてCSS変数参照であることを確認
-      expect(result["--test-text-color"]).toMatch(
-        /^var\(--test-text-color-on-light\)$/
-      );
+      // 両方ともCSS変数参照であることを確認
       expect(result["--test-text-color-on-light"]).toMatch(
         /^var\(--test-\d+\)$/
       );
@@ -154,17 +154,8 @@ describe("paletteGenerator", () => {
         /^var\(--test-\d+\)$/
       );
 
-      // デフォルトテキスト色がライトテーマ用を参照していることを確認
-      expect(result["--test-text-color"]).toBe(
-        "var(--test-text-color-on-light)"
-      );
-      expect(result["--test-text-color-on-light"]).toMatch(
-        /^var\(--test-\d+\)$/
-      );
-
       // 実際の出力順序をログ出力（デバッグ用）
       console.log("Text color definitions:");
-      console.log("--test-text-color:", result["--test-text-color"]);
       console.log(
         "--test-text-color-on-light:",
         result["--test-text-color-on-light"]
@@ -445,12 +436,7 @@ describe("paletteGenerator", () => {
           );
         });
 
-        // text colorはCSS変数参照
-        expect(palette[`--${config.prefix}-text-color`]).toMatch(
-          /^var\(--[^-]+-text-color-on-light\)$/
-        );
-
-        // 新しいテキスト色も出力されることを確認
+        // text colorsはCSS変数参照
         expect(palette[`--${config.prefix}-text-color-on-light`]).toMatch(
           /^var\(--[^-]+-\d+\)$/
         );
@@ -502,10 +488,7 @@ describe("paletteGenerator", () => {
       // color keyがスケールカラーを参照していることを確認
       expect(palette["--test-color"]).toMatch(/^var\(--test-\d+\)$/);
 
-      // text colorがスケールカラーを参照していることを確認
-      expect(palette["--test-text-color"]).toMatch(
-        /^var\(--test-text-color-on-light\)$/
-      );
+      // text colorsがスケールカラーを参照していることを確認
       expect(palette["--test-text-color-on-light"]).toMatch(
         /^var\(--test-\d+\)$/
       );

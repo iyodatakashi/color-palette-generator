@@ -58,7 +58,7 @@ export const DEFAULT_BASE_COLOR_CONFIG = {
   lightnessMethod: "hybrid" as LightnessMethod,
   hueShiftMode: "fixed" as HueShiftMode,
   includeTransparent: true,
-  includeTextColors: false,
+  includeTextColors: true,
   bgColorLight: "#ffffff",
   bgColorDark: "#000000",
   transparentOriginLevel: 950,

@@ -335,10 +335,4 @@ const setTextColor = ({
       `--${colorConfig.prefix}-text-color-on-dark`
     ] = `var(--${colorConfig.prefix}-${inputClosestLevel})`;
   }
-
-  // Set default text color to light theme version for backward compatibility
-  // This must be set AFTER both on-light and on-dark are defined
-  palette[
-    `--${colorConfig.prefix}-text-color`
-  ] = `var(--${colorConfig.prefix}-text-color-on-light)`;
 };
