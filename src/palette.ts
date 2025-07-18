@@ -234,104 +234,103 @@ const setTextColor = ({
     lightnessMethod: colorConfig.lightnessMethod,
   });
 
-  // Find text color for light background (dark text on light background)
-  let textColorForLightBackground: number | null = null;
-
-  // First check if the primary color itself is dark enough
+  // Get primary color and its lightness
   const primaryColor = palette[`--${colorConfig.prefix}-${primaryLevel}`];
-  if (primaryColor) {
-    const primaryLightness = getLightness({
-      color: primaryColor,
-      lightnessMethod: "perceptual",
-    });
-
-    if (primaryLightness <= 70) {
-      // Primary color is dark enough, use it
-      textColorForLightBackground = primaryLevel;
-    } else {
-      // Primary color is too light, find a darker level
-      const primaryIndex = SCALE_LEVELS.indexOf(primaryLevel);
-      for (let i = primaryIndex + 1; i < SCALE_LEVELS.length; i++) {
-        const level = SCALE_LEVELS[i];
-        const levelColor = palette[`--${colorConfig.prefix}-${level}`];
-        if (levelColor) {
-          const levelLightness = getLightness({
-            color: levelColor,
-            lightnessMethod: "perceptual",
-          });
-          if (levelLightness <= 70) {
-            textColorForLightBackground = level;
-            break;
-          }
-        }
-      }
-
-      // If no suitable dark color found, use the darkest available color
-      if (textColorForLightBackground === null) {
-        textColorForLightBackground = 950;
-      }
-    }
+  if (!primaryColor) {
+    return;
   }
+
+  const primaryLightness = getLightness({
+    color: primaryColor,
+    lightnessMethod: "perceptual",
+  });
+
+  // Find text color for light background (dark text on light background)
+  const textColorForLightBackground = findTextColorLevel({
+    primaryLevel,
+    primaryLightness,
+    palette,
+    prefix: colorConfig.prefix,
+    targetLightness: 60,
+    isLighter: false, // Find darker color
+  });
 
   // Find text color for dark background (light text on dark background)
-  let textColorForDarkBackground: number | null = null;
+  const textColorForDarkBackground = findTextColorLevel({
+    primaryLevel,
+    primaryLightness,
+    palette,
+    prefix: colorConfig.prefix,
+    targetLightness: 50,
+    isLighter: true, // Find lighter color
+  });
 
-  // First check if the primary color itself is light enough
-  if (primaryColor) {
-    const primaryLightness = getLightness({
-      color: primaryColor,
-      lightnessMethod: "perceptual",
-    });
+  // Set light theme text color (dark text on light background)
+  palette[
+    `--${colorConfig.prefix}-text-color-on-light`
+  ] = `var(--${colorConfig.prefix}-${textColorForLightBackground})`;
 
-    if (primaryLightness >= 30) {
-      // Primary color is light enough, use it
-      textColorForDarkBackground = primaryLevel;
-    } else {
-      // Primary color is too dark, find a lighter level
-      const primaryIndex = SCALE_LEVELS.indexOf(primaryLevel);
-      for (let i = primaryIndex - 1; i >= 0; i--) {
-        const level = SCALE_LEVELS[i];
-        const levelColor = palette[`--${colorConfig.prefix}-${level}`];
-        if (levelColor) {
-          const levelLightness = getLightness({
-            color: levelColor,
-            lightnessMethod: "perceptual",
-          });
-          if (levelLightness >= 30) {
-            textColorForDarkBackground = level;
-            break;
-          }
-        }
-      }
+  // Set dark theme text color (light text on dark background)
+  palette[
+    `--${colorConfig.prefix}-text-color-on-dark`
+  ] = `var(--${colorConfig.prefix}-${textColorForDarkBackground})`;
+};
 
-      // If no suitable light color found, use the lightest available color
-      if (textColorForDarkBackground === null) {
-        textColorForDarkBackground = 50;
+/**
+ * Find appropriate text color level based on lightness criteria
+ */
+const findTextColorLevel = ({
+  primaryLevel,
+  primaryLightness,
+  palette,
+  prefix,
+  targetLightness,
+  isLighter,
+}: {
+  primaryLevel: number;
+  primaryLightness: number;
+  palette: Palette;
+  prefix: string;
+  targetLightness: number;
+  isLighter: boolean;
+}): number => {
+  // Check if primary color meets the criteria
+  const meetsCriteria = isLighter
+    ? primaryLightness >= targetLightness
+    : primaryLightness <= targetLightness;
+
+  if (meetsCriteria) {
+    return primaryLevel;
+  }
+
+  // Search for appropriate color level
+  const primaryIndex = SCALE_LEVELS.indexOf(primaryLevel);
+  const startIndex = isLighter ? primaryIndex - 1 : primaryIndex + 1;
+  const endIndex = isLighter ? 0 : SCALE_LEVELS.length;
+  const step = isLighter ? -1 : 1;
+
+  for (
+    let i = startIndex;
+    isLighter ? i >= endIndex : i < endIndex;
+    i += step
+  ) {
+    const level = SCALE_LEVELS[i];
+    const levelColor = palette[`--${prefix}-${level}`];
+    if (levelColor) {
+      const levelLightness = getLightness({
+        color: levelColor,
+        lightnessMethod: "perceptual",
+      });
+      const levelMeetsCriteria = isLighter
+        ? levelLightness >= targetLightness
+        : levelLightness <= targetLightness;
+
+      if (levelMeetsCriteria) {
+        return level;
       }
     }
   }
 
-  // Set light theme text color (dark text on light background)
-  if (textColorForLightBackground !== null) {
-    palette[
-      `--${colorConfig.prefix}-text-color-on-light`
-    ] = `var(--${colorConfig.prefix}-${textColorForLightBackground})`;
-  } else {
-    // Fallback to primary color if no suitable dark color found
-    palette[
-      `--${colorConfig.prefix}-text-color-on-light`
-    ] = `var(--${colorConfig.prefix}-${primaryLevel})`;
-  }
-
-  // Set dark theme text color (light text on dark background)
-  if (textColorForDarkBackground !== null) {
-    palette[
-      `--${colorConfig.prefix}-text-color-on-dark`
-    ] = `var(--${colorConfig.prefix}-${textColorForDarkBackground})`;
-  } else {
-    // Fallback to primary color if no suitable light color found
-    palette[
-      `--${colorConfig.prefix}-text-color-on-dark`
-    ] = `var(--${colorConfig.prefix}-${primaryLevel})`;
-  }
+  // Fallback to extreme level
+  return isLighter ? 50 : 950;
 };
