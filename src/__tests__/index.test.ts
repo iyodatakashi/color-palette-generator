@@ -1,11 +1,7 @@
 // index.test.ts
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import {
-  generateColorPalette,
-  generateMultipleColorPalette,
-  applyColorPaletteToDom,
-} from "../index";
+import { generateColorPalette, applyColorPaletteToDom } from "../index";
 import type { ColorConfig, Palette, HueShiftMode } from "../types";
 import { SCALE_LEVELS } from "../constants";
 
@@ -127,14 +123,22 @@ describe("index", () => {
           prefix,
           color,
           hueShiftMode: "natural",
+          includeTextColors: true, // テキストカラー生成を有効化
         };
 
         const result = generateColorPalette(config);
-        const textColorKey = `--${prefix}-text-color`;
 
-        expect(result).toHaveProperty(textColorKey);
-        // text colorはCSS変数参照を返す
-        expect(result[textColorKey]).toMatch(/^var\(--[^-]+-\d+\)$/);
+        // text-color-on-light と text-color-on-dark が生成されることを確認
+        expect(result).toHaveProperty(`--${prefix}-text-color-on-light`);
+        expect(result).toHaveProperty(`--${prefix}-text-color-on-dark`);
+
+        // 両方ともCSS変数参照であることを確認
+        expect(result[`--${prefix}-text-color-on-light`]).toMatch(
+          /^var\(--[^-]+-\d+\)$/
+        );
+        expect(result[`--${prefix}-text-color-on-dark`]).toMatch(
+          /^var\(--[^-]+-\d+\)$/
+        );
       });
     });
 
@@ -693,7 +697,7 @@ describe("index", () => {
     });
   });
 
-  describe("generateMultipleColorPalette", () => {
+  describe("generateColorPalette (multiple configurations)", () => {
     const colorConfigs: ColorConfig[] = [
       {
         id: "blue",
@@ -722,7 +726,7 @@ describe("index", () => {
     ];
 
     it("複数のカラーパレットを一度に生成する", () => {
-      const result = generateMultipleColorPalette(colorConfigs);
+      const result = generateColorPalette(colorConfigs);
 
       // 全ての設定に対してパレットが生成されることを確認
       colorConfigs.forEach((config) => {
@@ -752,13 +756,13 @@ describe("index", () => {
     });
 
     it("空の配列で空のパレットを返す", () => {
-      const result = generateMultipleColorPalette([]);
+      const result = generateColorPalette([]);
       expect(result).toEqual({});
     });
 
     it("単一設定で個別生成と同じ結果を返す", () => {
       const singleConfig = colorConfigs[0];
-      const multipleResult = generateMultipleColorPalette([singleConfig]);
+      const multipleResult = generateColorPalette([singleConfig]);
       const singleResult = generateColorPalette(singleConfig);
 
       expect(multipleResult).toEqual(singleResult);
@@ -782,7 +786,7 @@ describe("index", () => {
         },
       ];
 
-      const result = generateMultipleColorPalette(conflictConfigs);
+      const result = generateColorPalette(conflictConfigs);
       expect(result["--primary-color"]).toMatch(/^var\(--primary-\d+\)$/);
     });
 
@@ -807,7 +811,7 @@ describe("index", () => {
         },
       ];
 
-      const result = generateMultipleColorPalette(mixedConfigs);
+      const result = generateColorPalette(mixedConfigs);
 
       // 両方の色が正しく設定されることを確認
       expect(result["--purple-color"]).toMatch(/^var\(--purple-\d+\)$/);
@@ -952,7 +956,7 @@ describe("index", () => {
         },
       ];
 
-      const palette = generateMultipleColorPalette(configs);
+      const palette = generateColorPalette(configs);
 
       configs.forEach((config) => {
         expect(palette[`--${config.prefix}-color`]).toMatch(
@@ -1015,6 +1019,7 @@ describe("index", () => {
           hueShiftMode: "natural",
           lightnessMethod: "hybrid",
           includeTransparent: true,
+          includeTextColors: true,
           transparentOriginLevel: 400,
           bgColorLight: "#ffffff",
           bgColorDark: "#1a1a1a",
@@ -1026,6 +1031,7 @@ describe("index", () => {
           hueShiftMode: "unnatural",
           lightnessMethod: "perceptual",
           includeTransparent: false,
+          includeTextColors: true,
         },
         {
           id: "warning",
@@ -1034,6 +1040,7 @@ describe("index", () => {
           hueShiftMode: "fixed",
           lightnessMethod: "hsl",
           includeTransparent: true,
+          includeTextColors: true,
           transparentOriginLevel: 600,
           bgColorLight: "#f8f9fa",
           bgColorDark: "#212529",
@@ -1041,7 +1048,7 @@ describe("index", () => {
       ];
 
       // 複数パレット生成
-      const palette = generateMultipleColorPalette(complexConfigs);
+      const palette = generateColorPalette(complexConfigs);
 
       // 各設定が正しく反映されることを確認
       complexConfigs.forEach((config) => {
@@ -1064,8 +1071,11 @@ describe("index", () => {
           );
         });
 
-        // text colorの確認
-        expect(palette[`--${config.prefix}-text-color`]).toMatch(
+        // text colorsの確認
+        expect(palette[`--${config.prefix}-text-color-on-light`]).toMatch(
+          /^var\(--.*-\d+\)$/
+        );
+        expect(palette[`--${config.prefix}-text-color-on-dark`]).toMatch(
           /^var\(--.*-\d+\)$/
         );
 

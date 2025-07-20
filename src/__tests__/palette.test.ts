@@ -1,7 +1,7 @@
 // paletteGenerator.test.ts
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { generateColorPalette, generateMultipleColorPalette } from "../palette";
+import { generateColorPalette } from "../palette";
 import { applyColorPaletteToDom } from "../applyToDom";
 import type {
   ColorConfig,
@@ -86,8 +86,8 @@ describe("paletteGenerator", () => {
 
     it("text colorが明度に基づいて適切に設定される", () => {
       const testCases = [
-        { id: "light", prefix: "light", color: "#f8fafc" },
-        { id: "dark", prefix: "dark", color: "#1e293b" },
+        { id: "light", color: "#f8fafc", prefix: "light" },
+        { id: "dark", color: "#1e293b", prefix: "dark" },
       ];
 
       testCases.forEach(({ id, color, prefix }) => {
@@ -96,15 +96,74 @@ describe("paletteGenerator", () => {
           prefix,
           color,
           hueShiftMode: "natural",
+          includeTextColors: true, // 明示的に有効化
         };
 
         const result = generateColorPalette(config);
-        const textColorKey = `--${prefix}-text-color`;
 
-        expect(result).toHaveProperty(textColorKey);
-        // text colorはCSS変数参照になる
-        expect(result[textColorKey]).toMatch(/^var\(--[^-]+-\d+\)$/);
+        // text-color-on-light と text-color-on-dark が生成されることを確認
+        expect(result).toHaveProperty(`--${prefix}-text-color-on-light`);
+        expect(result).toHaveProperty(`--${prefix}-text-color-on-dark`);
+
+        // 両方ともCSS変数参照であることを確認
+        expect(result[`--${prefix}-text-color-on-light`]).toMatch(
+          /^var\(--[^-]+-\d+\)$/
+        );
+        expect(result[`--${prefix}-text-color-on-dark`]).toMatch(
+          /^var\(--[^-]+-\d+\)$/
+        );
       });
+    });
+
+    it("includeTextColors: falseの場合、テキスト色が出力されない", () => {
+      const config: ColorConfig = {
+        id: "test",
+        prefix: "test",
+        color: "#3b82f6",
+        hueShiftMode: "natural",
+        includeTextColors: false, // 明示的に無効化
+      };
+
+      const result = generateColorPalette(config);
+
+      // テキスト色が出力されないことを確認
+      expect(result).not.toHaveProperty("--test-text-color-on-light");
+      expect(result).not.toHaveProperty("--test-text-color-on-dark");
+    });
+
+    it("includeTextColors: trueの場合、すべてのテキスト色が出力される", () => {
+      const config: ColorConfig = {
+        id: "test",
+        prefix: "test",
+        color: "#3b82f6",
+        hueShiftMode: "natural",
+        includeTextColors: true, // 明示的に有効化
+      };
+
+      const result = generateColorPalette(config);
+
+      // text-color-on-light と text-color-on-dark が出力されることを確認
+      expect(result).toHaveProperty("--test-text-color-on-light");
+      expect(result).toHaveProperty("--test-text-color-on-dark");
+
+      // 両方ともCSS変数参照であることを確認
+      expect(result["--test-text-color-on-light"]).toMatch(
+        /^var\(--test-\d+\)$/
+      );
+      expect(result["--test-text-color-on-dark"]).toMatch(
+        /^var\(--test-\d+\)$/
+      );
+
+      // 実際の出力順序をログ出力（デバッグ用）
+      console.log("Text color definitions:");
+      console.log(
+        "--test-text-color-on-light:",
+        result["--test-text-color-on-light"]
+      );
+      console.log(
+        "--test-text-color-on-dark:",
+        result["--test-text-color-on-dark"]
+      );
     });
 
     it("透明色が有効な場合、透過色パレットが追加される", () => {
@@ -239,7 +298,7 @@ describe("paletteGenerator", () => {
     });
   });
 
-  describe("generateMultipleColorPalette", () => {
+  describe("generateColorPalette (multiple configurations)", () => {
     const colorConfigs: ColorConfig[] = [
       {
         id: "blue",
@@ -268,7 +327,7 @@ describe("paletteGenerator", () => {
     ];
 
     it("複数のカラーパレットを一度に生成する", () => {
-      const result = generateMultipleColorPalette(colorConfigs);
+      const result = generateColorPalette(colorConfigs);
 
       colorConfigs.forEach((config) => {
         // color keyはCSS変数参照
@@ -291,13 +350,13 @@ describe("paletteGenerator", () => {
     });
 
     it("空の配列で空のパレットを返す", () => {
-      const result = generateMultipleColorPalette([]);
+      const result = generateColorPalette([]);
       expect(result).toEqual({});
     });
 
     it("単一設定で個別生成と同じ結果を返す", () => {
       const singleConfig = colorConfigs[0];
-      const multipleResult = generateMultipleColorPalette([singleConfig]);
+      const multipleResult = generateColorPalette([singleConfig]);
       const singleResult = generateColorPalette(singleConfig);
 
       expect(multipleResult).toEqual(singleResult);
@@ -339,6 +398,7 @@ describe("paletteGenerator", () => {
           hueShiftMode: "natural",
           lightnessMethod: "hybrid",
           includeTransparent: true,
+          includeTextColors: true, // 明示的に有効化
           transparentOriginLevel: 400,
           bgColorLight: "#ffffff",
           bgColorDark: "#1a1a1a",
@@ -350,10 +410,11 @@ describe("paletteGenerator", () => {
           hueShiftMode: "unnatural",
           lightnessMethod: "perceptual",
           includeTransparent: false,
+          includeTextColors: true, // 明示的に有効化
         },
       ];
 
-      const palette = generateMultipleColorPalette(complexConfigs);
+      const palette = generateColorPalette(complexConfigs);
 
       complexConfigs.forEach((config) => {
         // color keyはCSS変数参照
@@ -375,8 +436,11 @@ describe("paletteGenerator", () => {
           );
         });
 
-        // text colorはCSS変数参照
-        expect(palette[`--${config.prefix}-text-color`]).toMatch(
+        // text colorsはCSS変数参照
+        expect(palette[`--${config.prefix}-text-color-on-light`]).toMatch(
+          /^var\(--[^-]+-\d+\)$/
+        );
+        expect(palette[`--${config.prefix}-text-color-on-dark`]).toMatch(
           /^var\(--[^-]+-\d+\)$/
         );
 
@@ -404,6 +468,7 @@ describe("paletteGenerator", () => {
         prefix: "test",
         color: "#3b82f6",
         hueShiftMode: "natural",
+        includeTextColors: true, // 明示的に有効化
       };
 
       const palette = generateColorPalette(config);
@@ -423,8 +488,13 @@ describe("paletteGenerator", () => {
       // color keyがスケールカラーを参照していることを確認
       expect(palette["--test-color"]).toMatch(/^var\(--test-\d+\)$/);
 
-      // text colorがスケールカラーを参照していることを確認
-      expect(palette["--test-text-color"]).toMatch(/^var\(--test-\d+\)$/);
+      // text colorsがスケールカラーを参照していることを確認
+      expect(palette["--test-text-color-on-light"]).toMatch(
+        /^var\(--test-\d+\)$/
+      );
+      expect(palette["--test-text-color-on-dark"]).toMatch(
+        /^var\(--test-\d+\)$/
+      );
     });
   });
 });

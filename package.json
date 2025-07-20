@@ -1,58 +1,61 @@
 {
-	"name": "@14ch/color-palette-generator",
-	"version": "1.0.0",
-	"type": "module",
-	"description": "A comprehensive color palette generation library with support for color scales, combinations, and transparency",
-	"main": "dist/index.js",
-	"module": "dist/index.esm.js",
-	"types": "dist/index.d.ts",
-	"exports": {
-		".": {
-			"import": "./dist/index.esm.js",
-			"require": "./dist/index.js",
-			"types": "./dist/index.d.ts"
-		}
-	},
-	"files": [
-		"dist",
-		"README.md",
-		"LICENSE"
-	],
-	"scripts": {
-		"build": "rollup -c",
-		"test": "vitest",
-		"test:run": "vitest run",
-		"prepublishOnly": "npm run build"
-	},
-	"keywords": [
-		"color",
-		"palette",
-		"color-palette",
-		"color-scale",
-		"color-combination",
-		"design-system",
-		"ui",
-		"colors",
-		"typescript"
-	],
-	"author": "Your Name <your.email@example.com>",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/your-username/color-palette-lib.git"
-	},
-	"bugs": {
-		"url": "https://github.com/your-username/color-palette-lib/issues"
-	},
-	"homepage": "https://github.com/your-username/color-palette-lib#readme",
-	"devDependencies": {
-		"@rollup/plugin-typescript": "^11.1.6",
-		"@types/node": "^20.10.0",
-		"rollup": "^4.9.0",
-		"tslib": "^2.6.2",
-		"typescript": "^5.3.0",
-		"vitest": "^1.0.0"
-	},
-	"peerDependencies": {},
-	"dependencies": {}
+  "name": "@14ch/color-palette-generator",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A comprehensive color palette generation library with support for color scales, combinations, and transparency",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "color",
+    "palette",
+    "color-palette",
+    "color-scale",
+    "color-combination",
+    "design-system",
+    "ui",
+    "colors",
+    "typescript"
+  ],
+  "author": "14ch",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/14ch/color-palette-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/14ch/color-palette-generator/issues"
+  },
+  "homepage": "https://github.com/14ch/color-palette-generator#readme",
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^20.10.0",
+    "rollup": "^4.9.0",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {},
+  "dependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
 }

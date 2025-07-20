@@ -1,142 +1,143 @@
 // types.ts
 
 // =============================================================================
-// カラーパレット生成ライブラリ - 型定義
+// Color Palette Generation Library - Type Definitions
 // =============================================================================
 
 // =============================================================================
-// ライブラリの基本的なインターフェース
+// Basic Library Interfaces
 // =============================================================================
 
 /**
- * カラーパレットの型定義（出力）
+ * Color palette type definition (output)
  */
 /**
- * 色設定の型定義（入力）
+ * Color configuration type definition (input)
  */
 export type ColorConfig = {
-	id: string;
-	prefix: string;
-	color: string;
-	hueShiftMode?: HueShiftMode;
-	lightnessMethod?: LightnessMethod;
-	includeTransparent?: boolean;
-	bgColorLight?: string;
-	bgColorDark?: string;
-	transparentOriginLevel?: number;
+  id: string;
+  prefix: string;
+  color: string;
+  hueShiftMode?: HueShiftMode;
+  lightnessMethod?: LightnessMethod;
+  includeTransparent?: boolean;
+  bgColorLight?: string;
+  bgColorDark?: string;
+  transparentOriginLevel?: number;
+  includeTextColors?: boolean;
 };
 
 export type Palette = {
-	[key: string]: string;
+  [key: string]: string;
 };
 
 // =============================================================================
-// 色空間の型定義
+// Color Space Type Definitions
 // =============================================================================
 
 /**
- * RGB色の型定義
+ * RGB color type definition
  */
 export type RGB = {
-	r: number;
-	g: number;
-	b: number;
+  r: number;
+  g: number;
+  b: number;
 };
 
 /**
- * HSL色の型定義
+ * HSL color type definition
  */
 export type HSL = {
-	h: number;
-	s: number;
-	l: number;
+  h: number;
+  s: number;
+  l: number;
 };
 
 // =============================================================================
-// 明度計算関連の型定義
+// Lightness Calculation Related Type Definitions
 // =============================================================================
 
 /**
- * 明度計算方法の型定義
+ * Lightness calculation method type definition
  */
 export type LightnessMethod =
-	| 'hybrid' // バランス明度（推奨）
-	| 'hsl' // HSL明度（統一重視）
-	| 'perceptual' // 知覚的明度（正確性重視）
-	| 'average'; // RGB平均明度（シンプル）
+  | "hybrid" // Balanced lightness (recommended)
+  | "hsl" // HSL lightness (consistency focused)
+  | "perceptual" // Perceptual lightness (accuracy focused)
+  | "average"; // RGB average lightness (simple)
 
 // =============================================================================
-// 色相変化関連の型定義
+// Hue Shift Related Type Definitions
 // =============================================================================
 
 /**
- * 色相変化モードの型定義
+ * Hue shift mode type definition
  */
-export type HueShiftMode = 'fixed' | 'natural' | 'unnatural';
+export type HueShiftMode = "fixed" | "natural" | "unnatural";
 
 // types.ts に追加
 
 // =============================================================================
-// カラーコンビネーション関連の型定義
+// Color Combination Related Type Definitions
 // =============================================================================
 
 /**
- * カラー組み合わせの種類
+ * Color combination types
  */
 export type CombinationType =
-	| 'monochromatic'
-	| 'analogous'
-	| 'complementary'
-	| 'splitComplementary'
-	| 'doubleComplementary'
-	| 'doubleComplementaryReverse'
-	| 'triadic'
-	| 'tetradic';
+  | "monochromatic"
+  | "analogous"
+  | "complementary"
+  | "splitComplementary"
+  | "doubleComplementary"
+  | "doubleComplementaryReverse"
+  | "triadic"
+  | "tetradic";
 
 /**
- * ベースカラーの戦略
+ * Base color strategy
  */
-export type BaseColorStrategy = 'harmonic' | 'contrasting' | 'neutral';
+export type BaseColorStrategy = "harmonic" | "contrasting" | "neutral";
 
 /**
- * カラーサジェスト設定
+ * Color suggestion configuration
  */
 export type CombinationConfig = {
-	primaryColor: string;
-	combinationType?: CombinationType;
-	lightnessMethod?: LightnessMethod;
-	baseColorStrategy?: BaseColorStrategy;
+  primaryColor: string;
+  combinationType?: CombinationType;
+  lightnessMethod?: LightnessMethod;
+  baseColorStrategy?: BaseColorStrategy;
 };
 
 /**
- * サジェスト結果（ColorConfig配列）
+ * Suggestion result (ColorConfig array)
  */
 export type Combination = ColorConfig[];
 
 // =============================================================================
-// ランダムカラー生成関連の型定義
+// Random Color Generation Related Type Definitions
 // =============================================================================
 
 /**
- * ランダムプライマリーカラー生成の設定オプション
+ * Random primary color generation configuration options
  */
 export type RandomColorConfig = {
-	/** 彩度の範囲 [min, max] (0-100) */
-	saturationRange?: [number, number];
-	/** 目標明度 (0-100) */
-	lightnessRange?: [number, number];
-	/** 明度計算方法 */
-	lightnessMethod?: LightnessMethod;
-	/** 色相の制限範囲 [min, max] (0-360) */
-	hueRange?: [number, number];
+  /** Saturation range [min, max] (0-100) */
+  saturationRange?: [number, number];
+  /** Target lightness (0-100) */
+  lightnessRange?: [number, number];
+  /** Lightness calculation method */
+  lightnessMethod?: LightnessMethod;
+  /** Hue limitation range [min, max] (0-360) */
+  hueRange?: [number, number];
 };
 
 /**
- * 生成されたカラー情報
+ * Generated color information
  */
 export type GeneratedColor = {
-	hsl: HSL;
-	rgb: RGB;
-	hex: string;
-	actualLightness: number;
+  hsl: HSL;
+  rgb: RGB;
+  hex: string;
+  actualLightness: number;
 };
