@@ -2,6 +2,12 @@
 
 A comprehensive color palette generation library with support for color scales, combinations, and transparency.
 
+## 🌐 Online Tool
+
+Create color palettes with our web application at **[https://color-palette.14ch.jp/](https://color-palette.14ch.jp/)**
+
+A full-featured color palette generator built with this library.
+
 ## Features
 
 - 🎨 **Color Palette Generation**: Generate complete color palettes from a single base color

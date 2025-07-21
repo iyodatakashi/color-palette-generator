@@ -1,6 +1,6 @@
 {
   "name": "@14ch/color-palette-generator",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "A comprehensive color palette generation library with support for color scales, combinations, and transparency",
   "main": "dist/index.js",
