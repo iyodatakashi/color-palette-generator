@@ -39,12 +39,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/14ch/color-palette-generator.git"
+    "url": "git+https://github.com/iyodatakashi/color-palette-generator.git"
   },
   "bugs": {
-    "url": "https://github.com/14ch/color-palette-generator/issues"
+    "url": "https://github.com/iyodatakashi/color-palette-generator/issues"
   },
-  "homepage": "https://github.com/14ch/color-palette-generator#readme",
+  "homepage": "https://github.com/iyodatakashi/color-palette-generator#readme",
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "^20.10.0",
