@@ -1,8 +1,9 @@
 // combination.ts
 
 import { hexToHSL } from "./colorUtils";
-import { adjustToLightness, getLightness } from "./lightness";
+import { getLightness, adjustToLightness } from "./lightness";
 import { normalizeHue } from "./hueShift";
+import { adjustColorToSameTone } from "./hue";
 import type {
   ColorConfig,
   HSL,
@@ -253,11 +254,10 @@ const getSecondaryColors = ({
   for (const key of keys) {
     const hsl = hslValues[key];
     if (hsl) {
-      result[key] = adjustColorToPrimaryTone({
-        targetHSL: hsl,
-        primaryHSL,
+      result[key] = adjustColorToSameTone({
+        color: primaryColor,
+        targetHue: hsl.h,
         lightnessMethod,
-        primaryColor,
       });
     }
   }
@@ -268,29 +268,3 @@ const getSecondaryColors = ({
 // =============================================================================
 // Color Adjustment
 // =============================================================================
-
-/**
- * Adjust hue to match primary color tone (saturation/lightness)
- */
-const adjustColorToPrimaryTone = ({
-  targetHSL,
-  primaryHSL,
-  lightnessMethod = "hybrid",
-  primaryColor,
-}: {
-  targetHSL: HSL;
-  primaryHSL: HSL;
-  lightnessMethod?: LightnessMethod;
-  primaryColor?: string;
-}): string => {
-  const targetLightness = primaryColor
-    ? getLightness({ color: primaryColor, lightnessMethod: lightnessMethod })
-    : primaryHSL.l; // Fallback
-
-  return adjustToLightness({
-    h: targetHSL.h,
-    s: primaryHSL.s,
-    targetLightness,
-    lightnessMethod: lightnessMethod,
-  });
-};

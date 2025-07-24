@@ -1,15 +1,15 @@
 // hue.test.ts
 
 import { describe, it, expect } from "vitest";
-import { changeHueWithSameTone } from "../hue";
+import { adjustColorToSameTone } from "../hue";
 
 describe("hue", () => {
-  describe("changeHueWithSameTone", () => {
+  describe("adjustColorToSameTone", () => {
     it("should change hue while maintaining the same tone", () => {
       const originalColor = "#3b82f6"; // Blue
       const targetHue = 120; // Green
 
-      const result = changeHueWithSameTone({
+      const result = adjustColorToSameTone({
         color: originalColor,
         targetHue,
       });
@@ -23,25 +23,25 @@ describe("hue", () => {
       const originalColor = "#3b82f6";
 
       // Test negative hue
-      const result1 = changeHueWithSameTone({
+      const result1 = adjustColorToSameTone({
         color: originalColor,
         targetHue: -30,
       });
       expect(result1).toBeDefined();
 
       // Test hue > 360
-      const result2 = changeHueWithSameTone({
+      const result2 = adjustColorToSameTone({
         color: originalColor,
         targetHue: 390,
       });
       expect(result2).toBeDefined();
 
       // Test 0 and 360 should be equivalent
-      const result3 = changeHueWithSameTone({
+      const result3 = adjustColorToSameTone({
         color: originalColor,
         targetHue: 0,
       });
-      const result4 = changeHueWithSameTone({
+      const result4 = adjustColorToSameTone({
         color: originalColor,
         targetHue: 360,
       });
@@ -51,7 +51,7 @@ describe("hue", () => {
     it("should handle invalid colors gracefully", () => {
       const invalidColor = "invalid-color";
 
-      const result = changeHueWithSameTone({
+      const result = adjustColorToSameTone({
         color: invalidColor,
         targetHue: 120,
       });
@@ -63,7 +63,7 @@ describe("hue", () => {
       const originalColor = "#3b82f6";
       const targetHue = 0; // Red
 
-      const result = changeHueWithSameTone({
+      const result = adjustColorToSameTone({
         color: originalColor,
         targetHue,
       });

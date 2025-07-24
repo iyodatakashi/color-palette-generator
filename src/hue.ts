@@ -1,12 +1,6 @@
 // hue.ts
 
-import {
-  hexToHSL,
-  hslToRGB,
-  rgbToHex,
-  hslToHex,
-  validateHexColor,
-} from "./colorUtils";
+import { hexToHSL, validateHexColor } from "./colorUtils";
 import { getLightness, adjustToLightness } from "./lightness";
 import type { LightnessMethod } from "./types";
 
@@ -15,9 +9,9 @@ import type { LightnessMethod } from "./types";
 // =============================================================================
 
 /**
- * Change color hue while maintaining the same tone (lightness and saturation)
+ * Adjust color hue while maintaining the same tone (saturation/lightness)
  */
-export const changeHueWithSameTone = ({
+export const adjustColorToSameTone = ({
   color,
   targetHue,
   lightnessMethod = "hybrid",
