@@ -25,43 +25,20 @@ export const rgbToHex = ({ r, g, b }: RGB): string => {
 };
 
 export const hexToRGB = (hex: string): RGB => {
-  try {
-    const cleanHex = String(hex).trim();
-    if (!cleanHex || cleanHex.length === 0) {
-      return { r: 0, g: 0, b: 0 };
-    }
-
-    const normalizedHex = cleanHex.startsWith("#") ? cleanHex : `#${cleanHex}`;
-
-    if (normalizedHex.length !== 7) {
-      return { r: 0, g: 0, b: 0 };
-    }
-
-    const hexPattern = /^#[0-9a-fA-F]{6}$/;
-    if (!hexPattern.test(normalizedHex)) {
-      return { r: 0, g: 0, b: 0 };
-    }
-
-    const r = parseInt(normalizedHex.slice(1, 3), 16);
-    const g = parseInt(normalizedHex.slice(3, 5), 16);
-    const b = parseInt(normalizedHex.slice(5, 7), 16);
-
-    // NaN check
-    if (isNaN(r) || isNaN(g) || isNaN(b)) {
-      log.warn("Invalid hex color values detected, using black fallback", {
-        hex,
-        r,
-        g,
-        b,
-      });
-      return { r: 0, g: 0, b: 0 };
-    }
-
-    return { r, g, b };
-  } catch (error) {
-    log.warn("Error parsing hex color, using black fallback", { hex, error });
+  // Use validateHexColor for consistent validation
+  if (!validateHexColor(hex)) {
+    log.warn("Invalid hex color detected, using black fallback", { hex });
     return { r: 0, g: 0, b: 0 };
   }
+
+  const cleanHex = String(hex).trim();
+  const normalizedHex = cleanHex.startsWith("#") ? cleanHex : `#${cleanHex}`;
+
+  const r = parseInt(normalizedHex.slice(1, 3), 16);
+  const g = parseInt(normalizedHex.slice(3, 5), 16);
+  const b = parseInt(normalizedHex.slice(5, 7), 16);
+
+  return { r, g, b };
 };
 
 // =============================================================================
@@ -201,9 +178,10 @@ export const hslToHex = ({ h, s, l }: HSL): string => {
   return rgbToHex(rgb);
 };
 
-/**
- * Validate if a color string is a valid hex color
- */
+// =============================================================================
+// Validate HEX Color
+// =============================================================================
+
 export const validateHexColor = (color: string): boolean => {
   try {
     const cleanColor = String(color).trim();
