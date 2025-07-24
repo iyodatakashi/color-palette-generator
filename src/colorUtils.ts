@@ -200,3 +200,36 @@ export const hslToHex = ({ h, s, l }: HSL): string => {
   const rgb = hslToRGB({ h, s, l });
   return rgbToHex(rgb);
 };
+
+/**
+ * Validate if a color string is a valid hex color
+ */
+export const validateHexColor = (color: string): boolean => {
+  try {
+    const cleanColor = String(color).trim();
+    if (!cleanColor || cleanColor.length === 0) {
+      return false;
+    }
+
+    const normalizedColor = cleanColor.startsWith("#")
+      ? cleanColor
+      : `#${cleanColor}`;
+
+    if (normalizedColor.length !== 7) {
+      return false;
+    }
+
+    const hexPattern = /^#[0-9a-fA-F]{6}$/;
+    if (!hexPattern.test(normalizedColor)) {
+      return false;
+    }
+
+    // Test conversion round-trip
+    const rgb = hexToRGB(normalizedColor);
+    const convertedBack = rgbToHex(rgb);
+
+    return convertedBack.toLowerCase() === normalizedColor.toLowerCase();
+  } catch (error) {
+    return false;
+  }
+};
