@@ -9,7 +9,7 @@ import {
   hslToRGB,
   hexToHSL,
   hslToHex,
-  isValidHexColor,
+  validateHexColor,
 } from "../colorUtils";
 import type { RGB, HSL } from "../types";
 
@@ -852,55 +852,55 @@ describe("colorUtils", () => {
       }).not.toThrow();
     });
 
-    describe("isValidHexColor", () => {
+    describe("validateHexColor", () => {
       it("should return true for valid hex colors", () => {
-        expect(isValidHexColor("#ff0000")).toBe(true);
-        expect(isValidHexColor("#00ff00")).toBe(true);
-        expect(isValidHexColor("#0000ff")).toBe(true);
-        expect(isValidHexColor("#ffffff")).toBe(true);
-        expect(isValidHexColor("#000000")).toBe(true);
-        expect(isValidHexColor("#123456")).toBe(true);
-        expect(isValidHexColor("#abcdef")).toBe(true);
-        expect(isValidHexColor("#ABCDEF")).toBe(true);
+        expect(validateHexColor("#ff0000")).toBe(true);
+        expect(validateHexColor("#00ff00")).toBe(true);
+        expect(validateHexColor("#0000ff")).toBe(true);
+        expect(validateHexColor("#ffffff")).toBe(true);
+        expect(validateHexColor("#000000")).toBe(true);
+        expect(validateHexColor("#123456")).toBe(true);
+        expect(validateHexColor("#abcdef")).toBe(true);
+        expect(validateHexColor("#ABCDEF")).toBe(true);
       });
 
       it("should handle hex without # prefix", () => {
-        expect(isValidHexColor("ff0000")).toBe(true);
-        expect(isValidHexColor("00ff00")).toBe(true);
-        expect(isValidHexColor("0000ff")).toBe(true);
+        expect(validateHexColor("ff0000")).toBe(true);
+        expect(validateHexColor("00ff00")).toBe(true);
+        expect(validateHexColor("0000ff")).toBe(true);
       });
 
       it("should handle whitespace gracefully", () => {
-        expect(isValidHexColor(" #ffffff ")).toBe(true);
-        expect(isValidHexColor("\n#ffffff\t")).toBe(true);
-        expect(isValidHexColor("  ffffff  ")).toBe(true);
+        expect(validateHexColor(" #ffffff ")).toBe(true);
+        expect(validateHexColor("\n#ffffff\t")).toBe(true);
+        expect(validateHexColor("  ffffff  ")).toBe(true);
       });
 
       it("should return false for invalid hex colors", () => {
-        expect(isValidHexColor("")).toBe(false);
-        expect(isValidHexColor("   ")).toBe(false);
-        expect(isValidHexColor(null as any)).toBe(false);
-        expect(isValidHexColor(undefined as any)).toBe(false);
-        expect(isValidHexColor("#")).toBe(false);
-        expect(isValidHexColor("#ff")).toBe(false);
-        expect(isValidHexColor("#ffff")).toBe(false);
-        expect(isValidHexColor("#1234567")).toBe(false);
-        expect(isValidHexColor("#gghhii")).toBe(false);
-        expect(isValidHexColor("red")).toBe(false);
-        expect(isValidHexColor("rgb(255,0,0)")).toBe(false);
-        expect(isValidHexColor("invalid-color")).toBe(false);
+        expect(validateHexColor("")).toBe(false);
+        expect(validateHexColor("   ")).toBe(false);
+        expect(validateHexColor(null as any)).toBe(false);
+        expect(validateHexColor(undefined as any)).toBe(false);
+        expect(validateHexColor("#")).toBe(false);
+        expect(validateHexColor("#ff")).toBe(false);
+        expect(validateHexColor("#ffff")).toBe(false);
+        expect(validateHexColor("#1234567")).toBe(false);
+        expect(validateHexColor("#gghhii")).toBe(false);
+        expect(validateHexColor("red")).toBe(false);
+        expect(validateHexColor("rgb(255,0,0)")).toBe(false);
+        expect(validateHexColor("invalid-color")).toBe(false);
       });
 
       it("should return false for non-hex characters", () => {
-        expect(isValidHexColor("#ff00zz")).toBe(false);
-        expect(isValidHexColor("#gg0000")).toBe(false);
-        expect(isValidHexColor("#ff000g")).toBe(false);
+        expect(validateHexColor("#ff00zz")).toBe(false);
+        expect(validateHexColor("#gg0000")).toBe(false);
+        expect(validateHexColor("#ff000g")).toBe(false);
       });
 
       it("should handle edge cases", () => {
-        expect(isValidHexColor("123456")).toBe(true); // Valid without #
-        expect(isValidHexColor("abcdef")).toBe(true); // Valid without #
-        expect(isValidHexColor("ABCDEF")).toBe(true); // Valid without #
+        expect(validateHexColor("123456")).toBe(true); // Valid without #
+        expect(validateHexColor("abcdef")).toBe(true); // Valid without #
+        expect(validateHexColor("ABCDEF")).toBe(true); // Valid without #
       });
     });
   });

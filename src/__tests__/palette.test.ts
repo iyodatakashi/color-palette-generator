@@ -10,6 +10,7 @@ import type {
   HueShiftMode,
 } from "../types";
 import { SCALE_LEVELS } from "../constants";
+import { resolveVariable } from "../palette";
 
 // DOM操作のモック
 const mockSetProperty = vi.fn();
@@ -495,6 +496,143 @@ describe("paletteGenerator", () => {
       expect(palette["--test-text-color-on-dark"]).toMatch(
         /^var\(--test-\d+\)$/
       );
+    });
+  });
+
+  describe("resolveVariable", () => {
+    it("パレットから直接HEX値を取得", () => {
+      const palette: Palette = {
+        "--primary-500": "#3b82f6",
+        "--primary-600": "#2563eb",
+        "--primary-700": "#1d4ed8",
+      };
+
+      const result = resolveVariable({
+        variableName: "--primary-500",
+        palette,
+      });
+
+      expect(result).toBe("#3b82f6");
+    });
+
+    it("CSS変数参照を解決してHEX値を取得", () => {
+      const palette: Palette = {
+        "--primary-color": "var(--primary-500)",
+        "--primary-500": "#3b82f6",
+        "--primary-600": "#2563eb",
+      };
+
+      const result = resolveVariable({
+        variableName: "--primary-color",
+        palette,
+      });
+
+      expect(result).toBe("#3b82f6");
+    });
+
+    it("ネストしたCSS変数参照を解決", () => {
+      const palette: Palette = {
+        "--primary-color": "var(--primary-base)",
+        "--primary-base": "var(--primary-500)",
+        "--primary-500": "#3b82f6",
+      };
+
+      const result = resolveVariable({
+        variableName: "--primary-color",
+        palette,
+      });
+
+      expect(result).toBe("#3b82f6");
+    });
+
+    it("変数が見つからない場合はフォールバック値を返す", () => {
+      const palette: Palette = {
+        "--primary-500": "#3b82f6",
+      };
+
+      const result = resolveVariable({
+        variableName: "--non-existent",
+        palette,
+        fallback: "#ff0000",
+      });
+
+      expect(result).toBe("#ff0000");
+    });
+
+    it("デフォルトフォールバック値を使用", () => {
+      const palette: Palette = {
+        "--primary-500": "#3b82f6",
+      };
+
+      const result = resolveVariable({
+        variableName: "--non-existent",
+        palette,
+      });
+
+      expect(result).toBe("#000000");
+    });
+
+    it("変数名の形式を正規化", () => {
+      const palette: Palette = {
+        "--primary-500": "#3b82f6",
+      };
+
+      // -- なしでも動作することを確認
+      const result1 = resolveVariable({
+        variableName: "primary-500",
+        palette,
+      });
+
+      // -- ありでも動作することを確認
+      const result2 = resolveVariable({
+        variableName: "--primary-500",
+        palette,
+      });
+
+      expect(result1).toBe("#3b82f6");
+      expect(result2).toBe("#3b82f6");
+    });
+
+    it("循環参照を検出してフォールバック値を返す", () => {
+      const palette: Palette = {
+        "--primary-color": "var(--primary-color)", // 自己参照
+      };
+
+      const result = resolveVariable({
+        variableName: "--primary-color",
+        palette,
+        fallback: "#ff0000",
+      });
+
+      expect(result).toBe("#ff0000");
+    });
+
+    it("実際のパレット生成結果でresolveVariableをテスト", () => {
+      const config: ColorConfig = {
+        prefix: "test",
+        color: "#3b82f6",
+        includeTextColors: true,
+      };
+
+      const palette = generateColorPalette(config);
+
+      // color keyを解決
+      const resolvedColor = resolveVariable({
+        variableName: "--test-color",
+        palette,
+      });
+
+      // 解決された値が実際のHEX色であることを確認
+      expect(resolvedColor).toMatch(/^#[0-9a-f]{6}$/i);
+
+      // text colorを解決
+      const resolvedTextColor = resolveVariable({
+        variableName: "--test-text-color-on-light",
+        palette,
+      });
+
+      // 解決された値が実際のHEX色であることを確認
+      expect(resolvedTextColor).toMatch(/^#[0-9a-f]{6}$/i);
     });
   });
 });

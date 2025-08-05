@@ -342,32 +342,46 @@ const findTextColorLevel = ({
 /**
  * Resolve CSS variable to its final HEX value by following all variable references
  */
-export const resolveVariable = (options: {
+export const resolveVariable = ({
+  variableName,
+  palette,
+  fallback = "#000000",
+}: {
   variableName: string;
   palette: Palette;
   fallback?: string;
 }): string => {
-  const { variableName, palette, fallback = "#000000" } = options;
+  const visited = new Set<string>();
 
-  // Ensure variable name starts with --
-  const normalizedName = variableName.startsWith("--")
-    ? variableName
-    : `--${variableName}`;
+  const resolve = (varName: string): string => {
+    // Ensure variable name starts with --
+    const normalizedName = varName.startsWith("--") ? varName : `--${varName}`;
 
-  // Get value from palette
-  const value = palette[normalizedName];
+    // Check for circular reference
+    if (visited.has(normalizedName)) {
+      return fallback;
+    }
 
-  // Early return if no value found
-  if (!value) return fallback;
+    // Mark as visited
+    visited.add(normalizedName);
 
-  // Return HEX color directly
-  if (value.startsWith("#")) return value;
+    // Get value from palette
+    const value = palette[normalizedName];
 
-  // Resolve CSS variable reference recursively
-  if (value.startsWith("var(")) {
-    const innerVariable = value.slice(4, -1); // Remove var() wrapper
-    return resolveVariable({ variableName: innerVariable, palette, fallback });
-  }
+    // Early return if no value found
+    if (!value) return fallback;
 
-  return fallback;
+    // Return HEX color directly
+    if (value.startsWith("#")) return value;
+
+    // Resolve CSS variable reference recursively
+    if (value.startsWith("var(")) {
+      const innerVariable = value.slice(4, -1); // Remove var() wrapper
+      return resolve(innerVariable);
+    }
+
+    return fallback;
+  };
+
+  return resolve(variableName);
 };

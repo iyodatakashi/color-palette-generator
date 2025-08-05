@@ -16,6 +16,7 @@ A full-featured color palette generator built with this library.
 - 🔀 **Color Combinations**: Create harmonious color combinations (complementary, triadic, analogous, etc.)
 - 🎯 **Lightness Control**: Precise control over color lightness and contrast
 - 🔧 **Utility Functions**: Comprehensive color conversion utilities (HEX, RGB, HSL)
+- 🔍 **CSS Variable Resolution**: Follow nested CSS variable references (var(--primary-color) → var(--primary-500) → #3b82f6) to get final HEX values
 
 ## Installation
 
@@ -32,7 +33,6 @@ import { generateColorPalette } from "@14ch/color-palette-generator";
 
 // Generate a color palette from a single base color
 const palette = generateColorPalette({
-  id: "primary",
   prefix: "primary",
   color: "#3b82f6",
   lightnessMethod: "hybrid",
@@ -51,8 +51,8 @@ console.log(palette);
 
 // Generate palettes from multiple colors
 const configs = [
-  { id: "primary", prefix: "primary", color: "#3b82f6" },
-  { id: "secondary", prefix: "secondary", color: "#10b981" },
+  { prefix: "primary", color: "#3b82f6" },
+  { prefix: "secondary", color: "#10b981" },
 ];
 const multiPalette = generateColorPalette(configs);
 ```
@@ -64,7 +64,6 @@ import { generateColorPalette } from "@14ch/color-palette-generator";
 
 // Generate palette with transparent variants
 const paletteWithTransparency = generateColorPalette({
-  id: "primary",
   prefix: "primary",
   color: "#3b82f6",
   includeTransparent: true,
@@ -174,13 +173,30 @@ console.log({ rgb, hsl, newRgb, hex });
 // }
 ```
 
+### Resolve Nested CSS Variables to Final HEX Values
+
+```typescript
+import { resolveVariable } from "@14ch/color-palette-generator";
+
+// Palette structure: variables reference other variables
+const palette = {
+  "--primary-color": "var(--primary-500)", // Before: CSS variable reference
+  "--primary-500": "#3b82f6", // Actual HEX value
+};
+
+// After resolveVariable: can get final HEX value even when variables reference other variables
+const resolvedColor = resolveVariable({
+  variableName: "--primary-color",
+  palette,
+});
+```
+
 ### Apply to DOM
 
 ```typescript
 import { applyColorPaletteToDom } from "@14ch/color-palette-generator";
 
 const palette = generateColorPalette({
-  id: "primary",
   prefix: "primary",
   color: "#3b82f6",
 });
@@ -200,9 +216,9 @@ applyColorPaletteToDom(palette);
 
 ```typescript
 interface ColorConfig {
-  id: string;
   prefix: string;
   color: string;
+  id?: string; // Optional for internal unique management
   hueShiftMode?: HueShiftMode;
   lightnessMethod?: LightnessMethod;
   includeTransparent?: boolean;
@@ -273,8 +289,8 @@ const palette = generateColorPalette(config);
 
 ```typescript
 const configs = [
-  { id: "primary", prefix: "primary", color: "#007bff" },
-  { id: "secondary", prefix: "secondary", color: "#6c757d" },
+  { prefix: "primary", color: "#007bff" },
+  { prefix: "secondary", color: "#6c757d" },
 ];
 const palette = generateColorPalette(configs);
 ```
@@ -294,6 +310,18 @@ Calculates the lightness of a color using the specified method.
 #### `adjustToLightness({ h, s, targetLightness, lightnessMethod? }): string`
 
 Adjusts HSL values to achieve a target lightness, returning a HEX string.
+
+#### `resolveVariable(options: { variableName: string; palette: Palette; fallback?: string }): string`
+
+Resolves CSS variable references to their final HEX values by following all variable references recursively. Handles circular references and provides fallback values.
+
+```typescript
+const resolved = resolveVariable({
+  variableName: "--primary-color",
+  palette,
+  fallback: "#000000", // Optional, defaults to "#000000"
+});
+```
 
 #### `applyColorPaletteToDom(palette: Palette): void`
 
