@@ -433,8 +433,8 @@ describe("combinationUtils", () => {
       // baseColorConfigの確認（DEFAULT_BASE_COLOR_CONFIGの値）
       const baseConfig = result.find((config) => config.prefix === "base");
       expect(baseConfig).toBeDefined();
-      expect(baseConfig?.includeTransparent).toBe(true);
-      expect(baseConfig?.includeTextColors).toBe(true);
+      expect(baseConfig?.includeTransparent).toBe(false);
+      expect(baseConfig?.includeTextColors).toBe(false);
       expect(baseConfig?.transparentOriginLevel).toBe(950);
       expect(baseConfig?.bgColorLight).toBe("#ffffff");
       expect(baseConfig?.bgColorDark).toBe("#000000");
@@ -444,8 +444,8 @@ describe("combinationUtils", () => {
         (config) => config.prefix === "primary"
       );
       expect(primaryConfig).toBeDefined();
-      expect(primaryConfig?.includeTransparent).toBe(true);
-      expect(primaryConfig?.includeTextColors).toBe(true);
+      expect(primaryConfig?.includeTransparent).toBe(false);
+      expect(primaryConfig?.includeTextColors).toBe(false);
       expect(primaryConfig?.transparentOriginLevel).toBe(500);
       expect(primaryConfig?.bgColorLight).toBe("#ffffff");
       expect(primaryConfig?.bgColorDark).toBe("#000000");
@@ -455,8 +455,8 @@ describe("combinationUtils", () => {
         (config) => config.prefix === "secondary"
       );
       expect(secondaryConfig).toBeDefined();
-      expect(secondaryConfig?.includeTransparent).toBe(true);
-      expect(secondaryConfig?.includeTextColors).toBe(true);
+      expect(secondaryConfig?.includeTransparent).toBe(false);
+      expect(secondaryConfig?.includeTextColors).toBe(false);
       expect(secondaryConfig?.transparentOriginLevel).toBe(500);
       expect(secondaryConfig?.bgColorLight).toBe("#ffffff");
       expect(secondaryConfig?.bgColorDark).toBe("#000000");

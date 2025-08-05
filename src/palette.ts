@@ -1,6 +1,13 @@
 // palette.ts
 
-import type { Palette, ColorConfig, HSL, NormalizedColorConfig } from "./types";
+import type {
+  ColorConfig,
+  LightnessMethod,
+  HueShiftMode,
+  NormalizedColorConfig,
+  Palette,
+  HSL,
+} from "./types";
 import { hexToRGB, rgbToHSL, rgbToHex } from "./colorUtils";
 import {
   getLightness,
@@ -11,11 +18,7 @@ import {
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
 import { createContextLogger } from "./logger";
-import {
-  SCALE_LEVELS,
-  DEFAULT_LIGHTNESS_METHOD,
-  DEFAULT_HUE_SHIFT_MODE,
-} from "./constants";
+import { DEFAULT_COLOR_CONFIG, SCALE_LEVELS } from "./constants";
 
 const log = createContextLogger("Palette");
 
@@ -64,13 +67,18 @@ export const generateColorPalette = (
   const normalizedConfig: NormalizedColorConfig = {
     ...colorConfig,
     color: normalizedColor,
-    lightnessMethod: colorConfig.lightnessMethod || DEFAULT_LIGHTNESS_METHOD,
-    hueShiftMode: colorConfig.hueShiftMode || DEFAULT_HUE_SHIFT_MODE,
-    includeTransparent: colorConfig.includeTransparent || false,
-    includeTextColors: colorConfig.includeTextColors || false,
-    bgColorLight: colorConfig.bgColorLight || "#ffffff",
-    bgColorDark: colorConfig.bgColorDark || "#000000",
-    transparentOriginLevel: colorConfig.transparentOriginLevel || 500,
+    lightnessMethod:
+      colorConfig.lightnessMethod || DEFAULT_COLOR_CONFIG.lightnessMethod,
+    hueShiftMode: colorConfig.hueShiftMode || DEFAULT_COLOR_CONFIG.hueShiftMode,
+    includeTransparent:
+      colorConfig.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
+    includeTextColors:
+      colorConfig.includeTextColors ?? DEFAULT_COLOR_CONFIG.includeTextColors,
+    bgColorLight: colorConfig.bgColorLight || DEFAULT_COLOR_CONFIG.bgColorLight,
+    bgColorDark: colorConfig.bgColorDark || DEFAULT_COLOR_CONFIG.bgColorDark,
+    transparentOriginLevel:
+      colorConfig.transparentOriginLevel ||
+      DEFAULT_COLOR_CONFIG.transparentOriginLevel,
   };
 
   const inputLightness = getLightness({
