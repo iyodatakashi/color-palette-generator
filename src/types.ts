@@ -15,11 +15,41 @@
  * Color configuration type definition (input)
  */
 export type ColorConfig = {
-  id: string;
   prefix: string;
   color: string;
+  id?: string; // Optional for internal unique management
   hueShiftMode?: HueShiftMode;
   lightnessMethod?: LightnessMethod;
+  includeTransparent?: boolean;
+  bgColorLight?: string;
+  bgColorDark?: string;
+  transparentOriginLevel?: number;
+  includeTextColors?: boolean;
+};
+
+/**
+ * Normalized color configuration type definition (internal use)
+ * All optional properties are made required except id
+ */
+export type NormalizedColorConfig = ColorConfig & {
+  color: string;
+  lightnessMethod: LightnessMethod;
+  hueShiftMode: HueShiftMode;
+  includeTransparent: boolean;
+  includeTextColors: boolean;
+  bgColorLight: string;
+  bgColorDark: string;
+  transparentOriginLevel: number;
+};
+
+/**
+ * Hue palette configuration type definition (input)
+ */
+export type HuePaletteConfig = {
+  color: string;
+  divisions?: number;
+  lightnessMethod?: LightnessMethod;
+  hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;
   bgColorLight?: string;
   bgColorDark?: string;

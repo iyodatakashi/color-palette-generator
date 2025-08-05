@@ -1,6 +1,6 @@
 // palette.ts
 
-import type { Palette, ColorConfig, HSL } from "./types";
+import type { Palette, ColorConfig, HSL, NormalizedColorConfig } from "./types";
 import { hexToRGB, rgbToHSL, rgbToHex } from "./colorUtils";
 import {
   getLightness,
@@ -61,7 +61,7 @@ export const generateColorPalette = (
     });
   }
 
-  const normalizedConfig: Required<ColorConfig> = {
+  const normalizedConfig: NormalizedColorConfig = {
     ...colorConfig,
     color: normalizedColor,
     lightnessMethod: colorConfig.lightnessMethod || DEFAULT_LIGHTNESS_METHOD,
@@ -134,7 +134,7 @@ const generateOriginalPalette = ({
   inputHSL: HSL;
   closestLevel: number;
   adjustedLightnessScale: Record<number, number>;
-  colorConfig: Required<ColorConfig>;
+  colorConfig: NormalizedColorConfig;
 }): Palette => {
   const palette: Palette = {};
   const originalLightness = adjustedLightnessScale[closestLevel];
@@ -173,7 +173,7 @@ const setVariationColors = ({
   closestLevel,
   palette,
 }: {
-  colorConfig: Required<ColorConfig>;
+  colorConfig: NormalizedColorConfig;
   closestLevel: number;
   palette: Palette;
 }): void => {
@@ -212,7 +212,7 @@ const setTextColor = ({
   inputColor,
   palette,
 }: {
-  colorConfig: Required<ColorConfig>;
+  colorConfig: NormalizedColorConfig;
   inputColor: string;
   palette: Palette;
 }): void => {
