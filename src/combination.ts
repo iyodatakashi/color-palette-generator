@@ -36,19 +36,30 @@ export const generateCombination = (config: CombinationConfig): Combination => {
     primaryHSL,
     lightnessMethod,
     strategy: baseColorStrategy,
+    config,
   });
   const primaryColorConfig = {
-    ...DEFAULT_COLOR_CONFIG,
+    lightnessMethod,
+    hueShiftMode: "natural" as const,
+    includeTransparent:
+      config.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
+    includeTextColors:
+      config.includeTextColors ?? DEFAULT_COLOR_CONFIG.includeTextColors,
+    bgColorLight: config.bgColorLight ?? DEFAULT_COLOR_CONFIG.bgColorLight,
+    bgColorDark: config.bgColorDark ?? DEFAULT_COLOR_CONFIG.bgColorDark,
+    transparentOriginLevel:
+      config.transparentOriginLevel ??
+      DEFAULT_COLOR_CONFIG.transparentOriginLevel,
     id: "primary",
     prefix: "primary",
     color: config.primaryColor,
-    lightnessMethod,
   };
   const secondaryColorConfigs = generateSecondaryColorConfigs({
     primaryHSL,
     combinationType,
     lightnessMethod,
     primaryColor: config.primaryColor,
+    config,
   });
 
   return [baseColorConfig, primaryColorConfig, ...secondaryColorConfigs];
@@ -65,19 +76,30 @@ const generateBaseColorConfig = ({
   primaryHSL,
   lightnessMethod = "hybrid",
   strategy = "harmonic",
+  config,
 }: {
   primaryHSL: HSL;
   lightnessMethod?: LightnessMethod;
   strategy?: BaseColorStrategy;
+  config: CombinationConfig;
 }): ColorConfig => {
   const baseColor = getBaseColor({ primaryHSL, lightnessMethod, strategy });
 
   return {
-    ...DEFAULT_BASE_COLOR_CONFIG,
+    lightnessMethod,
+    hueShiftMode: "fixed" as const,
+    includeTransparent:
+      config.includeTransparent ?? DEFAULT_BASE_COLOR_CONFIG.includeTransparent,
+    includeTextColors:
+      config.includeTextColors ?? DEFAULT_BASE_COLOR_CONFIG.includeTextColors,
+    bgColorLight: config.bgColorLight ?? DEFAULT_BASE_COLOR_CONFIG.bgColorLight,
+    bgColorDark: config.bgColorDark ?? DEFAULT_BASE_COLOR_CONFIG.bgColorDark,
+    transparentOriginLevel:
+      config.baseTransparentOriginLevel ??
+      DEFAULT_BASE_COLOR_CONFIG.transparentOriginLevel,
     id: "base",
     prefix: "base",
     color: baseColor,
-    lightnessMethod,
   };
 };
 
@@ -89,11 +111,13 @@ const generateSecondaryColorConfigs = ({
   combinationType,
   lightnessMethod,
   primaryColor,
+  config,
 }: {
   primaryHSL: HSL;
   combinationType: CombinationType;
   lightnessMethod: LightnessMethod;
   primaryColor: string;
+  config: CombinationConfig;
 }): ColorConfig[] => {
   if (combinationType === "monochromatic") {
     return [];
@@ -124,11 +148,20 @@ const generateSecondaryColorConfigs = ({
   for (const { id, color, prefix } of secondaryColorMap) {
     if (color) {
       configs.push({
-        ...DEFAULT_COLOR_CONFIG,
+        lightnessMethod,
+        hueShiftMode: "natural" as const,
+        includeTransparent:
+          config.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
+        includeTextColors:
+          config.includeTextColors ?? DEFAULT_COLOR_CONFIG.includeTextColors,
+        bgColorLight: config.bgColorLight ?? DEFAULT_COLOR_CONFIG.bgColorLight,
+        bgColorDark: config.bgColorDark ?? DEFAULT_COLOR_CONFIG.bgColorDark,
+        transparentOriginLevel:
+          config.transparentOriginLevel ??
+          DEFAULT_COLOR_CONFIG.transparentOriginLevel,
         id,
         prefix,
         color,
-        lightnessMethod,
       });
     }
   }

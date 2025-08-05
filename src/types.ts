@@ -62,6 +62,12 @@ export type CombinationConfig = {
   combinationType?: CombinationType;
   lightnessMethod?: LightnessMethod;
   baseColorStrategy?: BaseColorStrategy;
+  includeTransparent?: boolean;
+  includeTextColors?: boolean;
+  bgColorLight?: string;
+  bgColorDark?: string;
+  baseTransparentOriginLevel?: number;
+  transparentOriginLevel?: number;
 };
 
 // Color combination result (output)
