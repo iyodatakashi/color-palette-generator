@@ -17,7 +17,7 @@ export { generateRandomPrimaryColor } from "./randomColor";
 export { getLightness, adjustToLightness } from "./lightness";
 
 // Hue change features
-export { adjustColorToSameTone } from "./hue";
+export { adjustColorToSameTone, generateHuePalette, HUE_NAMES } from "./hue";
 
 // Basic color utilities
 export { hexToRGB, rgbToHex, hexToHSL, hslToRGB, rgbToHSL } from "./colorUtils";

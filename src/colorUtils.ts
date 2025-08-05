@@ -6,6 +6,65 @@ import { createContextLogger } from "./logger";
 const log = createContextLogger("ColorUtils");
 
 // =============================================================================
+// Validate HEX Color
+// =============================================================================
+
+export const validateHexColor = (color: string): boolean => {
+  try {
+    const cleanColor = String(color).trim();
+    if (!cleanColor || cleanColor.length === 0) {
+      return false;
+    }
+
+    const normalizedColor = cleanColor.startsWith("#")
+      ? cleanColor
+      : `#${cleanColor}`;
+
+    if (normalizedColor.length !== 7) {
+      return false;
+    }
+
+    // Check basic hex format
+    const hexPattern = /^#[0-9a-fA-F]{6}$/;
+    if (!hexPattern.test(normalizedColor)) {
+      return false;
+    }
+
+    // Parse RGB values directly
+    const r = parseInt(normalizedColor.slice(1, 3), 16);
+    const g = parseInt(normalizedColor.slice(3, 5), 16);
+    const b = parseInt(normalizedColor.slice(5, 7), 16);
+
+    // Validate each component is within valid range
+    if (
+      isNaN(r) ||
+      !isFinite(r) ||
+      r < 0 ||
+      r > 255 ||
+      isNaN(g) ||
+      !isFinite(g) ||
+      g < 0 ||
+      g > 255 ||
+      isNaN(b) ||
+      !isFinite(b) ||
+      b < 0 ||
+      b > 255
+    ) {
+      return false;
+    }
+
+    // Validate the color can be correctly represented in hex
+    const convertedBack = `#${[r, g, b]
+      .map((c) => c.toString(16).padStart(2, "0"))
+      .join("")}`;
+
+    return convertedBack.toLowerCase() === normalizedColor.toLowerCase();
+  } catch (error) {
+    return false;
+  }
+};
+
+// =============================================================================
 // RGB ⇔ HEX Conversion
 // =============================================================================
 
@@ -25,14 +84,14 @@ export const rgbToHex = ({ r, g, b }: RGB): string => {
 };
 
 export const hexToRGB = (hex: string): RGB => {
-  // Use validateHexColor for consistent validation
-  if (!validateHexColor(hex)) {
+  const cleanHex = String(hex).trim();
+  const normalizedHex = cleanHex.startsWith("#") ? cleanHex : `#${cleanHex}`;
+
+  // Simple validation without using validateHexColor
+  if (normalizedHex.length !== 7 || !/^#[0-9a-fA-F]{6}$/.test(normalizedHex)) {
     log.warn("Invalid hex color detected, using black fallback", { hex });
     return { r: 0, g: 0, b: 0 };
   }
-
-  const cleanHex = String(hex).trim();
-  const normalizedHex = cleanHex.startsWith("#") ? cleanHex : `#${cleanHex}`;
 
   const r = parseInt(normalizedHex.slice(1, 3), 16);
   const g = parseInt(normalizedHex.slice(3, 5), 16);
@@ -176,38 +235,4 @@ export const hexToHSL = (hex: string): HSL => {
 export const hslToHex = ({ h, s, l }: HSL): string => {
   const rgb = hslToRGB({ h, s, l });
   return rgbToHex(rgb);
-};
-
-// =============================================================================
-// Validate HEX Color
-// =============================================================================
-
-export const validateHexColor = (color: string): boolean => {
-  try {
-    const cleanColor = String(color).trim();
-    if (!cleanColor || cleanColor.length === 0) {
-      return false;
-    }
-
-    const normalizedColor = cleanColor.startsWith("#")
-      ? cleanColor
-      : `#${cleanColor}`;
-
-    if (normalizedColor.length !== 7) {
-      return false;
-    }
-
-    const hexPattern = /^#[0-9a-fA-F]{6}$/;
-    if (!hexPattern.test(normalizedColor)) {
-      return false;
-    }
-
-    // Test conversion round-trip
-    const rgb = hexToRGB(normalizedColor);
-    const convertedBack = rgbToHex(rgb);
-
-    return convertedBack.toLowerCase() === normalizedColor.toLowerCase();
-  } catch (error) {
-    return false;
-  }
 };
