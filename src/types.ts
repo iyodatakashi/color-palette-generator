@@ -1,19 +1,10 @@
 // types.ts
 
 // =============================================================================
-// Color Palette Generation Library - Type Definitions
+// Palette Generation Types
 // =============================================================================
 
-// =============================================================================
-// Basic Library Interfaces
-// =============================================================================
-
-/**
- * Color palette type definition (output)
- */
-/**
- * Color configuration type definition (input)
- */
+// Color configuration (input)
 export type ColorConfig = {
   prefix: string;
   color: string;
@@ -27,10 +18,7 @@ export type ColorConfig = {
   includeTextColors?: boolean;
 };
 
-/**
- * Normalized color configuration type definition (internal use)
- * All optional properties are made required except id
- */
+// Normalized color configuration (internal use)
 export type NormalizedColorConfig = ColorConfig & {
   color: string;
   lightnessMethod: LightnessMethod;
@@ -42,9 +30,16 @@ export type NormalizedColorConfig = ColorConfig & {
   transparentOriginLevel: number;
 };
 
-/**
- * Hue palette configuration type definition (input)
- */
+// Color palette (output)
+export type Palette = {
+  [key: string]: string;
+};
+
+// =============================================================================
+// Hue Palette Generation Types
+// =============================================================================
+
+// Hue palette configuration (input)
 export type HuePaletteConfig = {
   color: string;
   divisions?: number;
@@ -57,63 +52,22 @@ export type HuePaletteConfig = {
   includeTextColors?: boolean;
 };
 
-export type Palette = {
-  [key: string]: string;
+// =============================================================================
+// Color Combination Types
+// =============================================================================
+
+// Color combination configuration (input)
+export type CombinationConfig = {
+  primaryColor: string;
+  combinationType?: CombinationType;
+  lightnessMethod?: LightnessMethod;
+  baseColorStrategy?: BaseColorStrategy;
 };
 
-// =============================================================================
-// Color Space Type Definitions
-// =============================================================================
+// Color combination result (output)
+export type Combination = ColorConfig[];
 
-/**
- * RGB color type definition
- */
-export type RGB = {
-  r: number;
-  g: number;
-  b: number;
-};
-
-/**
- * HSL color type definition
- */
-export type HSL = {
-  h: number;
-  s: number;
-  l: number;
-};
-
-// =============================================================================
-// Lightness Calculation Related Type Definitions
-// =============================================================================
-
-/**
- * Lightness calculation method type definition
- */
-export type LightnessMethod =
-  | "hybrid" // Balanced lightness (recommended)
-  | "hsl" // HSL lightness (consistency focused)
-  | "perceptual" // Perceptual lightness (accuracy focused)
-  | "average"; // RGB average lightness (simple)
-
-// =============================================================================
-// Hue Shift Related Type Definitions
-// =============================================================================
-
-/**
- * Hue shift mode type definition
- */
-export type HueShiftMode = "fixed" | "natural" | "unnatural";
-
-// types.ts に追加
-
-// =============================================================================
-// Color Combination Related Type Definitions
-// =============================================================================
-
-/**
- * Color combination types
- */
+// Color combination types
 export type CombinationType =
   | "monochromatic"
   | "analogous"
@@ -124,33 +78,14 @@ export type CombinationType =
   | "triadic"
   | "tetradic";
 
-/**
- * Base color strategy
- */
+// Base color strategy
 export type BaseColorStrategy = "harmonic" | "contrasting" | "neutral";
 
-/**
- * Color suggestion configuration
- */
-export type CombinationConfig = {
-  primaryColor: string;
-  combinationType?: CombinationType;
-  lightnessMethod?: LightnessMethod;
-  baseColorStrategy?: BaseColorStrategy;
-};
-
-/**
- * Suggestion result (ColorConfig array)
- */
-export type Combination = ColorConfig[];
-
 // =============================================================================
-// Random Color Generation Related Type Definitions
+// Random Color Generation Types
 // =============================================================================
 
-/**
- * Random primary color generation configuration options
- */
+// Random color generation configuration (input)
 export type RandomColorConfig = {
   /** Saturation range [min, max] (0-100) */
   saturationRange?: [number, number];
@@ -162,12 +97,42 @@ export type RandomColorConfig = {
   hueRange?: [number, number];
 };
 
-/**
- * Generated color information
- */
+// Generated color (output)
 export type GeneratedColor = {
   hsl: HSL;
   rgb: RGB;
   hex: string;
   actualLightness: number;
 };
+
+// =============================================================================
+// Color Space Types
+// =============================================================================
+
+// RGB color type definition
+export type RGB = {
+  r: number;
+  g: number;
+  b: number;
+};
+
+// HSL color type definition
+export type HSL = {
+  h: number;
+  s: number;
+  l: number;
+};
+
+// =============================================================================
+// Calculation Method Types
+// =============================================================================
+
+// Lightness calculation method type definition
+export type LightnessMethod =
+  | "hybrid" // Balanced lightness (recommended)
+  | "hsl" // HSL lightness (consistency focused)
+  | "perceptual" // Perceptual lightness (accuracy focused)
+  | "average"; // RGB average lightness (simple)
+
+// Hue shift mode type definition
+export type HueShiftMode = "fixed" | "natural" | "unnatural";
