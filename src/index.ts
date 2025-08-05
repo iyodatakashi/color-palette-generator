@@ -5,7 +5,7 @@
 // =============================================================================
 
 // Palette generation features
-export { generateColorPalette } from "./palette";
+export { generateColorPalette, resolveVariable } from "./palette";
 
 // Color combination features
 export { generateCombination } from "./combination";

@@ -334,3 +334,40 @@ const findTextColorLevel = ({
   // Fallback to extreme level
   return isLighter ? 50 : 950;
 };
+
+// =============================================================================
+// Palette Utility Functions
+// =============================================================================
+
+/**
+ * Resolve CSS variable to its final HEX value by following all variable references
+ */
+export const resolveVariable = (options: {
+  variableName: string;
+  palette: Palette;
+  fallback?: string;
+}): string => {
+  const { variableName, palette, fallback = "#000000" } = options;
+
+  // Ensure variable name starts with --
+  const normalizedName = variableName.startsWith("--")
+    ? variableName
+    : `--${variableName}`;
+
+  // Get value from palette
+  const value = palette[normalizedName];
+
+  // Early return if no value found
+  if (!value) return fallback;
+
+  // Return HEX color directly
+  if (value.startsWith("#")) return value;
+
+  // Resolve CSS variable reference recursively
+  if (value.startsWith("var(")) {
+    const innerVariable = value.slice(4, -1); // Remove var() wrapper
+    return resolveVariable({ variableName: innerVariable, palette, fallback });
+  }
+
+  return fallback;
+};
