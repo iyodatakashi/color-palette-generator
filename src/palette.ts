@@ -1,6 +1,13 @@
 // palette.ts
 
-import type { Palette, ColorConfig, HSL } from "./types";
+import type {
+  ColorConfig,
+  LightnessMethod,
+  HueShiftMode,
+  NormalizedColorConfig,
+  Palette,
+  HSL,
+} from "./types";
 import { hexToRGB, rgbToHSL, rgbToHex } from "./colorUtils";
 import {
   getLightness,
@@ -11,11 +18,7 @@ import {
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
 import { createContextLogger } from "./logger";
-import {
-  SCALE_LEVELS,
-  DEFAULT_LIGHTNESS_METHOD,
-  DEFAULT_HUE_SHIFT_MODE,
-} from "./constants";
+import { DEFAULT_COLOR_CONFIG, SCALE_LEVELS } from "./constants";
 
 const log = createContextLogger("Palette");
 
@@ -61,16 +64,21 @@ export const generateColorPalette = (
     });
   }
 
-  const normalizedConfig: Required<ColorConfig> = {
+  const normalizedConfig: NormalizedColorConfig = {
     ...colorConfig,
     color: normalizedColor,
-    lightnessMethod: colorConfig.lightnessMethod || DEFAULT_LIGHTNESS_METHOD,
-    hueShiftMode: colorConfig.hueShiftMode || DEFAULT_HUE_SHIFT_MODE,
-    includeTransparent: colorConfig.includeTransparent || false,
-    includeTextColors: colorConfig.includeTextColors || false,
-    bgColorLight: colorConfig.bgColorLight || "#ffffff",
-    bgColorDark: colorConfig.bgColorDark || "#000000",
-    transparentOriginLevel: colorConfig.transparentOriginLevel || 500,
+    lightnessMethod:
+      colorConfig.lightnessMethod || DEFAULT_COLOR_CONFIG.lightnessMethod,
+    hueShiftMode: colorConfig.hueShiftMode || DEFAULT_COLOR_CONFIG.hueShiftMode,
+    includeTransparent:
+      colorConfig.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
+    includeTextColors:
+      colorConfig.includeTextColors ?? DEFAULT_COLOR_CONFIG.includeTextColors,
+    bgColorLight: colorConfig.bgColorLight || DEFAULT_COLOR_CONFIG.bgColorLight,
+    bgColorDark: colorConfig.bgColorDark || DEFAULT_COLOR_CONFIG.bgColorDark,
+    transparentOriginLevel:
+      colorConfig.transparentOriginLevel ||
+      DEFAULT_COLOR_CONFIG.transparentOriginLevel,
   };
 
   const inputLightness = getLightness({
@@ -134,7 +142,7 @@ const generateOriginalPalette = ({
   inputHSL: HSL;
   closestLevel: number;
   adjustedLightnessScale: Record<number, number>;
-  colorConfig: Required<ColorConfig>;
+  colorConfig: NormalizedColorConfig;
 }): Palette => {
   const palette: Palette = {};
   const originalLightness = adjustedLightnessScale[closestLevel];
@@ -173,7 +181,7 @@ const setVariationColors = ({
   closestLevel,
   palette,
 }: {
-  colorConfig: Required<ColorConfig>;
+  colorConfig: NormalizedColorConfig;
   closestLevel: number;
   palette: Palette;
 }): void => {
@@ -212,7 +220,7 @@ const setTextColor = ({
   inputColor,
   palette,
 }: {
-  colorConfig: Required<ColorConfig>;
+  colorConfig: NormalizedColorConfig;
   inputColor: string;
   palette: Palette;
 }): void => {
@@ -333,4 +341,55 @@ const findTextColorLevel = ({
 
   // Fallback to extreme level
   return isLighter ? 50 : 950;
+};
+
+// =============================================================================
+// Palette Utility Functions
+// =============================================================================
+
+/**
+ * Resolve CSS variable to its final HEX value by following all variable references
+ */
+export const resolveVariable = ({
+  variableName,
+  palette,
+  fallback = "#000000",
+}: {
+  variableName: string;
+  palette: Palette;
+  fallback?: string;
+}): string => {
+  const visited = new Set<string>();
+
+  const resolve = (varName: string): string => {
+    // Ensure variable name starts with --
+    const normalizedName = varName.startsWith("--") ? varName : `--${varName}`;
+
+    // Check for circular reference
+    if (visited.has(normalizedName)) {
+      return fallback;
+    }
+
+    // Mark as visited
+    visited.add(normalizedName);
+
+    // Get value from palette
+    const value = palette[normalizedName];
+
+    // Early return if no value found
+    if (!value) return fallback;
+
+    // Return HEX color directly
+    if (value.startsWith("#")) return value;
+
+    // Resolve CSS variable reference recursively
+    if (value.startsWith("var(")) {
+      const innerVariable = value.slice(4, -1); // Remove var() wrapper
+      return resolve(innerVariable);
+    }
+
+    return fallback;
+  };
+
+  return resolve(variableName);
 };

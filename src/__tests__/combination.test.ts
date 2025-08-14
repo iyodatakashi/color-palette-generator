@@ -363,13 +363,14 @@ describe("combinationUtils", () => {
   });
 
   describe("パフォーマンステスト", () => {
-    it("大量の生成でも適切な時間で完了する", () => {
+    it("パフォーマンステスト", () => {
       const startTime = Date.now();
+      const iterations = 1000;
 
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < iterations; i++) {
         generateCombination({
           primaryColor: testPrimaryColor,
-          combinationType: "tetradic",
+          combinationType: "complementary",
         });
       }
 
@@ -377,6 +378,88 @@ describe("combinationUtils", () => {
       const duration = endTime - startTime;
 
       expect(duration).toBeLessThan(1000);
+    });
+
+    it("新しい設定項目が正しく適用される", () => {
+      const result = generateCombination({
+        primaryColor: testPrimaryColor,
+        combinationType: "complementary",
+        includeTransparent: false,
+        includeTextColors: false,
+        baseTransparentOriginLevel: 800,
+        transparentOriginLevel: 600,
+        bgColorLight: "#f0f0f0",
+        bgColorDark: "#1a1a1a",
+      });
+
+      // baseColorConfigの確認
+      const baseConfig = result.find((config) => config.prefix === "base");
+      expect(baseConfig).toBeDefined();
+      expect(baseConfig?.includeTransparent).toBe(false);
+      expect(baseConfig?.includeTextColors).toBe(false);
+      expect(baseConfig?.transparentOriginLevel).toBe(800);
+      expect(baseConfig?.bgColorLight).toBe("#f0f0f0");
+      expect(baseConfig?.bgColorDark).toBe("#1a1a1a");
+
+      // primaryColorConfigの確認
+      const primaryConfig = result.find(
+        (config) => config.prefix === "primary"
+      );
+      expect(primaryConfig).toBeDefined();
+      expect(primaryConfig?.includeTransparent).toBe(false);
+      expect(primaryConfig?.includeTextColors).toBe(false);
+      expect(primaryConfig?.transparentOriginLevel).toBe(600);
+      expect(primaryConfig?.bgColorLight).toBe("#f0f0f0");
+      expect(primaryConfig?.bgColorDark).toBe("#1a1a1a");
+
+      // secondaryColorConfigの確認
+      const secondaryConfig = result.find(
+        (config) => config.prefix === "secondary"
+      );
+      expect(secondaryConfig).toBeDefined();
+      expect(secondaryConfig?.includeTransparent).toBe(false);
+      expect(secondaryConfig?.includeTextColors).toBe(false);
+      expect(secondaryConfig?.transparentOriginLevel).toBe(600);
+      expect(secondaryConfig?.bgColorLight).toBe("#f0f0f0");
+      expect(secondaryConfig?.bgColorDark).toBe("#1a1a1a");
+    });
+
+    it("設定が指定されていない場合はデフォルト値が適用される", () => {
+      const result = generateCombination({
+        primaryColor: testPrimaryColor,
+        combinationType: "complementary",
+      });
+
+      // baseColorConfigの確認（DEFAULT_BASE_COLOR_CONFIGの値）
+      const baseConfig = result.find((config) => config.prefix === "base");
+      expect(baseConfig).toBeDefined();
+      expect(baseConfig?.includeTransparent).toBe(false);
+      expect(baseConfig?.includeTextColors).toBe(false);
+      expect(baseConfig?.transparentOriginLevel).toBe(950);
+      expect(baseConfig?.bgColorLight).toBe("#ffffff");
+      expect(baseConfig?.bgColorDark).toBe("#000000");
+
+      // primaryColorConfigの確認（DEFAULT_COLOR_CONFIGの値）
+      const primaryConfig = result.find(
+        (config) => config.prefix === "primary"
+      );
+      expect(primaryConfig).toBeDefined();
+      expect(primaryConfig?.includeTransparent).toBe(false);
+      expect(primaryConfig?.includeTextColors).toBe(false);
+      expect(primaryConfig?.transparentOriginLevel).toBe(500);
+      expect(primaryConfig?.bgColorLight).toBe("#ffffff");
+      expect(primaryConfig?.bgColorDark).toBe("#000000");
+
+      // secondaryColorConfigの確認（DEFAULT_COLOR_CONFIGの値）
+      const secondaryConfig = result.find(
+        (config) => config.prefix === "secondary"
+      );
+      expect(secondaryConfig).toBeDefined();
+      expect(secondaryConfig?.includeTransparent).toBe(false);
+      expect(secondaryConfig?.includeTextColors).toBe(false);
+      expect(secondaryConfig?.transparentOriginLevel).toBe(500);
+      expect(secondaryConfig?.bgColorLight).toBe("#ffffff");
+      expect(secondaryConfig?.bgColorDark).toBe("#000000");
     });
   });
 });

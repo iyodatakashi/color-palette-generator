@@ -5,7 +5,7 @@
 // =============================================================================
 
 // Palette generation features
-export { generateColorPalette } from "./palette";
+export { generateColorPalette, resolveVariable } from "./palette";
 
 // Color combination features
 export { generateCombination } from "./combination";
@@ -15,6 +15,9 @@ export { generateRandomPrimaryColor } from "./randomColor";
 
 // Lightness calculation features
 export { getLightness, adjustToLightness } from "./lightness";
+
+// Hue change features
+export { adjustColorToSameTone, generateHuePalette, HUE_NAMES } from "./hue";
 
 // Basic color utilities
 export { hexToRGB, rgbToHex, hexToHSL, hslToRGB, rgbToHSL } from "./colorUtils";

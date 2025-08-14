@@ -47,8 +47,8 @@ export const DEFAULT_HUE_SHIFT_MODE = "natural" as const;
 export const DEFAULT_COLOR_CONFIG = {
   lightnessMethod: "hybrid" as LightnessMethod,
   hueShiftMode: "natural" as HueShiftMode,
-  includeTransparent: true,
-  includeTextColors: true,
+  includeTransparent: false,
+  includeTextColors: false,
   bgColorLight: "#ffffff",
   bgColorDark: "#000000",
   transparentOriginLevel: 500,
@@ -57,8 +57,8 @@ export const DEFAULT_COLOR_CONFIG = {
 export const DEFAULT_BASE_COLOR_CONFIG = {
   lightnessMethod: "hybrid" as LightnessMethod,
   hueShiftMode: "fixed" as HueShiftMode,
-  includeTransparent: true,
-  includeTextColors: true,
+  includeTransparent: false,
+  includeTextColors: false,
   bgColorLight: "#ffffff",
   bgColorDark: "#000000",
   transparentOriginLevel: 950,

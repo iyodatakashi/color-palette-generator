@@ -1,8 +1,9 @@
 // combination.ts
 
 import { hexToHSL } from "./colorUtils";
-import { adjustToLightness, getLightness } from "./lightness";
+import { getLightness, adjustToLightness } from "./lightness";
 import { normalizeHue } from "./hueShift";
+import { adjustColorToSameTone } from "./hue";
 import type {
   ColorConfig,
   HSL,
@@ -35,19 +36,30 @@ export const generateCombination = (config: CombinationConfig): Combination => {
     primaryHSL,
     lightnessMethod,
     strategy: baseColorStrategy,
+    config,
   });
   const primaryColorConfig = {
-    ...DEFAULT_COLOR_CONFIG,
+    lightnessMethod,
+    hueShiftMode: "natural" as const,
+    includeTransparent:
+      config.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
+    includeTextColors:
+      config.includeTextColors ?? DEFAULT_COLOR_CONFIG.includeTextColors,
+    bgColorLight: config.bgColorLight ?? DEFAULT_COLOR_CONFIG.bgColorLight,
+    bgColorDark: config.bgColorDark ?? DEFAULT_COLOR_CONFIG.bgColorDark,
+    transparentOriginLevel:
+      config.transparentOriginLevel ??
+      DEFAULT_COLOR_CONFIG.transparentOriginLevel,
     id: "primary",
     prefix: "primary",
     color: config.primaryColor,
-    lightnessMethod,
   };
   const secondaryColorConfigs = generateSecondaryColorConfigs({
     primaryHSL,
     combinationType,
     lightnessMethod,
     primaryColor: config.primaryColor,
+    config,
   });
 
   return [baseColorConfig, primaryColorConfig, ...secondaryColorConfigs];
@@ -64,19 +76,30 @@ const generateBaseColorConfig = ({
   primaryHSL,
   lightnessMethod = "hybrid",
   strategy = "harmonic",
+  config,
 }: {
   primaryHSL: HSL;
   lightnessMethod?: LightnessMethod;
   strategy?: BaseColorStrategy;
+  config: CombinationConfig;
 }): ColorConfig => {
   const baseColor = getBaseColor({ primaryHSL, lightnessMethod, strategy });
 
   return {
-    ...DEFAULT_BASE_COLOR_CONFIG,
+    lightnessMethod,
+    hueShiftMode: "fixed" as const,
+    includeTransparent:
+      config.includeTransparent ?? DEFAULT_BASE_COLOR_CONFIG.includeTransparent,
+    includeTextColors:
+      config.includeTextColors ?? DEFAULT_BASE_COLOR_CONFIG.includeTextColors,
+    bgColorLight: config.bgColorLight ?? DEFAULT_BASE_COLOR_CONFIG.bgColorLight,
+    bgColorDark: config.bgColorDark ?? DEFAULT_BASE_COLOR_CONFIG.bgColorDark,
+    transparentOriginLevel:
+      config.baseTransparentOriginLevel ??
+      DEFAULT_BASE_COLOR_CONFIG.transparentOriginLevel,
     id: "base",
     prefix: "base",
     color: baseColor,
-    lightnessMethod,
   };
 };
 
@@ -88,11 +111,13 @@ const generateSecondaryColorConfigs = ({
   combinationType,
   lightnessMethod,
   primaryColor,
+  config,
 }: {
   primaryHSL: HSL;
   combinationType: CombinationType;
   lightnessMethod: LightnessMethod;
   primaryColor: string;
+  config: CombinationConfig;
 }): ColorConfig[] => {
   if (combinationType === "monochromatic") {
     return [];
@@ -123,11 +148,20 @@ const generateSecondaryColorConfigs = ({
   for (const { id, color, prefix } of secondaryColorMap) {
     if (color) {
       configs.push({
-        ...DEFAULT_COLOR_CONFIG,
+        lightnessMethod,
+        hueShiftMode: "natural" as const,
+        includeTransparent:
+          config.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
+        includeTextColors:
+          config.includeTextColors ?? DEFAULT_COLOR_CONFIG.includeTextColors,
+        bgColorLight: config.bgColorLight ?? DEFAULT_COLOR_CONFIG.bgColorLight,
+        bgColorDark: config.bgColorDark ?? DEFAULT_COLOR_CONFIG.bgColorDark,
+        transparentOriginLevel:
+          config.transparentOriginLevel ??
+          DEFAULT_COLOR_CONFIG.transparentOriginLevel,
         id,
         prefix,
         color,
-        lightnessMethod,
       });
     }
   }
@@ -253,11 +287,10 @@ const getSecondaryColors = ({
   for (const key of keys) {
     const hsl = hslValues[key];
     if (hsl) {
-      result[key] = adjustColorToPrimaryTone({
-        targetHSL: hsl,
-        primaryHSL,
+      result[key] = adjustColorToSameTone({
+        color: primaryColor,
+        targetHue: hsl.h,
         lightnessMethod,
-        primaryColor,
       });
     }
   }
@@ -268,29 +301,3 @@ const getSecondaryColors = ({
 // =============================================================================
 // Color Adjustment
 // =============================================================================
-
-/**
- * Adjust hue to match primary color tone (saturation/lightness)
- */
-const adjustColorToPrimaryTone = ({
-  targetHSL,
-  primaryHSL,
-  lightnessMethod = "hybrid",
-  primaryColor,
-}: {
-  targetHSL: HSL;
-  primaryHSL: HSL;
-  lightnessMethod?: LightnessMethod;
-  primaryColor?: string;
-}): string => {
-  const targetLightness = primaryColor
-    ? getLightness({ color: primaryColor, lightnessMethod: lightnessMethod })
-    : primaryHSL.l; // Fallback
-
-  return adjustToLightness({
-    h: targetHSL.h,
-    s: primaryHSL.s,
-    targetLightness,
-    lightnessMethod: lightnessMethod,
-  });
-};
