@@ -4,7 +4,7 @@ A comprehensive color palette generation library with support for color scales, 
 
 ## 🌐 Online Tool
 
-Create color palettes with my web application at **[https://color-palette.14ch.jp/](https://color-palette.14ch.jp/)**
+Create color palettes with my web application at **[https://color-palette-ca114.web.app/](https://color-palette-ca114.web.app/)**
 
 A full-featured color palette generator built with this library.
 
