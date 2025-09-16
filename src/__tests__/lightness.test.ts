@@ -157,6 +157,66 @@ describe("lightness", () => {
       expect(Math.abs(actualLightness - targetLightness)).toBeLessThan(1);
     });
 
+    it("彩度調整機能が有効な場合、より自然な色を生成する", () => {
+      // 黄色の色相（約60度）でテスト
+      const yellowHue = 60;
+      const baseSaturation = 80;
+      const baseLightness = 70;
+      const targetLightness = 40; // より暗い明度
+
+      // 彩度調整なし
+      const withoutSaturationAdjustment = adjustToLightness({
+        h: yellowHue,
+        s: baseSaturation,
+        targetLightness,
+        lightnessMethod: "hybrid",
+        enableSaturationAdjustment: false,
+        baseLightness,
+      });
+
+      // 彩度調整あり
+      const withSaturationAdjustment = adjustToLightness({
+        h: yellowHue,
+        s: baseSaturation,
+        targetLightness,
+        lightnessMethod: "hybrid",
+        enableSaturationAdjustment: true,
+        baseLightness,
+      });
+
+      // 両方とも有効な色を返す
+      expect(withoutSaturationAdjustment).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(withSaturationAdjustment).toMatch(/^#[0-9a-f]{6}$/i);
+
+      // 彩度調整ありの方が異なる色になることを確認
+      expect(withoutSaturationAdjustment).not.toBe(withSaturationAdjustment);
+    });
+
+    it("青色の彩度調整が適切に動作する", () => {
+      // 青色の色相（約240度）でテスト
+      const blueHue = 240;
+      const baseSaturation = 70;
+      const baseLightness = 60;
+      const targetLightness = 30; // より暗い明度
+
+      const result = adjustToLightness({
+        h: blueHue,
+        s: baseSaturation,
+        targetLightness,
+        lightnessMethod: "hybrid",
+        enableSaturationAdjustment: true,
+        baseLightness,
+      });
+
+      expect(result).toMatch(/^#[0-9a-f]{6}$/i);
+
+      const actualLightness = getLightness({
+        color: result,
+        lightnessMethod: "hybrid",
+      });
+      expect(Math.abs(actualLightness - targetLightness)).toBeLessThan(3);
+    });
+
     it("無効な入力値でエラーを起こさない", () => {
       const invalidInputs = [
         { h: NaN, s: 50, targetLightness: 50 },

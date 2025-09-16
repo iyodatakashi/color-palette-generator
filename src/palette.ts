@@ -79,6 +79,9 @@ export const generateColorPalette = (
     transparentOriginLevel:
       colorConfig.transparentOriginLevel ||
       DEFAULT_COLOR_CONFIG.transparentOriginLevel,
+    enableSaturationAdjustment:
+      colorConfig.enableSaturationAdjustment ??
+      DEFAULT_COLOR_CONFIG.enableSaturationAdjustment,
   };
 
   const inputLightness = getLightness({
@@ -164,6 +167,8 @@ const generateOriginalPalette = ({
         s: inputHSL.s,
         targetLightness,
         lightnessMethod: colorConfig.lightnessMethod,
+        enableSaturationAdjustment: colorConfig.enableSaturationAdjustment,
+        baseLightness: originalLightness,
       });
 
       palette[`--${colorConfig.prefix}-${key}`] = generatedColor;

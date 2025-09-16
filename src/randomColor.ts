@@ -37,5 +37,6 @@ export function generateRandomPrimaryColor(
     s: saturation,
     targetLightness: lightness,
     lightnessMethod: perfectConfig.lightnessMethod,
+    enableSaturationAdjustment: false, // Keep original saturation for random color generation
   });
 }

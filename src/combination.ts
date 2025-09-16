@@ -50,6 +50,7 @@ export const generateCombination = (config: CombinationConfig): Combination => {
     transparentOriginLevel:
       config.transparentOriginLevel ??
       DEFAULT_COLOR_CONFIG.transparentOriginLevel,
+    enableSaturationAdjustment: DEFAULT_COLOR_CONFIG.enableSaturationAdjustment,
     id: "primary",
     prefix: "primary",
     color: config.primaryColor,
@@ -97,6 +98,8 @@ const generateBaseColorConfig = ({
     transparentOriginLevel:
       config.baseTransparentOriginLevel ??
       DEFAULT_BASE_COLOR_CONFIG.transparentOriginLevel,
+    enableSaturationAdjustment:
+      DEFAULT_BASE_COLOR_CONFIG.enableSaturationAdjustment,
     id: "base",
     prefix: "base",
     color: baseColor,
@@ -159,6 +162,8 @@ const generateSecondaryColorConfigs = ({
         transparentOriginLevel:
           config.transparentOriginLevel ??
           DEFAULT_COLOR_CONFIG.transparentOriginLevel,
+        enableSaturationAdjustment:
+          DEFAULT_COLOR_CONFIG.enableSaturationAdjustment,
         id,
         prefix,
         color,
@@ -208,6 +213,7 @@ const getBaseColor = ({
     s: finalSaturation,
     targetLightness,
     lightnessMethod: lightnessMethod,
+    enableSaturationAdjustment: false, // Keep original saturation for base colors
   });
 };
 

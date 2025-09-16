@@ -140,23 +140,37 @@ export const adjustToLightness = ({
   s,
   targetLightness,
   lightnessMethod = "hybrid",
+  enableSaturationAdjustment = true,
+  baseLightness = 50,
 }: {
   h: number;
   s: number;
   targetLightness: number;
   lightnessMethod?: LightnessMethod;
+  enableSaturationAdjustment?: boolean;
+  baseLightness?: number;
 }): string => {
   h = isFinite(h) ? ((h % 360) + 360) % 360 : 0;
   s = isFinite(s) ? Math.max(0, Math.min(100, s)) : 0;
   targetLightness = isFinite(targetLightness) ? targetLightness : 50;
+  baseLightness = isFinite(baseLightness) ? baseLightness : 50;
+
+  // Adjust saturation based on lightness change if enabled
+  const adjustedSaturation = enableSaturationAdjustment
+    ? adjustSaturationForLightness({ h, s, baseLightness, targetLightness })
+    : s;
 
   switch (lightnessMethod) {
     case "hsl":
-      return adjustToHSLLightness({ h, s, targetLightness });
+      return adjustToHSLLightness({
+        h,
+        s: adjustedSaturation,
+        targetLightness,
+      });
     default:
       return adjustToLightnessByBinarySearch({
         h,
-        s,
+        s: adjustedSaturation,
         targetLightness,
         lightnessMethod,
       });
@@ -336,6 +350,103 @@ export const calculateEvenScale = ({
   });
 
   return adjustedLightnessScale;
+};
+
+// =============================================================================
+// Saturation Adjustment Functions
+// =============================================================================
+
+/**
+ * Get ideal lightness for a given hue where the color appears most vibrant
+ * Based on color theory - each hue has an optimal lightness for maximum saturation
+ */
+const getIdealLightnessForHue = (hue: number): number => {
+  const normalizedHue = ((hue % 360) + 360) % 360;
+
+  // Define key color points based on color theory
+  const colorPoints = [
+    { hue: 0, lightness: 52 }, // Red
+    { hue: 60, lightness: 87 }, // Yellow
+    { hue: 120, lightness: 47 }, // Green
+    { hue: 180, lightness: 72 }, // Cyan
+    { hue: 240, lightness: 37 }, // Blue
+    { hue: 300, lightness: 62 }, // Magenta
+    { hue: 360, lightness: 52 }, // Red (full circle)
+  ];
+
+  // Find the two adjacent points for interpolation
+  let lowerPoint = colorPoints[0];
+  let upperPoint = colorPoints[1];
+
+  for (let i = 0; i < colorPoints.length - 1; i++) {
+    if (
+      normalizedHue >= colorPoints[i].hue &&
+      normalizedHue <= colorPoints[i + 1].hue
+    ) {
+      lowerPoint = colorPoints[i];
+      upperPoint = colorPoints[i + 1];
+      break;
+    }
+  }
+
+  // Linear interpolation between the two points
+  const hueRange = upperPoint.hue - lowerPoint.hue;
+  const lightnessRange = upperPoint.lightness - lowerPoint.lightness;
+  const hueOffset = normalizedHue - lowerPoint.hue;
+
+  const idealLightness =
+    lowerPoint.lightness + (hueOffset / hueRange) * lightnessRange;
+
+  return idealLightness;
+};
+
+/**
+ * Adjust saturation based on how far the target lightness is from the ideal lightness for that hue
+ */
+const adjustSaturationForLightness = ({
+  h,
+  s,
+  baseLightness,
+  targetLightness,
+}: {
+  h: number;
+  s: number;
+  baseLightness: number;
+  targetLightness: number;
+}): number => {
+  // Get the ideal lightness for this hue
+  const idealLightness = getIdealLightnessForHue(h);
+
+  // Step 1: Calculate absolute adjustment based on distance from ideal lightness
+  const getAbsoluteAdjustment = (lightness: number): number => {
+    const maxDistance = Math.max(idealLightness, 100 - idealLightness);
+    const normalizedDistance =
+      Math.abs(lightness - idealLightness) / maxDistance;
+
+    // Apply sigmoid curve for smooth, natural adjustment
+    // Maps distance 0-1 to adjustment 0-0.4
+    const sigmoidInput = (normalizedDistance - 0.5) * 6; // Shift and scale for good curve shape
+    const sigmoidValue = 1 / (1 + Math.exp(-sigmoidInput)); // 0 to 1
+
+    // Convert sigmoid output to adjustment factor
+    return sigmoidValue * 0.4; // Up to 40% boost for maximum distance
+  };
+
+  // Step 2: Calculate adjustments for both target and base lightness
+  const targetAdjustment = getAbsoluteAdjustment(targetLightness);
+  const baseAdjustment = getAbsoluteAdjustment(baseLightness);
+
+  // Step 3: Apply zero-correction so base color has no adjustment
+  const relativeAdjustment = targetAdjustment - baseAdjustment;
+
+  // Step 4: Convert to saturation multiplier
+  const saturationMultiplier = 1 + relativeAdjustment;
+
+  // Apply adjustment
+  const adjustedSaturation = s * saturationMultiplier;
+
+  // Ensure saturation stays within reasonable bounds
+  return Math.max(15, Math.min(95, adjustedSaturation));
 };
 
 // =============================================================================

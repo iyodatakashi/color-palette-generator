@@ -50,6 +50,7 @@ export const adjustColorToSameTone = ({
     s: hsl.s,
     targetLightness: originalPerceivedLightness,
     lightnessMethod,
+    enableSaturationAdjustment: false, // Keep original saturation when changing hue
   });
 };
 

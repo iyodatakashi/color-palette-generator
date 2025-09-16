@@ -52,6 +52,7 @@ export const DEFAULT_COLOR_CONFIG = {
   bgColorLight: "#ffffff",
   bgColorDark: "#000000",
   transparentOriginLevel: 500,
+  enableSaturationAdjustment: true,
 };
 
 export const DEFAULT_BASE_COLOR_CONFIG = {
@@ -62,6 +63,7 @@ export const DEFAULT_BASE_COLOR_CONFIG = {
   bgColorLight: "#ffffff",
   bgColorDark: "#000000",
   transparentOriginLevel: 950,
+  enableSaturationAdjustment: false,
 };
 
 /**

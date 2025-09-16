@@ -16,6 +16,7 @@ export type ColorConfig = {
   bgColorDark?: string;
   transparentOriginLevel?: number;
   includeTextColors?: boolean;
+  enableSaturationAdjustment?: boolean; // Whether to apply saturation adjustment in palette generation
 };
 
 // Normalized color configuration (internal use)
@@ -28,6 +29,7 @@ export type NormalizedColorConfig = ColorConfig & {
   bgColorLight: string;
   bgColorDark: string;
   transparentOriginLevel: number;
+  enableSaturationAdjustment: boolean;
 };
 
 // Color palette (output)
