@@ -57,7 +57,6 @@ export type {
   ColorConfig,
   RGB,
   HSL,
-  OKLAB,
   LightnessMethod,
   SaturationMethod,
   HueShiftMode,
