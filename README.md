@@ -15,6 +15,7 @@ A full-featured color palette generator built with this library.
 - 🎲 **Random Color Generation**: Generate random colors with customizable parameters
 - 🔀 **Color Combinations**: Create harmonious color combinations (complementary, triadic, analogous, etc.)
 - 🎯 **Lightness Control**: Precise control over color lightness and contrast
+- ✨ **Perceptual Saturation Adjustment**: Advanced OKLAB-based saturation optimization for natural, consistent color vibrancy
 - 🔧 **Utility Functions**: Comprehensive color conversion utilities (HEX, RGB, HSL)
 - 🔍 **CSS Variable Resolution**: Follow nested CSS variable references (var(--primary-color) → var(--primary-500) → #3b82f6) to get final HEX values
 
@@ -38,6 +39,7 @@ const palette = generateColorPalette({
   lightnessMethod: "hybrid",
   hueShiftMode: "natural",
   includeTransparent: true,
+  enableSaturationAdjustment: true, // Automatically optimize saturation for natural-looking palettes
 });
 
 console.log(palette);
@@ -148,6 +150,30 @@ const adjustedColor = adjustToLightness({
 console.log(adjustedColor); // Output: '#5d8df7' (HEX string)
 ```
 
+### Saturation Adjustment
+
+```typescript
+import { generateColorPalette } from "@14ch/color-palette-generator";
+
+// Generate palette with natural saturation optimization
+const palette = generateColorPalette({
+  prefix: "primary",
+  color: "#3b82f6",
+  enableSaturationAdjustment: true, // Default: true
+});
+
+// Disable saturation adjustment for original behavior
+const paletteOriginal = generateColorPalette({
+  prefix: "primary",
+  color: "#3b82f6",
+  enableSaturationAdjustment: false,
+});
+
+// The saturation adjustment feature uses OKLAB color space to automatically
+// optimize saturation based on each hue's ideal lightness, ensuring consistent
+// visual vibrancy across all lightness levels (50, 100, 200, ..., 950)
+```
+
 ### Utility Functions
 
 ```typescript
@@ -191,6 +217,26 @@ const resolvedColor = resolveVariable({
 });
 ```
 
+### Saturation Calculation
+
+```typescript
+import { getSaturation } from "@14ch/color-palette-generator";
+
+// Get perceptual saturation (OKLAB-based, more accurate)
+const perceptualSat = getSaturation({
+  color: "#3b82f6",
+  saturationMethod: "perceptual", // Default
+});
+
+// Get HSL saturation (traditional)
+const hslSat = getSaturation({
+  color: "#3b82f6",
+  saturationMethod: "hsl",
+});
+
+console.log(`Perceptual: ${perceptualSat}, HSL: ${hslSat}`);
+```
+
 ### Apply to DOM
 
 ```typescript
@@ -222,9 +268,12 @@ interface ColorConfig {
   hueShiftMode?: HueShiftMode;
   lightnessMethod?: LightnessMethod;
   includeTransparent?: boolean;
+  includeTextColors?: boolean;
   bgColorLight?: string;
   bgColorDark?: string;
   transparentOriginLevel?: number;
+  enableSaturationAdjustment?: boolean; // Default: true - Optimize saturation for natural palettes
+  saturationMethod?: SaturationMethod; // Default: "oklab" - Method for saturation calculation
 }
 
 interface Palette {
@@ -258,6 +307,7 @@ interface RandomColorConfig {
 }
 
 type LightnessMethod = "hybrid" | "hsl" | "perceptual" | "average";
+type SaturationMethod = "hsl" | "perceptual" | "oklab" | "hybrid";
 type HueShiftMode = "fixed" | "natural" | "unnatural";
 type BaseColorStrategy = "harmonic" | "contrasting" | "neutral";
 type CombinationType =
@@ -307,9 +357,13 @@ Generates a random color with optional constraints, returning a HEX string.
 
 Calculates the lightness of a color using the specified method.
 
-#### `adjustToLightness({ h, s, targetLightness, lightnessMethod? }): string`
+#### `getSaturation({ color: string, saturationMethod?: "hsl" | "perceptual" }): number`
 
-Adjusts HSL values to achieve a target lightness, returning a HEX string.
+Calculates the saturation of a color using the specified method. Default is "perceptual" (OKLAB-based) for more accurate results.
+
+#### `adjustToLightness({ h, s, targetLightness, lightnessMethod?, enableSaturationAdjustment? }): string`
+
+Adjusts HSL values to achieve a target lightness with optional perceptual saturation optimization, returning a HEX string.
 
 #### `resolveVariable(options: { variableName: string; palette: Palette; fallback?: string }): string`
 
@@ -341,4 +395,4 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request.う
