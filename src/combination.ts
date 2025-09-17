@@ -31,6 +31,7 @@ export const generateCombination = (config: CombinationConfig): Combination => {
   const primaryHSL = hexToHSL(config.primaryColor);
   const lightnessMethod = config.lightnessMethod || "hybrid";
   const baseColorStrategy = config.baseColorStrategy || "harmonic";
+  const enableSaturationAdjustment = config.enableSaturationAdjustment ?? false; // Default to false for combinations
 
   const baseColorConfig = generateBaseColorConfig({
     primaryHSL,
@@ -60,6 +61,7 @@ export const generateCombination = (config: CombinationConfig): Combination => {
     combinationType,
     lightnessMethod,
     primaryColor: config.primaryColor,
+    enableSaturationAdjustment,
     config,
   });
 
@@ -114,12 +116,14 @@ const generateSecondaryColorConfigs = ({
   combinationType,
   lightnessMethod,
   primaryColor,
+  enableSaturationAdjustment,
   config,
 }: {
   primaryHSL: HSL;
   combinationType: CombinationType;
   lightnessMethod: LightnessMethod;
   primaryColor: string;
+  enableSaturationAdjustment: boolean;
   config: CombinationConfig;
 }): ColorConfig[] => {
   if (combinationType === "monochromatic") {
@@ -131,6 +135,7 @@ const generateSecondaryColorConfigs = ({
     combinationType,
     lightnessMethod,
     primaryColor,
+    enableSaturationAdjustment,
   });
   const configs: ColorConfig[] = [];
 
@@ -225,11 +230,13 @@ const getSecondaryColors = ({
   combinationType,
   lightnessMethod,
   primaryColor,
+  enableSaturationAdjustment,
 }: {
   primaryHSL: HSL;
   combinationType: CombinationType;
   lightnessMethod: LightnessMethod;
   primaryColor: string;
+  enableSaturationAdjustment: boolean;
 }): {
   secondary?: string;
   secondary2?: string;

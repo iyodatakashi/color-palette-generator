@@ -23,7 +23,16 @@ export { getSaturation } from "./saturation";
 export { adjustColorToSameTone, generateHuePalette, HUE_NAMES } from "./hue";
 
 // Basic color utilities
-export { hexToRGB, rgbToHex, hexToHSL, hslToRGB, rgbToHSL } from "./colorUtils";
+export {
+  hexToRGB,
+  rgbToHex,
+  hexToHSL,
+  hslToRGB,
+  rgbToHSL,
+  hexToOKLAB,
+  oklabToRGB,
+  getPerceptualChroma,
+} from "./colorUtils";
 
 // Apply to DOM
 export { applyColorPaletteToDom } from "./applyToDom";
@@ -48,6 +57,7 @@ export type {
   ColorConfig,
   RGB,
   HSL,
+  OKLAB,
   LightnessMethod,
   SaturationMethod,
   HueShiftMode,
