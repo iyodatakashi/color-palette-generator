@@ -70,7 +70,6 @@ export type CombinationConfig = {
   bgColorDark?: string;
   baseTransparentOriginLevel?: number;
   transparentOriginLevel?: number;
-  enableSaturationAdjustment?: boolean; // Control saturation adjustment for secondary colors
 };
 
 // Color combination result (output)

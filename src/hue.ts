@@ -44,15 +44,13 @@ export const adjustColorToSameTone = ({
     lightnessMethod,
   });
 
-  // Simple hue change maintaining HSL saturation
-  // Note: enableSaturationAdjustment parameter is kept for API compatibility
-  // but is ignored to avoid over-correction in combination generation
+  // Use existing adjustToLightness function to maintain perceived lightness
   return adjustToLightness({
     h: targetHue,
     s: hsl.s,
     targetLightness: originalPerceivedLightness,
     lightnessMethod,
-    enableSaturationAdjustment: false, // Always false for hue changes to avoid over-correction
+    enableSaturationAdjustment: false, // Keep original saturation when changing hue
   });
 };
 
