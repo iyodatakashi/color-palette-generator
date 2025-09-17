@@ -142,5 +142,10 @@ export type LightnessMethod =
   | "perceptual" // Perceptual lightness (accuracy focused)
   | "average"; // RGB average lightness (simple)
 
+// Saturation calculation method type definition
+export type SaturationMethod =
+  | "hsl" // HSL saturation
+  | "perceptual"; // OKLAB chroma-based saturation
+
 // Hue shift mode type definition
 export type HueShiftMode = "fixed" | "natural" | "unnatural";

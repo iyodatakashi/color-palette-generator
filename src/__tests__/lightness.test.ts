@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   getLightness,
+  getSaturation,
   adjustToLightness,
   findClosestLevel,
   calculateEvenScale,
@@ -320,6 +321,34 @@ describe("lightness", () => {
         const nextLevel = sortedLevels[i + 1];
         expect(result[currentLevel]).toBeGreaterThanOrEqual(result[nextLevel]);
       }
+    });
+  });
+
+  describe("getSaturation", () => {
+    it("perceptual method (OKLAB) returns valid saturation values", () => {
+      const saturation = getSaturation({
+        color: "#ff0000",
+        saturationMethod: "perceptual",
+      });
+      expect(saturation).toBeGreaterThan(0);
+      expect(saturation).toBeLessThanOrEqual(100);
+    });
+
+    it("HSL method returns valid saturation values", () => {
+      const saturation = getSaturation({
+        color: "#0000ff",
+        saturationMethod: "hsl",
+      });
+      expect(saturation).toBeGreaterThan(0);
+      expect(saturation).toBeLessThanOrEqual(100);
+    });
+
+    it("default method (hybrid) returns valid saturation values", () => {
+      const saturation = getSaturation({
+        color: "#ffff00",
+      });
+      expect(saturation).toBeGreaterThan(0);
+      expect(saturation).toBeLessThanOrEqual(100);
     });
   });
 });

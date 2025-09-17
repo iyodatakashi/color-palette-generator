@@ -1,6 +1,15 @@
 // lightness.ts
 
-import { hslToRGB, rgbToHex, rgbToHSL, hexToHSL, hexToRGB } from "./colorUtils";
+import {
+  hslToRGB,
+  rgbToHex,
+  rgbToHSL,
+  hexToHSL,
+  hexToRGB,
+  rgbToOKLAB,
+  hexToOKLAB,
+  getPerceptualChroma,
+} from "./colorUtils";
 import {
   SCALE_LEVELS,
   STANDARD_LIGHTNESS_SCALE,
@@ -9,7 +18,7 @@ import {
   MAX_LIGHTNESS,
   MIN_LIGHTNESS,
 } from "./constants";
-import type { LightnessMethod } from "./types";
+import type { LightnessMethod, SaturationMethod, RGB } from "./types";
 
 // =============================================================================
 // Lightness Calculation Functions
@@ -129,6 +138,67 @@ const getHybridLightness = ({
 };
 
 // =============================================================================
+// Saturation Calculation Functions
+// =============================================================================
+
+/**
+ * Get saturation value from color according to saturation calculation method
+ */
+export const getSaturation = ({
+  color,
+  saturationMethod = "perceptual",
+}: {
+  color: string;
+  saturationMethod?: SaturationMethod;
+}): number => {
+  const rgb = hexToRGB(color);
+
+  switch (saturationMethod) {
+    case "hsl":
+      return getHSLSaturation(rgb);
+    case "perceptual":
+    default:
+      return getPerceptualSaturation(rgb);
+  }
+};
+
+/**
+ * Get HSL saturation
+ */
+const getHSLSaturation = ({
+  r,
+  g,
+  b,
+}: {
+  r: number;
+  g: number;
+  b: number;
+}): number => {
+  const hsl = rgbToHSL({ r, g, b });
+  return hsl.s;
+};
+
+/**
+ * Calculate perceptual saturation from RGB using OKLAB chroma
+ */
+const getPerceptualSaturation = ({
+  r,
+  g,
+  b,
+}: {
+  r: number;
+  g: number;
+  b: number;
+}): number => {
+  const oklab = rgbToOKLAB({ r, g, b });
+  const chroma = getPerceptualChroma({ a: oklab.a, b: oklab.b });
+
+  // Normalize chroma to 0-100 scale
+  // OKLAB chroma typically ranges from 0 to ~0.4
+  return Math.min(100, (chroma / 0.4) * 100);
+};
+
+// =============================================================================
 // Lightness Adjustment Functions
 // =============================================================================
 
@@ -157,7 +227,12 @@ export const adjustToLightness = ({
 
   // Adjust saturation based on lightness change if enabled
   const adjustedSaturation = enableSaturationAdjustment
-    ? adjustSaturationForLightness({ h, s, baseLightness, targetLightness })
+    ? adjustSaturationForLightness({
+        h,
+        s,
+        baseLightness,
+        targetLightness,
+      })
     : s;
 
   switch (lightnessMethod) {
@@ -357,51 +432,25 @@ export const calculateEvenScale = ({
 // =============================================================================
 
 /**
- * Get ideal lightness for a given hue where the color appears most vibrant
- * Based on color theory - each hue has an optimal lightness for maximum saturation
+ * Calculate theoretical saturation coefficient based on lightness
+ * Returns a coefficient (0-1) representing how much saturation is naturally expected at given lightness
  */
-const getIdealLightnessForHue = (hue: number): number => {
-  const normalizedHue = ((hue % 360) + 360) % 360;
+const getTheoreticalSaturationCoefficient = (lightness: number): number => {
+  // Normalize lightness to 0-1 range
+  const normalizedL = Math.max(0, Math.min(100, lightness)) / 100;
 
-  // Define key color points based on color theory
-  const colorPoints = [
-    { hue: 0, lightness: 52 }, // Red
-    { hue: 60, lightness: 87 }, // Yellow
-    { hue: 120, lightness: 47 }, // Green
-    { hue: 180, lightness: 72 }, // Cyan
-    { hue: 240, lightness: 37 }, // Blue
-    { hue: 300, lightness: 62 }, // Magenta
-    { hue: 360, lightness: 52 }, // Red (full circle)
-  ];
+  // Peak saturation around lightness 50 (0.5 normalized)
+  // Use a moderately steep curve with balanced falloff
+  // Using power function: (4 * x * (1 - x))^1.2
+  const baseCoeff = 4 * normalizedL * (1 - normalizedL);
+  const coefficient = Math.pow(baseCoeff, 1.2);
 
-  // Find the two adjacent points for interpolation
-  let lowerPoint = colorPoints[0];
-  let upperPoint = colorPoints[1];
-
-  for (let i = 0; i < colorPoints.length - 1; i++) {
-    if (
-      normalizedHue >= colorPoints[i].hue &&
-      normalizedHue <= colorPoints[i + 1].hue
-    ) {
-      lowerPoint = colorPoints[i];
-      upperPoint = colorPoints[i + 1];
-      break;
-    }
-  }
-
-  // Linear interpolation between the two points
-  const hueRange = upperPoint.hue - lowerPoint.hue;
-  const lightnessRange = upperPoint.lightness - lowerPoint.lightness;
-  const hueOffset = normalizedHue - lowerPoint.hue;
-
-  const idealLightness =
-    lowerPoint.lightness + (hueOffset / hueRange) * lightnessRange;
-
-  return idealLightness;
+  // Moderate minimum value for balanced reduction at ends
+  return Math.max(0.15, coefficient); // Minimum 0.15 for moderate reduction
 };
 
 /**
- * Adjust saturation based on how far the target lightness is from the ideal lightness for that hue
+ * Adjust saturation based on lightness using various methods
  */
 const adjustSaturationForLightness = ({
   h,
@@ -414,36 +463,31 @@ const adjustSaturationForLightness = ({
   baseLightness: number;
   targetLightness: number;
 }): number => {
-  // Get the ideal lightness for this hue
-  const idealLightness = getIdealLightnessForHue(h);
+  let adjustedSaturation: number;
 
-  // Step 1: Calculate absolute adjustment based on distance from ideal lightness
-  const getAbsoluteAdjustment = (lightness: number): number => {
-    const maxDistance = Math.max(idealLightness, 100 - idealLightness);
-    const normalizedDistance =
-      Math.abs(lightness - idealLightness) / maxDistance;
+  // OKLAB perceptual method: use theoretical saturation curve based on lightness
+  // Step 1: Get base color's perceptual saturation from HSL values
+  const baseColor = hslToRGB({ h, s, l: baseLightness });
+  const basePerceptualSat = getPerceptualSaturation(baseColor);
 
-    // Apply sigmoid curve for smooth, natural adjustment
-    // Maps distance 0-1 to adjustment 0-0.4
-    const sigmoidInput = (normalizedDistance - 0.5) * 6; // Shift and scale for good curve shape
-    const sigmoidValue = 1 / (1 + Math.exp(-sigmoidInput)); // 0 to 1
+  // Step 2: Get current scale color's perceptual saturation (before adjustment)
+  const currentColor = hslToRGB({ h, s, l: targetLightness });
+  const currentPerceptualSat = getPerceptualSaturation(currentColor);
 
-    // Convert sigmoid output to adjustment factor
-    return sigmoidValue * 0.4; // Up to 40% boost for maximum distance
-  };
+  // Step 3: Calculate baseline perceptual saturations for both lightness levels
+  const baseLightnessCoeff = getTheoreticalSaturationCoefficient(baseLightness);
+  const targetLightnessCoeff =
+    getTheoreticalSaturationCoefficient(targetLightness);
 
-  // Step 2: Calculate adjustments for both target and base lightness
-  const targetAdjustment = getAbsoluteAdjustment(targetLightness);
-  const baseAdjustment = getAbsoluteAdjustment(baseLightness);
+  // Calculate theoretical perceptual saturations (not just coefficients)
+  const baselinePerceptualSat = basePerceptualSat; // Base color's actual perceptual saturation
+  const targetBaselinePerceptualSat =
+    baselinePerceptualSat * (targetLightnessCoeff / baseLightnessCoeff);
 
-  // Step 3: Apply zero-correction so base color has no adjustment
-  const relativeAdjustment = targetAdjustment - baseAdjustment;
-
-  // Step 4: Convert to saturation multiplier
-  const saturationMultiplier = 1 + relativeAdjustment;
-
-  // Apply adjustment
-  const adjustedSaturation = s * saturationMultiplier;
+  // Apply correction: adjust current perceptual saturation toward target baseline
+  const saturationRatio =
+    targetBaselinePerceptualSat / Math.max(currentPerceptualSat, 1);
+  adjustedSaturation = s * saturationRatio;
 
   // Ensure saturation stays within reasonable bounds
   return Math.max(15, Math.min(95, adjustedSaturation));

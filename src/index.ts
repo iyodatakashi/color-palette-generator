@@ -13,8 +13,8 @@ export { generateCombination } from "./combination";
 // Random color generation features
 export { generateRandomPrimaryColor } from "./randomColor";
 
-// Lightness calculation features
-export { getLightness, adjustToLightness } from "./lightness";
+// Lightness and saturation calculation features
+export { getLightness, getSaturation, adjustToLightness } from "./lightness";
 
 // Hue change features
 export { adjustColorToSameTone, generateHuePalette, HUE_NAMES } from "./hue";
@@ -46,6 +46,7 @@ export type {
   RGB,
   HSL,
   LightnessMethod,
+  SaturationMethod,
   HueShiftMode,
   CombinationType,
   BaseColorStrategy,
