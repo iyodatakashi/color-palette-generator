@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
   getLightness,
-  getSaturation,
   adjustToLightness,
   findClosestLevel,
   calculateEvenScale,
 } from "../lightness";
+import { getSaturation } from "../saturation";
 import { SCALE_LEVELS, STANDARD_LIGHTNESS_SCALE } from "../constants";
 import type { LightnessMethod } from "../types";
 
