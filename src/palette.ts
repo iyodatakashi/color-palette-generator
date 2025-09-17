@@ -1,13 +1,6 @@
 // palette.ts
 
-import type {
-  ColorConfig,
-  LightnessMethod,
-  HueShiftMode,
-  NormalizedColorConfig,
-  Palette,
-  HSL,
-} from "./types";
+import type { ColorConfig, NormalizedColorConfig, Palette, HSL } from "./types";
 import { hexToRGB, rgbToHSL, rgbToHex } from "./colorUtils";
 import {
   getLightness,

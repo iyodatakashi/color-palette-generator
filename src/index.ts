@@ -13,8 +13,11 @@ export { generateCombination } from "./combination";
 // Random color generation features
 export { generateRandomPrimaryColor } from "./randomColor";
 
-// Lightness and saturation calculation features
-export { getLightness, getSaturation, adjustToLightness } from "./lightness";
+// Lightness calculation features
+export { getLightness, adjustToLightness } from "./lightness";
+
+// Saturation calculation features
+export { getSaturation } from "./saturation";
 
 // Hue change features
 export { adjustColorToSameTone, generateHuePalette, HUE_NAMES } from "./hue";
