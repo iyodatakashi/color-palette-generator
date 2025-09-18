@@ -325,7 +325,7 @@ describe("lightness", () => {
   });
 
   describe("getSaturation", () => {
-    it("perceptual method (OKLAB) returns valid saturation values", () => {
+    it("perceptual method (OKLCH) returns valid saturation values", () => {
       const saturation = getSaturation({
         color: "#ff0000",
         saturationMethod: "perceptual",

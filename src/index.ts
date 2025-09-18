@@ -29,9 +29,8 @@ export {
   hexToHSL,
   hslToRGB,
   rgbToHSL,
-  hexToOKLAB,
-  oklabToRGB,
-  getPerceptualChroma,
+  hexToOKLCH,
+  rgbToOKLCH,
 } from "./colorUtils";
 
 // Apply to DOM

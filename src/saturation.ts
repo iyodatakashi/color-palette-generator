@@ -1,12 +1,6 @@
 // saturation.ts
 
-import {
-  hslToRGB,
-  rgbToHSL,
-  hexToRGB,
-  rgbToOKLAB,
-  getPerceptualChroma,
-} from "./colorUtils";
+import { hslToRGB, rgbToHSL, hexToRGB, rgbToOKLCH } from "./colorUtils";
 import type { SaturationMethod, RGB } from "./types";
 
 // =============================================================================
@@ -51,7 +45,7 @@ const getHSLSaturation = ({
 };
 
 /**
- * Calculate perceptual saturation from RGB using OKLAB chroma
+ * Calculate perceptual saturation from RGB using OKLCH chroma
  */
 const getPerceptualSaturation = ({
   r,
@@ -62,12 +56,11 @@ const getPerceptualSaturation = ({
   g: number;
   b: number;
 }): number => {
-  const oklab = rgbToOKLAB({ r, g, b });
-  const chroma = getPerceptualChroma({ a: oklab.a, b: oklab.b });
+  const oklch = rgbToOKLCH({ r, g, b });
 
   // Normalize chroma to 0-100 scale
-  // OKLAB chroma typically ranges from 0 to ~0.4
-  return Math.min(100, (chroma / 0.4) * 100);
+  // OKLCH chroma typically ranges from 0 to ~0.4
+  return Math.min(100, (oklch.c / 0.4) * 100);
 };
 
 // =============================================================================
@@ -93,7 +86,7 @@ const getTheoreticalSaturationCoefficient = (lightness: number): number => {
 };
 
 /**
- * Adjust saturation based on lightness using OKLAB perceptual method
+ * Adjust saturation based on lightness using OKLCH perceptual method
  */
 export const adjustSaturationForLightness = ({
   h,
@@ -106,7 +99,7 @@ export const adjustSaturationForLightness = ({
   baseLightness: number;
   targetLightness: number;
 }): number => {
-  // OKLAB perceptual method: use theoretical saturation curve based on lightness
+  // OKLCH perceptual method: use theoretical saturation curve based on lightness
   // Step 1: Get base color's perceptual saturation from HSL values
   const baseColor = hslToRGB({ h, s, l: baseLightness });
   const basePerceptualSat = getPerceptualSaturation(baseColor);

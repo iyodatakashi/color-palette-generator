@@ -1,6 +1,13 @@
 // lightness.ts
 
-import { hslToRGB, rgbToHex, rgbToHSL, hexToHSL, hexToRGB } from "./colorUtils";
+import {
+  hslToRGB,
+  rgbToHex,
+  rgbToHSL,
+  hexToHSL,
+  hexToRGB,
+  rgbToOKLCH,
+} from "./colorUtils";
 import { adjustSaturationForLightness } from "./saturation";
 import {
   SCALE_LEVELS,
@@ -42,7 +49,7 @@ export const getLightness = ({
 };
 
 /**
- * Calculate perceptual lightness from RGB (CIE Lab* based)
+ * Calculate perceptual lightness from RGB (OKLCH based)
  */
 const getPerceptualLightness = ({
   r,
@@ -53,30 +60,11 @@ const getPerceptualLightness = ({
   g: number;
   b: number;
 }): number => {
-  const toLinear = ({ c }: { c: number }): number => {
-    if (isNaN(c) || !isFinite(c)) c = 0;
-    const normalized = Math.max(0, Math.min(255, c)) / 255;
-    return normalized <= 0.04045
-      ? normalized / 12.92
-      : Math.pow((normalized + 0.055) / 1.055, 2.4);
-  };
+  // Convert RGB directly to OKLCH to get lightness
+  const oklch = rgbToOKLCH({ r, g, b });
 
-  const rLinear = toLinear({ c: r });
-  const gLinear = toLinear({ c: g });
-  const bLinear = toLinear({ c: b });
-
-  const luminance = 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
-
-  // Accurate CIE L* calculation
-  const threshold = 216 / 24389;
-  const multiplier = 24389 / 27;
-
-  const result =
-    luminance > threshold
-      ? Math.pow(luminance, 1 / 3) * 116 - 16
-      : luminance * multiplier;
-
-  return isFinite(result) ? result : 0;
+  // OKLCH lightness is 0-1, convert to 0-100 scale
+  return oklch.l * 100;
 };
 
 /**
