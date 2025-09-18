@@ -14,10 +14,20 @@ export { generateCombination } from "./combination";
 export { generateRandomPrimaryColor } from "./randomColor";
 
 // Lightness calculation features
-export { getLightness, adjustToLightness } from "./lightness";
+export {
+  getLightness,
+  adjustToLightness,
+  getHybridLightness,
+  getHybridSaturation,
+  calculateEvenScale,
+} from "./lightness";
 
 // Saturation calculation features
-export { getSaturation } from "./saturation";
+export {
+  getSaturation,
+  getTheoreticalSaturationCoefficient,
+  adjustSaturationForLightness,
+} from "./saturation";
 
 // Hue change features
 export { adjustColorToSameTone, generateHuePalette, HUE_NAMES } from "./hue";
@@ -29,10 +39,13 @@ export {
   hexToHSL,
   hslToRGB,
   rgbToHSL,
+  hslToHex,
   hexToOKLCH,
   rgbToOKLCH,
   oklchToRGB,
   oklchToHex,
+  hslToOKLCH,
+  oklchToHSL,
 } from "./colorUtils";
 
 // Apply to DOM

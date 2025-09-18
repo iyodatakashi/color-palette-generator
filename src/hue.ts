@@ -1,7 +1,15 @@
 // hue.ts
 
-import { hexToHSL, validateHexColor } from "./colorUtils";
-import { getLightness, adjustToLightness } from "./lightness";
+import { hexToHSL, validateHexColor, hexToRGB, rgbToOKLCH } from "./colorUtils";
+import {
+  getLightness,
+  adjustToLightness,
+  adjustToHybridLightness,
+  adjustToPerceptualLightness,
+  adjustToHSLLightness,
+  getHybridLightness,
+  getHybridSaturation,
+} from "./lightness";
 import type {
   LightnessMethod,
   HuePaletteConfig,
@@ -44,13 +52,16 @@ export const adjustColorToSameTone = ({
     lightnessMethod,
   });
 
-  // Use existing adjustToLightness function to maintain perceived lightness
-  return adjustToLightness({
+  // For adjustColorToSameTone, we want to maintain the same hybrid lightness
+  // to ensure visual consistency across different hues
+  const originalRGB = hexToRGB(color);
+  const originalHybridLightness = getHybridLightness(originalRGB);
+
+  // Use hybrid lightness adjustment to maintain the same hybrid lightness
+  return adjustToHybridLightness({
     h: targetHue,
     s: hsl.s,
-    targetLightness: originalPerceivedLightness,
-    lightnessMethod,
-    enableSaturationAdjustment: false, // Keep original saturation when changing hue
+    targetLightness: originalHybridLightness, // Use original hybrid lightness
   });
 };
 

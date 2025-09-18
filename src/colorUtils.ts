@@ -392,3 +392,19 @@ export const oklchToHex = (oklch: OKLCH): string => {
   const rgb = oklchToRGB(oklch);
   return rgbToHex(rgb);
 };
+
+/**
+ * Convert HSL to OKLCH color space
+ */
+export const hslToOKLCH = ({ h, s, l }: HSL): OKLCH => {
+  const rgb = hslToRGB({ h, s, l });
+  return rgbToOKLCH(rgb);
+};
+
+/**
+ * Convert OKLCH to HSL color space
+ */
+export const oklchToHSL = (oklch: OKLCH): HSL => {
+  const rgb = oklchToRGB(oklch);
+  return rgbToHSL(rgb);
+};

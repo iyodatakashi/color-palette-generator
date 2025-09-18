@@ -8,7 +8,11 @@ import {
   hexToRGB,
   rgbToOKLCH,
 } from "./colorUtils";
-import { adjustSaturationForLightness } from "./saturation";
+import {
+  adjustSaturationForLightness,
+  getTheoreticalSaturationCoefficient,
+  getPerceptualSaturation,
+} from "./saturation";
 import {
   SCALE_LEVELS,
   STANDARD_LIGHTNESS_SCALE,
@@ -102,7 +106,7 @@ const getAverageLightness = ({
 /**
  * Get hybrid lightness (weighted average of perceptual lightness + HSL lightness)
  */
-const getHybridLightness = ({
+export const getHybridLightness = ({
   r,
   g,
   b,
@@ -115,6 +119,24 @@ const getHybridLightness = ({
   const hsl = rgbToHSL({ r, g, b });
   // Weighted average of perceptual lightness and HSL lightness
   return perceptual * 0.4 + hsl.l * 0.6;
+};
+
+/**
+ * Get hybrid saturation (weighted average of perceptual saturation + HSL saturation)
+ */
+export const getHybridSaturation = ({
+  r,
+  g,
+  b,
+}: {
+  r: number;
+  g: number;
+  b: number;
+}): number => {
+  const perceptual = getPerceptualSaturation({ r, g, b });
+  const hsl = rgbToHSL({ r, g, b });
+  // Weighted average of perceptual saturation and HSL saturation
+  return perceptual * 0.4 + hsl.s * 0.6;
 };
 
 // =============================================================================
@@ -131,6 +153,7 @@ export const adjustToLightness = ({
   lightnessMethod = "hybrid",
   enableSaturationAdjustment = true,
   baseLightness = 50,
+  baseColor,
 }: {
   h: number;
   s: number;
@@ -138,6 +161,7 @@ export const adjustToLightness = ({
   lightnessMethod?: LightnessMethod;
   enableSaturationAdjustment?: boolean;
   baseLightness?: number;
+  baseColor?: string;
 }): string => {
   h = isFinite(h) ? ((h % 360) + 360) % 360 : 0;
   s = isFinite(s) ? Math.max(0, Math.min(100, s)) : 0;
@@ -161,6 +185,20 @@ export const adjustToLightness = ({
         s: adjustedSaturation,
         targetLightness,
       });
+    case "perceptual":
+      // For perceptual lightness, use direct perceptual lightness adjustment
+      return adjustToPerceptualLightness({
+        h,
+        s: adjustedSaturation,
+        targetLightness,
+      });
+    case "hybrid":
+      // For hybrid lightness, use direct hybrid lightness adjustment
+      return adjustToHybridLightness({
+        h,
+        s: adjustedSaturation,
+        targetLightness,
+      });
     default:
       return adjustToLightnessByBinarySearch({
         h,
@@ -168,6 +206,7 @@ export const adjustToLightness = ({
         targetLightness,
         lightnessMethod,
         baseLightness,
+        baseColor,
       });
   }
 };
@@ -175,7 +214,7 @@ export const adjustToLightness = ({
 /**
  * Direct adjustment by HSL lightness (100% round-trip consistency guaranteed)
  */
-const adjustToHSLLightness = ({
+export const adjustToHSLLightness = ({
   h,
   s,
   targetLightness,
@@ -190,28 +229,19 @@ const adjustToHSLLightness = ({
 };
 
 /**
- * Lightness adjustment by binary search with OKLCH chroma preservation
+ * Direct adjustment by perceptual lightness using binary search
  */
-const adjustToLightnessByBinarySearch = ({
+export const adjustToPerceptualLightness = ({
   h,
   s,
   targetLightness,
-  lightnessMethod = "hybrid",
-  baseLightness = 50,
 }: {
   h: number;
   s: number;
   targetLightness: number;
-  lightnessMethod?: LightnessMethod;
-  baseLightness?: number;
 }): string => {
   const MAX_ITERATIONS = 100;
   const PRECISION_THRESHOLD = 0.001;
-
-  // Get reference OKLCH chroma from the actual base color lightness
-  const baseRgb = hslToRGB({ h, s, l: baseLightness });
-  const baseOKLCH = rgbToOKLCH(baseRgb);
-  const targetChroma = baseOKLCH.c;
 
   let low = 0;
   let high = 100;
@@ -221,22 +251,12 @@ const adjustToLightnessByBinarySearch = ({
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     const mid = (low + high) / 2;
     const rgb = hslToRGB({ h, s, l: mid });
-    const currentLightness = getLightness({
-      color: rgbToHex(rgb),
-      lightnessMethod: lightnessMethod,
-    });
+    const currentLightness = getPerceptualLightness(rgb);
     const diff = Math.abs(currentLightness - targetLightness);
 
-    // Check OKLCH chroma deviation
-    const currentOKLCH = rgbToOKLCH(rgb);
-    const chromaDiff = Math.abs(currentOKLCH.c - targetChroma);
-
-    // Prioritize lightness accuracy but penalize excessive chroma deviation
-    const combinedScore = diff + chromaDiff * 0.5;
-
-    // Record L value with best combined score
-    if (combinedScore < bestDiff) {
-      bestDiff = combinedScore;
+    // Record L value with best lightness match
+    if (diff < bestDiff) {
+      bestDiff = diff;
       bestL = mid;
     }
 
@@ -255,6 +275,191 @@ const adjustToLightnessByBinarySearch = ({
 
   const finalRgb = hslToRGB({ h, s, l: bestL });
   return rgbToHex(finalRgb);
+};
+
+/**
+ * Direct adjustment by hybrid lightness using binary search
+ */
+export const adjustToHybridLightness = ({
+  h,
+  s,
+  targetLightness,
+}: {
+  h: number;
+  s: number;
+  targetLightness: number;
+}): string => {
+  const MAX_ITERATIONS = 100;
+  const PRECISION_THRESHOLD = 0.001;
+
+  let low = 0;
+  let high = 100;
+  let bestL = 50;
+  let bestDiff = Infinity;
+
+  for (let i = 0; i < MAX_ITERATIONS; i++) {
+    const mid = (low + high) / 2;
+    const rgb = hslToRGB({ h, s, l: mid });
+    const currentLightness = getHybridLightness(rgb);
+    const diff = Math.abs(currentLightness - targetLightness);
+
+    // Record L value with best lightness match
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestL = mid;
+    }
+
+    // Exit if sufficient precision is reached
+    if (diff < PRECISION_THRESHOLD) break;
+
+    // Exit if range becomes sufficiently small
+    if (high - low < PRECISION_THRESHOLD) break;
+
+    if (currentLightness < targetLightness) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+
+  const finalRgb = hslToRGB({ h, s, l: bestL });
+  return rgbToHex(finalRgb);
+};
+
+/**
+ * Lightness adjustment with OKLCH chroma preservation using theoretical curve
+ */
+const adjustToLightnessByBinarySearch = ({
+  h,
+  s,
+  targetLightness,
+  lightnessMethod = "hybrid",
+  baseLightness = 50,
+  baseColor,
+}: {
+  h: number;
+  s: number;
+  targetLightness: number;
+  lightnessMethod?: LightnessMethod;
+  baseLightness?: number;
+  baseColor?: string;
+}): string => {
+  // Step 1: For base color level, return the original color to preserve its chroma
+  if (baseColor) {
+    const baseColorLightness = getLightness({
+      color: baseColor,
+      lightnessMethod,
+    });
+    if (Math.abs(targetLightness - baseColorLightness) < 1) {
+      return baseColor;
+    }
+  }
+
+  // Step 1: Generate color with specified lightness method
+  const initialColor = adjustToHSLLightness({
+    h,
+    s,
+    targetLightness,
+  });
+
+  // Step 2: Use base color chroma directly (without theoretical curve)
+  const baseRgb = baseColor
+    ? hexToRGB(baseColor)
+    : hslToRGB({ h, s, l: baseLightness });
+  const baseOKLCH = rgbToOKLCH(baseRgb);
+  const targetChroma = baseOKLCH.c; // Use base color chroma directly
+
+  // Get current OKLCH values
+  const currentRGB = hexToRGB(initialColor);
+  const currentOKLCH = rgbToOKLCH(currentRGB);
+
+  // If chroma is already close to target, return initial color
+  if (Math.abs(currentOKLCH.c - targetChroma) < 0.001) {
+    return initialColor;
+  }
+
+  // Step 3: Adjust HSL saturation to match target chroma
+  const adjustedColor = adjustHSLForOKLCHChroma({
+    h,
+    s,
+    l: targetLightness,
+    targetChroma,
+    lightnessMethod,
+    targetLightness,
+  });
+
+  return adjustedColor;
+};
+
+/**
+ * Adjust HSL saturation to match target OKLCH chroma
+ */
+const adjustHSLForOKLCHChroma = ({
+  h,
+  s,
+  l,
+  targetChroma,
+  lightnessMethod,
+  targetLightness,
+}: {
+  h: number;
+  s: number;
+  l: number;
+  targetChroma: number;
+  lightnessMethod: LightnessMethod;
+  targetLightness: number;
+}): string => {
+  const MAX_ITERATIONS = 50;
+  const PRECISION_THRESHOLD = 0.001;
+
+  let low = 0;
+  let high = 100;
+  let bestS = s;
+  let bestDiff = Infinity;
+
+  for (let i = 0; i < MAX_ITERATIONS; i++) {
+    const mid = (low + high) / 2;
+    const rgb = hslToRGB({ h, s: mid, l });
+    const currentOKLCH = rgbToOKLCH(rgb);
+    const chromaDiff = Math.abs(currentOKLCH.c - targetChroma);
+
+    // Record S value with best chroma match
+    if (chromaDiff < bestDiff) {
+      bestDiff = chromaDiff;
+      bestS = mid;
+    }
+
+    // Exit if sufficient precision is reached
+    if (chromaDiff < PRECISION_THRESHOLD) break;
+
+    // Exit if range becomes sufficiently small
+    if (high - low < PRECISION_THRESHOLD) break;
+
+    if (currentOKLCH.c < targetChroma) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+
+  // Step 4: Adjust lightness if it deviated from target
+  const finalRGB = hslToRGB({ h, s: bestS, l });
+  const finalLightness = getLightness({
+    color: rgbToHex(finalRGB),
+    lightnessMethod,
+  });
+  const lightnessDiff = Math.abs(finalLightness - targetLightness);
+
+  // If lightness deviated significantly, adjust it
+  if (lightnessDiff > 0.01) {
+    return adjustToHSLLightness({
+      h,
+      s: bestS,
+      targetLightness,
+    });
+  }
+
+  return rgbToHex(finalRGB);
 };
 
 // =============================================================================
