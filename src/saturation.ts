@@ -71,18 +71,39 @@ const getPerceptualSaturation = ({
  * Calculate theoretical saturation coefficient based on lightness
  * Returns a coefficient (0-1) representing how much saturation is naturally expected at given lightness
  */
-const getTheoreticalSaturationCoefficient = (lightness: number): number => {
+const getTheoreticalSaturationCoefficient = (
+  lightness: number,
+  hue: number = 0
+): number => {
   // Normalize lightness to 0-1 range
   const normalizedL = Math.max(0, Math.min(100, lightness)) / 100;
 
-  // Use parabolic curve: peaks at 50% lightness, decreases towards extremes
+  // Use much gentler parabolic curve to reduce sudden jumps
   const baseCoeff = 4 * normalizedL * (1 - normalizedL);
 
-  // Apply power curve to make it gentler at the ends
-  const coefficient = Math.pow(baseCoeff, 1.2);
+  // Apply gentler power curve (reduced from 1.2 to 0.8)
+  let coefficient = Math.pow(baseCoeff, 0.8);
 
-  // Ensure minimum threshold for very dark/light colors
-  return Math.max(0.15, coefficient);
+  // Hue-specific adjustments for problematic colors
+  const normalizedHue = ((hue % 360) + 360) % 360;
+
+  // Cyan (160-200°): reduce mid-tone saturation to prevent over-vividness
+  if (normalizedHue >= 160 && normalizedHue <= 200) {
+    // Reduce coefficient for mid-lightness ranges where cyan becomes too vivid
+    if (normalizedL >= 0.3 && normalizedL <= 0.7) {
+      coefficient *= 0.7; // 30% reduction for problematic cyan range
+    }
+  }
+
+  // Yellow-green (80-120°): similar adjustment for over-saturation
+  if (normalizedHue >= 80 && normalizedHue <= 120) {
+    if (normalizedL >= 0.2 && normalizedL <= 0.6) {
+      coefficient *= 0.8; // 20% reduction for yellow-green
+    }
+  }
+
+  // Higher minimum threshold and narrower range to prevent extreme adjustments
+  return Math.max(0.4, Math.min(0.9, coefficient));
 };
 
 /**
@@ -109,20 +130,31 @@ export const adjustSaturationForLightness = ({
   const currentPerceptualSat = getPerceptualSaturation(currentColor);
 
   // Step 3: Calculate baseline perceptual saturations for both lightness levels
-  const baseLightnessCoeff = getTheoreticalSaturationCoefficient(baseLightness);
-  const targetLightnessCoeff =
-    getTheoreticalSaturationCoefficient(targetLightness);
+  const baseLightnessCoeff = getTheoreticalSaturationCoefficient(
+    baseLightness,
+    h
+  );
+  const targetLightnessCoeff = getTheoreticalSaturationCoefficient(
+    targetLightness,
+    h
+  );
 
   // Calculate theoretical perceptual saturations (not just coefficients)
   const baselinePerceptualSat = basePerceptualSat; // Base color's actual perceptual saturation
+
+  // Calculate target saturation based on theoretical curve
   const targetBaselinePerceptualSat =
     baselinePerceptualSat * (targetLightnessCoeff / baseLightnessCoeff);
 
-  // Apply correction: adjust current perceptual saturation toward target baseline
+  // Apply saturation adjustment to normalize vividness across hues at same lightness level
   const saturationRatio =
     targetBaselinePerceptualSat / Math.max(currentPerceptualSat, 1);
-  const adjustedSaturation = s * saturationRatio;
 
-  // Ensure saturation stays within reasonable bounds
-  return Math.max(15, Math.min(95, adjustedSaturation));
+  // Apply stronger correction to align with theoretical curve
+  const blendRatio = 0.8; // Maximum adjustment for visible effect
+  const adjustedSaturation =
+    s * (1 - blendRatio + blendRatio * saturationRatio);
+
+  // Keep reasonable bounds
+  return Math.max(10, Math.min(95, adjustedSaturation));
 };

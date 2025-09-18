@@ -31,6 +31,8 @@ export {
   rgbToHSL,
   hexToOKLCH,
   rgbToOKLCH,
+  oklchToRGB,
+  oklchToHex,
 } from "./colorUtils";
 
 // Apply to DOM

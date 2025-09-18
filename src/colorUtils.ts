@@ -301,3 +301,94 @@ export const hexToOKLCH = (hex: string): OKLCH => {
   const rgb = hexToRGB(hex);
   return rgbToOKLCH(rgb);
 };
+
+/**
+ * Convert OKLCH to RGB with lightness and hue priority gamut mapping
+ */
+export const oklchToRGB = (oklch: OKLCH): RGB => {
+  const { l, c, h } = oklch;
+
+  // Try with original chroma first
+  let rgb = oklchToRGBUnsafe({ l, c, h });
+
+  // If out of gamut, reduce chroma iteratively while preserving lightness and hue
+  if (!isRGBInGamut(rgb)) {
+    let adjustedChroma = c;
+    const chromaStep = c / 50; // Fine-grained reduction for better accuracy
+
+    while (adjustedChroma > 0.001 && !isRGBInGamut(rgb)) {
+      adjustedChroma = Math.max(0, adjustedChroma - chromaStep);
+      rgb = oklchToRGBUnsafe({ l, c: adjustedChroma, h });
+    }
+  }
+
+  // Final clamp to ensure valid RGB values
+  return {
+    r: Math.max(0, Math.min(255, Math.round(rgb.r))),
+    g: Math.max(0, Math.min(255, Math.round(rgb.g))),
+    b: Math.max(0, Math.min(255, Math.round(rgb.b))),
+  };
+};
+
+/**
+ * Convert OKLCH to RGB without gamut checking (unsafe)
+ */
+const oklchToRGBUnsafe = (oklch: OKLCH): RGB => {
+  const { l, c, h } = oklch;
+
+  // Convert OKLCH to Lab-like coordinates
+  const hRad = (h * Math.PI) / 180;
+  const a = c * Math.cos(hRad);
+  const b = c * Math.sin(hRad);
+
+  // Convert to LMS space (reverse of RGB→OKLCH)
+  const l_ = l + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = l - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = l - 0.0894841775 * a - 1.291485548 * b;
+
+  // Apply cube
+  const lLinear = l_ * l_ * l_;
+  const mLinear = m_ * m_ * m_;
+  const sLinear = s_ * s_ * s_;
+
+  // Convert to linear RGB
+  const rLinear =
+    +4.0767416621 * lLinear - 3.3077115913 * mLinear + 0.2309699292 * sLinear;
+  const gLinear =
+    -1.2684380046 * lLinear + 2.6097574011 * mLinear - 0.3413193965 * sLinear;
+  const bLinear =
+    -0.0041960863 * lLinear - 0.7034186147 * mLinear + 1.707614701 * sLinear;
+
+  // Convert to sRGB
+  const toSRGB = (c: number): number => {
+    return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+  };
+
+  return {
+    r: toSRGB(rLinear) * 255,
+    g: toSRGB(gLinear) * 255,
+    b: toSRGB(bLinear) * 255,
+  };
+};
+
+/**
+ * Check if RGB values are within valid gamut
+ */
+const isRGBInGamut = (rgb: RGB): boolean => {
+  return (
+    rgb.r >= 0 &&
+    rgb.r <= 255 &&
+    rgb.g >= 0 &&
+    rgb.g <= 255 &&
+    rgb.b >= 0 &&
+    rgb.b <= 255
+  );
+};
+
+/**
+ * Convert OKLCH to HEX with gamut mapping
+ */
+export const oklchToHex = (oklch: OKLCH): string => {
+  const rgb = oklchToRGB(oklch);
+  return rgbToHex(rgb);
+};

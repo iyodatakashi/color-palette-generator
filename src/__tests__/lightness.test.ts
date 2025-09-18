@@ -91,7 +91,7 @@ describe("lightness", () => {
       const perceptual = getLightness({ color, lightnessMethod: "perceptual" });
       const hsl = getLightness({ color, lightnessMethod: "hsl" });
 
-      const expected = perceptual * 0.3 + hsl * 0.7;
+      const expected = perceptual * 0.4 + hsl * 0.6;
       expect(hybrid).toBeCloseTo(expected, 1);
     });
   });

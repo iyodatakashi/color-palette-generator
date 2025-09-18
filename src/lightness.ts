@@ -114,7 +114,7 @@ const getHybridLightness = ({
   const perceptual = getPerceptualLightness({ r, g, b });
   const hsl = rgbToHSL({ r, g, b });
   // Weighted average of perceptual lightness and HSL lightness
-  return perceptual * 0.3 + hsl.l * 0.7;
+  return perceptual * 0.4 + hsl.l * 0.6;
 };
 
 // =============================================================================
@@ -167,6 +167,7 @@ export const adjustToLightness = ({
         s: adjustedSaturation,
         targetLightness,
         lightnessMethod,
+        baseLightness,
       });
   }
 };
@@ -189,21 +190,28 @@ const adjustToHSLLightness = ({
 };
 
 /**
- * Lightness adjustment by binary search
+ * Lightness adjustment by binary search with OKLCH chroma preservation
  */
 const adjustToLightnessByBinarySearch = ({
   h,
   s,
   targetLightness,
   lightnessMethod = "hybrid",
+  baseLightness = 50,
 }: {
   h: number;
   s: number;
   targetLightness: number;
   lightnessMethod?: LightnessMethod;
+  baseLightness?: number;
 }): string => {
   const MAX_ITERATIONS = 100;
   const PRECISION_THRESHOLD = 0.001;
+
+  // Get reference OKLCH chroma from the actual base color lightness
+  const baseRgb = hslToRGB({ h, s, l: baseLightness });
+  const baseOKLCH = rgbToOKLCH(baseRgb);
+  const targetChroma = baseOKLCH.c;
 
   let low = 0;
   let high = 100;
@@ -219,9 +227,16 @@ const adjustToLightnessByBinarySearch = ({
     });
     const diff = Math.abs(currentLightness - targetLightness);
 
-    // Record L value with minimum error
-    if (diff < bestDiff) {
-      bestDiff = diff;
+    // Check OKLCH chroma deviation
+    const currentOKLCH = rgbToOKLCH(rgb);
+    const chromaDiff = Math.abs(currentOKLCH.c - targetChroma);
+
+    // Prioritize lightness accuracy but penalize excessive chroma deviation
+    const combinedScore = diff + chromaDiff * 0.5;
+
+    // Record L value with best combined score
+    if (combinedScore < bestDiff) {
+      bestDiff = combinedScore;
       bestL = mid;
     }
 
@@ -367,10 +382,6 @@ const getAdjustedLightness = ({
     case "average":
       return MAX_LIGHTNESS - normalizedLevel * (MAX_LIGHTNESS - MIN_LIGHTNESS);
     case "hybrid":
-      const perceptualLightness = STANDARD_LIGHTNESS_SCALE[level];
-      const linearLightness =
-        MAX_LIGHTNESS - normalizedLevel * (MAX_LIGHTNESS - MIN_LIGHTNESS);
-      return perceptualLightness * 0.3 + linearLightness * 0.7;
     case "perceptual":
     default:
       return STANDARD_LIGHTNESS_SCALE[level];
