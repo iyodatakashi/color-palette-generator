@@ -52,17 +52,30 @@ export const adjustColorToSameTone = ({
     lightnessMethod,
   });
 
-  // For adjustColorToSameTone, we want to maintain the same hybrid lightness
-  // to ensure visual consistency across different hues
-  const originalRGB = hexToRGB(color);
-  const originalHybridLightness = getHybridLightness(originalRGB);
-
-  // Use hybrid lightness adjustment to maintain the same hybrid lightness
-  return adjustToHybridLightness({
-    h: targetHue,
-    s: hsl.s,
-    targetLightness: originalHybridLightness, // Use original hybrid lightness
-  });
+  // Use the same lightness method as specified to maintain consistency
+  switch (lightnessMethod) {
+    case "hsl":
+      return adjustToHSLLightness({
+        h: targetHue,
+        s: hsl.s,
+        targetLightness: originalPerceivedLightness,
+      });
+    case "perceptual":
+      return adjustToPerceptualLightness({
+        h: targetHue,
+        s: hsl.s,
+        targetLightness: originalPerceivedLightness,
+      });
+    case "hybrid":
+    default:
+      const originalRGB = hexToRGB(color);
+      const originalHybridLightness = getHybridLightness(originalRGB);
+      return adjustToHybridLightness({
+        h: targetHue,
+        s: hsl.s,
+        targetLightness: originalHybridLightness,
+      });
+  }
 };
 
 // =============================================================================
