@@ -17,15 +17,15 @@ export const MAX_LEVEL = 950;
 export const STANDARD_LIGHTNESS_SCALE: Record<number, number> = {
   50: 96,
   100: 92,
-  200: 83,
-  300: 74,
-  400: 65,
-  500: 56,
-  600: 47,
-  700: 38,
-  800: 29,
+  200: 84,
+  300: 76,
+  400: 68,
+  500: 60,
+  600: 50,
+  700: 40,
+  800: 30,
   900: 20,
-  950: 16,
+  950: 15,
 };
 
 export const MAX_LIGHTNESS = 96;
@@ -63,7 +63,7 @@ export const DEFAULT_BASE_COLOR_CONFIG = {
   bgColorLight: "#ffffff",
   bgColorDark: "#000000",
   transparentOriginLevel: 950,
-  enableSaturationAdjustment: true,
+  enableSaturationAdjustment: false,
 };
 
 /**
