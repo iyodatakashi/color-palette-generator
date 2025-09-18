@@ -121,24 +121,6 @@ export const getHybridLightness = ({
   return perceptual * 0.4 + hsl.l * 0.6;
 };
 
-/**
- * Get hybrid saturation (weighted average of perceptual saturation + HSL saturation)
- */
-export const getHybridSaturation = ({
-  r,
-  g,
-  b,
-}: {
-  r: number;
-  g: number;
-  b: number;
-}): number => {
-  const perceptual = getPerceptualSaturation({ r, g, b });
-  const hsl = rgbToHSL({ r, g, b });
-  // Weighted average of perceptual saturation and HSL saturation
-  return perceptual * 0.4 + hsl.s * 0.6;
-};
-
 // =============================================================================
 // Lightness Adjustment Functions
 // =============================================================================
@@ -153,7 +135,6 @@ export const adjustToLightness = ({
   lightnessMethod = "hybrid",
   enableSaturationAdjustment = true,
   baseLightness = 50,
-  baseColor,
 }: {
   h: number;
   s: number;
@@ -161,7 +142,6 @@ export const adjustToLightness = ({
   lightnessMethod?: LightnessMethod;
   enableSaturationAdjustment?: boolean;
   baseLightness?: number;
-  baseColor?: string;
 }): string => {
   h = isFinite(h) ? ((h % 360) + 360) % 360 : 0;
   s = isFinite(s) ? Math.max(0, Math.min(100, s)) : 0;
@@ -206,7 +186,6 @@ export const adjustToLightness = ({
         targetLightness,
         lightnessMethod,
         baseLightness,
-        baseColor,
       });
   }
 };
@@ -335,26 +314,13 @@ const adjustToLightnessByBinarySearch = ({
   targetLightness,
   lightnessMethod = "hybrid",
   baseLightness = 50,
-  baseColor,
 }: {
   h: number;
   s: number;
   targetLightness: number;
   lightnessMethod?: LightnessMethod;
   baseLightness?: number;
-  baseColor?: string;
 }): string => {
-  // Step 1: For base color level, return the original color to preserve its chroma
-  if (baseColor) {
-    const baseColorLightness = getLightness({
-      color: baseColor,
-      lightnessMethod,
-    });
-    if (Math.abs(targetLightness - baseColorLightness) < 1) {
-      return baseColor;
-    }
-  }
-
   // Step 1: Generate color with specified lightness method
   const initialColor = adjustToHSLLightness({
     h,
@@ -363,9 +329,7 @@ const adjustToLightnessByBinarySearch = ({
   });
 
   // Step 2: Use base color chroma directly (without theoretical curve)
-  const baseRgb = baseColor
-    ? hexToRGB(baseColor)
-    : hslToRGB({ h, s, l: baseLightness });
+  const baseRgb = hslToRGB({ h, s, l: baseLightness });
   const baseOKLCH = rgbToOKLCH(baseRgb);
   const targetChroma = baseOKLCH.c; // Use base color chroma directly
 

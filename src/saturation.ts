@@ -142,3 +142,21 @@ export const adjustSaturationForLightness = ({
   // Keep reasonable bounds
   return Math.max(10, Math.min(95, adjustedSaturation));
 };
+
+/**
+ * Get hybrid saturation (weighted average of perceptual saturation + HSL saturation)
+ */
+export const getHybridSaturation = ({
+  r,
+  g,
+  b,
+}: {
+  r: number;
+  g: number;
+  b: number;
+}): number => {
+  const perceptual = getPerceptualSaturation({ r, g, b });
+  const hsl = rgbToHSL({ r, g, b });
+  // Weighted average of perceptual saturation and HSL saturation
+  return perceptual * 0.4 + hsl.s * 0.6;
+};

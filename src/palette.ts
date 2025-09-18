@@ -162,7 +162,6 @@ const generateOriginalPalette = ({
         lightnessMethod: colorConfig.lightnessMethod,
         enableSaturationAdjustment: colorConfig.enableSaturationAdjustment,
         baseLightness: originalLightness,
-        baseColor: colorConfig.color,
       });
 
       palette[`--${colorConfig.prefix}-${key}`] = generatedColor;

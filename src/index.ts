@@ -18,7 +18,6 @@ export {
   getLightness,
   adjustToLightness,
   getHybridLightness,
-  getHybridSaturation,
   calculateEvenScale,
 } from "./lightness";
 
@@ -27,6 +26,7 @@ export {
   getSaturation,
   getTheoreticalSaturationCoefficient,
   adjustSaturationForLightness,
+  getHybridSaturation,
 } from "./saturation";
 
 // Hue change features

@@ -213,8 +213,6 @@ const getBaseColor = ({
     h: baseHue,
     s: finalSaturation,
     targetLightness,
-    lightnessMethod: lightnessMethod,
-    enableSaturationAdjustment: false, // Keep original saturation for base colors
   });
 };
 

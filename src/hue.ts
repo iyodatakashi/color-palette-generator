@@ -8,8 +8,8 @@ import {
   adjustToPerceptualLightness,
   adjustToHSLLightness,
   getHybridLightness,
-  getHybridSaturation,
 } from "./lightness";
+import { getHybridSaturation } from "./saturation";
 import type {
   LightnessMethod,
   HuePaletteConfig,
