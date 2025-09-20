@@ -10,7 +10,6 @@ export type ColorConfig = {
   color: string;
   id?: string; // Optional for internal unique management
   hueShiftMode?: HueShiftMode;
-  lightnessMethod?: LightnessMethod;
   includeTransparent?: boolean;
   bgColorLight?: string;
   bgColorDark?: string;
@@ -22,7 +21,6 @@ export type ColorConfig = {
 // Normalized color configuration (internal use)
 export type NormalizedColorConfig = ColorConfig & {
   color: string;
-  lightnessMethod: LightnessMethod;
   hueShiftMode: HueShiftMode;
   includeTransparent: boolean;
   includeTextColors: boolean;
@@ -45,7 +43,6 @@ export type Palette = {
 export type HuePaletteConfig = {
   color: string;
   divisions?: number;
-  lightnessMethod?: LightnessMethod;
   hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;
   bgColorLight?: string;
@@ -62,7 +59,6 @@ export type HuePaletteConfig = {
 export type CombinationConfig = {
   primaryColor: string;
   combinationType?: CombinationType;
-  lightnessMethod?: LightnessMethod;
   baseColorStrategy?: BaseColorStrategy;
   includeTransparent?: boolean;
   includeTextColors?: boolean;
@@ -100,7 +96,6 @@ export type RandomColorConfig = {
   /** Target lightness (0-100) */
   lightnessRange?: [number, number];
   /** Lightness calculation method */
-  lightnessMethod?: LightnessMethod;
   /** Hue limitation range [min, max] (0-360) */
   hueRange?: [number, number];
 };
@@ -127,9 +122,6 @@ export type OKLCH = Oklch;
 // =============================================================================
 // Calculation Method Types
 // =============================================================================
-
-// Lightness calculation method type definition
-export type LightnessMethod = "perceptual";
 
 // Hue shift mode type definition
 export type HueShiftMode = "fixed" | "natural" | "unnatural";

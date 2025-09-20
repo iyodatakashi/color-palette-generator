@@ -1,13 +1,11 @@
 // combination.ts
 
 import * as culori from "culori";
-import { getLightness, adjustToLightness } from "./lightness";
 import { normalizeHue } from "./hueShift";
 import { adjustColorToSameTone } from "./hue";
 import type {
   ColorConfig,
   OKLCH,
-  LightnessMethod,
   CombinationType,
   BaseColorStrategy,
   CombinationConfig,
@@ -38,18 +36,15 @@ export const generateCombination = (config: CombinationConfig): Combination => {
   if (!primaryOKLCH) {
     throw new Error("Failed to convert color to OKLCH");
   }
-  const lightnessMethod = config.lightnessMethod || "perceptual";
   const baseColorStrategy = config.baseColorStrategy || "harmonic";
   // Use default chroma adjustment settings for each color type
 
   const baseColorConfig = generateBaseColorConfig({
     primaryOKLCH,
-    lightnessMethod,
     strategy: baseColorStrategy,
     config,
   });
   const primaryColorConfig = {
-    lightnessMethod,
     hueShiftMode: "natural" as const,
     includeTransparent:
       config.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
@@ -68,7 +63,6 @@ export const generateCombination = (config: CombinationConfig): Combination => {
   const secondaryColorConfigs = generateSecondaryColorConfigs({
     primaryOKLCH,
     combinationType,
-    lightnessMethod,
     primaryColor: config.primaryColor,
     config,
   });
@@ -85,24 +79,20 @@ export const generateCombination = (config: CombinationConfig): Combination => {
  */
 const generateBaseColorConfig = ({
   primaryOKLCH,
-  lightnessMethod = "perceptual",
   strategy = "harmonic",
   config,
 }: {
   primaryOKLCH: OKLCH;
-  lightnessMethod?: LightnessMethod;
   strategy?: BaseColorStrategy;
   config: CombinationConfig;
 }): ColorConfig => {
   const baseColor = getBaseColor({
     primaryOKLCH,
-    lightnessMethod,
     strategy,
     config,
   });
 
   return {
-    lightnessMethod,
     hueShiftMode: "fixed" as const,
     includeTransparent:
       config.includeTransparent ?? DEFAULT_BASE_COLOR_CONFIG.includeTransparent,
@@ -126,13 +116,11 @@ const generateBaseColorConfig = ({
 const generateSecondaryColorConfigs = ({
   primaryOKLCH,
   combinationType,
-  lightnessMethod,
   primaryColor,
   config,
 }: {
   primaryOKLCH: OKLCH;
   combinationType: CombinationType;
-  lightnessMethod: LightnessMethod;
   primaryColor: string;
   config: CombinationConfig;
 }): ColorConfig[] => {
@@ -143,7 +131,6 @@ const generateSecondaryColorConfigs = ({
   const secondaryColors = getSecondaryColors({
     primaryOKLCH,
     combinationType,
-    lightnessMethod,
     primaryColor,
   });
   const configs: ColorConfig[] = [];
@@ -165,7 +152,6 @@ const generateSecondaryColorConfigs = ({
   for (const { id, color, prefix } of secondaryColorMap) {
     if (color) {
       configs.push({
-        lightnessMethod,
         hueShiftMode: "natural" as const,
         includeTransparent:
           config.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
@@ -196,12 +182,10 @@ const generateSecondaryColorConfigs = ({
  */
 const getBaseColor = ({
   primaryOKLCH,
-  lightnessMethod = "perceptual",
   strategy = "harmonic",
   config,
 }: {
   primaryOKLCH: OKLCH;
-  lightnessMethod?: LightnessMethod;
   strategy?: BaseColorStrategy;
   config: CombinationConfig;
 }): string => {
@@ -250,12 +234,10 @@ const getBaseColor = ({
 const getSecondaryColors = ({
   primaryOKLCH,
   combinationType,
-  lightnessMethod,
   primaryColor,
 }: {
   primaryOKLCH: OKLCH;
   combinationType: CombinationType;
-  lightnessMethod: LightnessMethod;
   primaryColor: string;
 }): {
   secondary?: string;

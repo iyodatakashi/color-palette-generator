@@ -16,7 +16,7 @@ import {
   MAX_LEVEL,
   MIN_LEVEL,
 } from "./constants";
-import type { LightnessMethod, RGB } from "./types";
+import type { RGB } from "./types";
 
 // =============================================================================
 // Lightness Calculation Functions
@@ -127,29 +127,17 @@ export const adjustToPerceptualLightness = ({
  */
 export const findClosestLevel = ({
   inputLightness,
-  lightnessMethod = "perceptual",
 }: {
   inputLightness: number;
-  lightnessMethod?: LightnessMethod;
 }): number => {
   if (!isFinite(inputLightness)) inputLightness = 50;
 
   return SCALE_LEVELS.reduce((closestLevel, current) => {
-    const lightness =
-      lightnessMethod !== "perceptual"
-        ? getAdjustedLightness({ level: current, lightnessMethod })
-        : lightnessMethod === "perceptual"
-        ? PERCEPTUAL_LIGHTNESS_SCALE[current]
-        : STANDARD_LIGHTNESS_SCALE[current];
+    const lightness = PERCEPTUAL_LIGHTNESS_SCALE[current];
 
     const currentDiff = Math.abs(inputLightness - lightness);
     const closestDiff = Math.abs(
-      inputLightness -
-        (lightnessMethod !== "perceptual"
-          ? getAdjustedLightness({ level: closestLevel, lightnessMethod })
-          : lightnessMethod === "perceptual"
-          ? PERCEPTUAL_LIGHTNESS_SCALE[closestLevel]
-          : STANDARD_LIGHTNESS_SCALE[closestLevel])
+      inputLightness - PERCEPTUAL_LIGHTNESS_SCALE[closestLevel]
     );
 
     return currentDiff < closestDiff ? current : closestLevel;
@@ -162,28 +150,16 @@ export const findClosestLevel = ({
 export const calculateEvenScale = ({
   inputLightness,
   baseLevel,
-  lightnessMethod = "perceptual",
 }: {
   inputLightness: number;
   baseLevel: number;
-  lightnessMethod?: LightnessMethod;
 }): Record<number, number> => {
   if (!isFinite(inputLightness)) inputLightness = 50;
 
-  // Use appropriate scale and limits based on lightness method
-  const scale =
-    lightnessMethod === "perceptual"
-      ? PERCEPTUAL_LIGHTNESS_SCALE
-      : STANDARD_LIGHTNESS_SCALE;
-
-  const maxLightness =
-    lightnessMethod === "perceptual"
-      ? PERCEPTUAL_MAX_LIGHTNESS
-      : STANDARD_MAX_LIGHTNESS;
-  const minLightness =
-    lightnessMethod === "perceptual"
-      ? PERCEPTUAL_MIN_LIGHTNESS
-      : STANDARD_MIN_LIGHTNESS;
+  // Use perceptual scale and limits
+  const scale = PERCEPTUAL_LIGHTNESS_SCALE;
+  const maxLightness = PERCEPTUAL_MAX_LIGHTNESS;
+  const minLightness = PERCEPTUAL_MIN_LIGHTNESS;
 
   const clampedInputLightness = Math.max(
     minLightness,
@@ -208,36 +184,10 @@ export const calculateEvenScale = ({
 
   const evenScale: Record<number, number> = {};
 
-  // For perceptual lightness, use PERCEPTUAL_LIGHTNESS_SCALE directly
-  if (lightnessMethod === "perceptual") {
-    SCALE_LEVELS.forEach((level) => {
-      evenScale[level] = scale[level];
-    });
-    return evenScale;
-  }
-
-  // For other methods, use the original logic
-  evenScale[baseLevel] = clampedInputLightness;
-
-  // Upper levels (bright direction)
-  for (let i = 1; i <= upwardSteps; i++) {
-    const level = baseLevel - i * STEP_SIZE;
-    const lightness = Math.min(
-      clampedInputLightness + upwardInterval * i,
-      maxLightness
-    );
-    evenScale[level] = lightness;
-  }
-
-  // Lower levels (dark direction)
-  for (let i = 1; i <= downwardSteps; i++) {
-    const level = baseLevel + i * STEP_SIZE;
-    const lightness = Math.max(
-      clampedInputLightness - downwardInterval * i,
-      minLightness
-    );
-    evenScale[level] = lightness;
-  }
+  // Use PERCEPTUAL_LIGHTNESS_SCALE directly
+  SCALE_LEVELS.forEach((level) => {
+    evenScale[level] = scale[level];
+  });
 
   // Return clamped results
   const adjustedLightnessScale: Record<number, number> = {};
@@ -258,17 +208,8 @@ export const calculateEvenScale = ({
 // =============================================================================
 
 /**
- * Get adjusted lightness according to method
+ * Get adjusted lightness using perceptual scale
  */
-const getAdjustedLightness = ({
-  level,
-  lightnessMethod,
-}: {
-  level: number;
-  lightnessMethod: LightnessMethod;
-}): number => {
-  const normalizedLevel = (level - MIN_LEVEL) / (MAX_LEVEL - MIN_LEVEL);
-
-  // Calculate lightness using perceptual scale
+const getAdjustedLightness = ({ level }: { level: number }): number => {
   return PERCEPTUAL_LIGHTNESS_SCALE[level];
 };

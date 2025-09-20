@@ -2,12 +2,7 @@
 
 import * as culori from "culori";
 import { getLightness, adjustToLightness } from "./lightness";
-import type {
-  LightnessMethod,
-  HuePaletteConfig,
-  ColorConfig,
-  Palette,
-} from "./types";
+import type { HuePaletteConfig, ColorConfig, Palette } from "./types";
 import { generateColorPalette } from "./palette";
 
 // =============================================================================
@@ -101,7 +96,6 @@ export const HUE_NAMES = {
 export const generateHuePalette = ({
   color,
   divisions = 24,
-  lightnessMethod = "perceptual",
   hueShiftMode = "natural",
   includeTransparent = false,
   bgColorLight = "#ffffff",
@@ -117,7 +111,6 @@ export const generateHuePalette = ({
     id: name.toLowerCase(),
     prefix: name.toLowerCase(),
     color,
-    lightnessMethod,
     hueShiftMode,
     includeTransparent,
     bgColorLight,

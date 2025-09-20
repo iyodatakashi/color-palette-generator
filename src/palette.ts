@@ -73,8 +73,6 @@ export const generateColorPalette = (
   const normalizedConfig: NormalizedColorConfig = {
     ...colorConfig,
     color: normalizedColor,
-    lightnessMethod:
-      colorConfig.lightnessMethod || DEFAULT_COLOR_CONFIG.lightnessMethod,
     hueShiftMode: colorConfig.hueShiftMode || DEFAULT_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
       colorConfig.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
@@ -94,13 +92,11 @@ export const generateColorPalette = (
 
   const closestLevel = findClosestLevel({
     inputLightness,
-    lightnessMethod: normalizedConfig.lightnessMethod,
   });
 
   const adjustedLightnessScale = calculateEvenScale({
     inputLightness,
     baseLevel: closestLevel,
-    lightnessMethod: normalizedConfig.lightnessMethod,
   });
 
   const palette = generateOriginalPalette({
@@ -255,7 +251,6 @@ const setTextColor = ({
   // Find the primary color level (the level closest to input color)
   const primaryLevel = findClosestLevel({
     inputLightness: inputPerceptualLightness,
-    lightnessMethod: colorConfig.lightnessMethod,
   });
 
   // Get primary color and its lightness

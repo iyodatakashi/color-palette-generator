@@ -1,6 +1,6 @@
 // constants.ts
 
-import type { HueShiftMode, LightnessMethod, RandomColorConfig } from "./types";
+import type { HueShiftMode, RandomColorConfig } from "./types";
 
 /**
  * Level definitions
@@ -71,7 +71,6 @@ export const DEFAULT_LIGHTNESS_METHOD = "perceptual" as const;
 export const DEFAULT_HUE_SHIFT_MODE = "natural" as const;
 
 export const DEFAULT_COLOR_CONFIG = {
-  lightnessMethod: "perceptual" as LightnessMethod,
   hueShiftMode: "natural" as HueShiftMode,
   includeTransparent: false,
   includeTextColors: false,
@@ -82,7 +81,6 @@ export const DEFAULT_COLOR_CONFIG = {
 };
 
 export const DEFAULT_BASE_COLOR_CONFIG = {
-  lightnessMethod: "perceptual" as LightnessMethod,
   hueShiftMode: "fixed" as HueShiftMode,
   includeTransparent: false,
   includeTextColors: false,
@@ -101,6 +99,5 @@ export const DEFAULT_RANDOM_COLOR_CONFIG: Required<RandomColorConfig> = {
     STANDARD_LIGHTNESS_SCALE[300],
     STANDARD_LIGHTNESS_SCALE[700],
   ], // Specified lightness
-  lightnessMethod: "perceptual", // Perceptual lightness
   hueRange: [0, 360], // All hues
 };
