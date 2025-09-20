@@ -153,6 +153,8 @@ const generateOriginalPalette = ({
   const originalLightness = inputLightness; // Use original input lightness, not adjusted scale value
 
   Object.entries(adjustedLightnessScale).forEach(([key, targetLightness]) => {
+    const level = parseInt(key);
+
     const adjustedHue = calculateHueShift({
       baseHue: inputOKLCH.h || 0,
       baseLightness: originalLightness,
@@ -169,6 +171,9 @@ const generateOriginalPalette = ({
 
     palette[`--${colorConfig.prefix}-${key}`] = generatedColor;
   });
+
+  // Override the closest level with the original input color for accuracy
+  palette[`--${colorConfig.prefix}-${closestLevel}`] = colorConfig.color;
 
   return palette;
 };

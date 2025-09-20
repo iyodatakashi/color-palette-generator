@@ -69,24 +69,62 @@ export const adjustToLightness = ({
 // =============================================================================
 
 /**
+ * Calculate optimal k parameter to achieve target lightness at target level
+ */
+const calculateOptimalK = (
+  targetLevel: number,
+  targetLightness: number
+): number => {
+  const tolerance = 0.1;
+  const maxIterations = 100;
+
+  let currentK = 0.18; // Start with optimized default for level 500 ≈ 63%
+
+  for (let i = 0; i < maxIterations; i++) {
+    const currentLightness = getBaseSigmoidLightness(targetLevel, currentK);
+    const error = targetLightness - currentLightness;
+
+    if (Math.abs(error) < tolerance) {
+      break;
+    }
+
+    // Adjust k based on error direction
+    // If we need higher lightness, decrease k (less steep)
+    // If we need lower lightness, increase k (more steep)
+    const adjustment = error * 0.01; // Larger adjustment factor
+    currentK = Math.max(0.1, Math.min(2.0, currentK + adjustment));
+  }
+
+  return currentK;
+};
+
+/**
  * Base sigmoid function for lightness distribution
  * Maps level 0-1000 to lightness 100%-20% with configurable steepness
  */
-const getBaseSigmoidLightness = (level: number, k: number = 0.4): number => {
+const getBaseSigmoidLightness = (level: number, k: number = 0.18): number => {
+  const MIN_LIGHTNESS_LOCAL = 10; // 10% to 100% range
+  const MAX_LIGHTNESS_LOCAL = 100;
   const xRange = 10;
   const x = (level / 1000) * xRange;
-  const rawSigmoid = 1 / (1 + Math.exp(-k * (x - xRange / 2)));
+  // Fixed center at 10 (use upper curve only)
+  const center = 10;
+  const rawSigmoid = 1 / (1 + Math.exp(-k * (x - center)));
 
-  const minRaw = 1 / (1 + Math.exp(-k * (0 - xRange / 2)));
-  const maxRaw = 1 / (1 + Math.exp(-k * (xRange - xRange / 2)));
+  const minRaw = 1 / (1 + Math.exp(-k * (0 - center)));
+  const maxRaw = 1 / (1 + Math.exp(-k * (xRange - center)));
   const scaledSigmoid =
     1.0 - ((1.0 - 0.1) * (rawSigmoid - minRaw)) / (maxRaw - minRaw);
 
   const lightness =
-    MIN_LIGHTNESS +
-    (MAX_LIGHTNESS - MIN_LIGHTNESS) * ((scaledSigmoid - 0.1) / (1.0 - 0.1));
+    MIN_LIGHTNESS_LOCAL +
+    (MAX_LIGHTNESS_LOCAL - MIN_LIGHTNESS_LOCAL) *
+      ((scaledSigmoid - 0.1) / (1.0 - 0.1));
 
-  return Math.max(MIN_LIGHTNESS, Math.min(MAX_LIGHTNESS, lightness));
+  return Math.max(
+    MIN_LIGHTNESS_LOCAL,
+    Math.min(MAX_LIGHTNESS_LOCAL, lightness)
+  );
 };
 
 /**
@@ -226,10 +264,10 @@ export const generateAdjustedLightnessScale = (
   const maxChroma = getMaxChromaForHue(inputHue);
   const relativeChroma = inputChroma / maxChroma;
 
-  // Step 1: Find initial level using symmetric sigmoid
+  // Step 1: Find initial level using new sigmoid (center=10)
   const baseScale: Record<number, number> = {};
   SCALE_LEVELS.forEach((level) => {
-    baseScale[level] = getBaseSigmoidLightness(level, 0.4);
+    baseScale[level] = getBaseSigmoidLightness(level, 0.18);
   });
 
   let initialLevel = 500;
@@ -243,7 +281,7 @@ export const generateAdjustedLightnessScale = (
   });
 
   // Step 2: Apply chroma-based level correction
-  const pullStrength = relativeChroma * 0.6;
+  const pullStrength = relativeChroma * 0.3;
   const targetDeepLevel = 500; // Pull toward center-deep levels
   const correctedLevel = Math.round(
     initialLevel * (1 - pullStrength) + targetDeepLevel * pullStrength
@@ -257,19 +295,15 @@ export const generateAdjustedLightnessScale = (
       : prev
   );
 
-  // Step 3: Target lightness = original input lightness (no change!)
+  // Step 3: Target lightness = original input lightness (to preserve input color characteristics)
   const targetLightness = inputLightness;
 
-  // Step 4: Generate asymmetric sigmoid that passes through (targetLevel, targetLightness)
-  // Calculate the transformation parameters once
-  const adjustedTransform = calculateAdjustedTransform(
-    targetLevel,
-    targetLightness,
-    0.4
-  );
+  // Step 4: Generate adjusted sigmoid by tuning k parameter
+  // Use fixed center=10 (upper curve only) and adjust k to hit target lightness
+  const adjustedK = calculateOptimalK(targetLevel, targetLightness);
 
   SCALE_LEVELS.forEach((level) => {
-    scale[level] = applyAdjustedTransform(level, adjustedTransform, 0.4);
+    scale[level] = getBaseSigmoidLightness(level, adjustedK);
   });
 
   return scale;
@@ -319,10 +353,10 @@ export const findClosestLevel = ({
   const maxChroma = getMaxChromaForHue(inputHue);
   const relativeChroma = inputChroma / maxChroma;
 
-  // Step 1: Find initial level using symmetric sigmoid
+  // Step 1: Find initial level using new sigmoid (center=10)
   const baseScale: Record<number, number> = {};
   SCALE_LEVELS.forEach((level) => {
-    baseScale[level] = getBaseSigmoidLightness(level, 0.4);
+    baseScale[level] = getBaseSigmoidLightness(level, 0.18);
   });
 
   let initialLevel = 500;
@@ -336,7 +370,7 @@ export const findClosestLevel = ({
   });
 
   // Step 2: Apply chroma-based level correction
-  const pullStrength = relativeChroma * 0.6;
+  const pullStrength = relativeChroma * 0.3;
   const targetDeepLevel = 500; // Pull toward center-deep levels
   const correctedLevel = Math.round(
     initialLevel * (1 - pullStrength) + targetDeepLevel * pullStrength
