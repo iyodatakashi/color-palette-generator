@@ -4,7 +4,6 @@ import * as culori from "culori";
 import {
   adjustChromaForLightness,
   getTheoreticalChromaCoefficient,
-  getPerceptualChroma,
 } from "./chroma";
 import {
   SCALE_LEVELS,
@@ -24,15 +23,9 @@ import type { LightnessMethod, RGB } from "./types";
 // =============================================================================
 
 /**
- * Get lightness value from color according to lightness calculation method
+ * Get lightness value from color using OKLCH
  */
-export const getLightness = ({
-  color,
-  lightnessMethod = "perceptual",
-}: {
-  color: string;
-  lightnessMethod?: LightnessMethod;
-}): number => {
+export const getLightness = (color: string): number => {
   // Convert color to OKLCH for lightness calculation
   const colorObj = culori.parse(color);
   if (!colorObj) return 0;
@@ -55,7 +48,6 @@ export const adjustToLightness = ({
   h,
   c,
   targetLightness,
-  lightnessMethod = "perceptual",
   enableChromaAdjustment = true,
   baseLightness = 50,
   baseColor,
@@ -63,7 +55,6 @@ export const adjustToLightness = ({
   h: number;
   c: number;
   targetLightness: number;
-  lightnessMethod?: LightnessMethod;
   enableChromaAdjustment?: boolean;
   baseLightness?: number;
   baseColor?: string;

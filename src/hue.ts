@@ -20,11 +20,9 @@ import { generateColorPalette } from "./palette";
 export const adjustColorToSameTone = ({
   color,
   targetHue,
-  lightnessMethod = "perceptual",
 }: {
   color: string;
   targetHue: number;
-  lightnessMethod?: LightnessMethod;
 }): string => {
   // Normalize target hue to 0-360 range
   targetHue = isFinite(targetHue) ? ((targetHue % 360) + 360) % 360 : 0;
@@ -36,11 +34,8 @@ export const adjustColorToSameTone = ({
     return color;
   }
 
-  // Calculate perceived lightness of original color using specified method
-  const originalPerceivedLightness = getLightness({
-    color: color,
-    lightnessMethod,
-  });
+  // Calculate perceived lightness of original color
+  const originalPerceivedLightness = getLightness(color);
 
   // Get OKLCH values from original color
   const originalOKLCH = culori.converter("oklch")(colorObj);
@@ -115,7 +110,7 @@ export const generateHuePalette = ({
   includeTextColors = false,
 }: HuePaletteConfig): Palette => {
   // Get base colors for each hue
-  const baseColors = generateHueColors({ color, divisions, lightnessMethod });
+  const baseColors = generateHueColors({ color, divisions });
 
   // Create ColorConfig array for all base colors
   const colorConfigs: ColorConfig[] = baseColors.map(({ name, color }) => ({
@@ -141,8 +136,7 @@ export const generateHuePalette = ({
 export const generateHueColors = ({
   color,
   divisions = 24,
-  lightnessMethod = "perceptual",
-}: Pick<HuePaletteConfig, "color" | "divisions" | "lightnessMethod">): Array<{
+}: Pick<HuePaletteConfig, "color" | "divisions">): Array<{
   name: string;
   hue: number;
   color: string;
@@ -166,7 +160,6 @@ export const generateHueColors = ({
     const adjustedColor = adjustColorToSameTone({
       color,
       targetHue: hue,
-      lightnessMethod,
     });
 
     // Get name from predefined names or generate generic name

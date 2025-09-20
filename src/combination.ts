@@ -323,7 +323,6 @@ const getSecondaryColors = ({
       result[key] = adjustColorToSameTone({
         color: primaryColor,
         targetHue,
-        lightnessMethod,
       });
     }
   }

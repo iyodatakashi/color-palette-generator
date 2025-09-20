@@ -55,7 +55,6 @@ export type {
   RGB,
   OKLCH,
   LightnessMethod,
-  ChromaMethod,
   HueShiftMode,
   CombinationType,
   BaseColorStrategy,

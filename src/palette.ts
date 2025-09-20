@@ -90,10 +90,7 @@ export const generateColorPalette = (
       DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
   };
 
-  const inputLightness = getLightness({
-    color: normalizedColor,
-    lightnessMethod: normalizedConfig.lightnessMethod,
-  });
+  const inputLightness = getLightness(normalizedColor);
 
   const closestLevel = findClosestLevel({
     inputLightness,
@@ -173,7 +170,6 @@ const generateOriginalPalette = ({
         h: adjustedHue,
         c: inputOKLCH.c || 0,
         targetLightness,
-        lightnessMethod: colorConfig.lightnessMethod,
         enableChromaAdjustment: colorConfig.enableChromaAdjustment,
         baseLightness: originalLightness,
         baseColor: colorConfig.color,
@@ -254,10 +250,7 @@ const setTextColor = ({
   }
 
   const normalizedColor = culori.formatHex(inputColorObj);
-  const inputPerceptualLightness = getLightness({
-    color: normalizedColor,
-    lightnessMethod: "perceptual",
-  });
+  const inputPerceptualLightness = getLightness(normalizedColor);
 
   // Find the primary color level (the level closest to input color)
   const primaryLevel = findClosestLevel({
@@ -271,10 +264,7 @@ const setTextColor = ({
     return;
   }
 
-  const primaryLightness = getLightness({
-    color: primaryColor,
-    lightnessMethod: "perceptual",
-  });
+  const primaryLightness = getLightness(primaryColor);
 
   // Find text color for light background (dark text on light background)
   const textColorForLightBackground = findTextColorLevel({
@@ -348,10 +338,7 @@ const findTextColorLevel = ({
     const level = SCALE_LEVELS[i];
     const levelColor = palette[`--${prefix}-${level}`];
     if (levelColor) {
-      const levelLightness = getLightness({
-        color: levelColor,
-        lightnessMethod: "perceptual",
-      });
+      const levelLightness = getLightness(levelColor);
       const levelMeetsCriteria = isLighter
         ? levelLightness >= targetLightness
         : levelLightness <= targetLightness;
