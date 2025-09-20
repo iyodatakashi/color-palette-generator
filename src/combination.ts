@@ -5,12 +5,12 @@ import { normalizeHue } from "./hueShift";
 import { adjustColorToSameTone } from "./hue";
 import type {
   ColorConfig,
-  OKLCH,
   CombinationType,
   BaseColorStrategy,
   CombinationConfig,
   Combination,
 } from "./types";
+import type { Oklch } from "culori";
 import {
   STANDARD_LIGHTNESS_SCALE,
   DEFAULT_COLOR_CONFIG,
@@ -82,7 +82,7 @@ const generateBaseColorConfig = ({
   strategy = "harmonic",
   config,
 }: {
-  primaryOKLCH: OKLCH;
+  primaryOKLCH: Oklch;
   strategy?: BaseColorStrategy;
   config: CombinationConfig;
 }): ColorConfig => {
@@ -119,7 +119,7 @@ const generateSecondaryColorConfigs = ({
   primaryColor,
   config,
 }: {
-  primaryOKLCH: OKLCH;
+  primaryOKLCH: Oklch;
   combinationType: CombinationType;
   primaryColor: string;
   config: CombinationConfig;
@@ -185,7 +185,7 @@ const getBaseColor = ({
   strategy = "harmonic",
   config,
 }: {
-  primaryOKLCH: OKLCH;
+  primaryOKLCH: Oklch;
   strategy?: BaseColorStrategy;
   config: CombinationConfig;
 }): string => {
@@ -236,7 +236,7 @@ const getSecondaryColors = ({
   combinationType,
   primaryColor,
 }: {
-  primaryOKLCH: OKLCH;
+  primaryOKLCH: Oklch;
   combinationType: CombinationType;
   primaryColor: string;
 }): {

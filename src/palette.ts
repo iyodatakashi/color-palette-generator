@@ -1,11 +1,7 @@
 // palette.ts
 
-import type {
-  ColorConfig,
-  NormalizedColorConfig,
-  Palette,
-  OKLCH,
-} from "./types";
+import type { ColorConfig, NormalizedColorConfig, Palette } from "./types";
+import type { Oklch } from "culori";
 import * as culori from "culori";
 import {
   getLightness,
@@ -142,7 +138,7 @@ const generateOriginalPalette = ({
   closestLevel,
   adjustedLightnessScale,
 }: {
-  inputOKLCH: OKLCH;
+  inputOKLCH: Oklch;
   closestLevel: number;
   adjustedLightnessScale: Record<number, number>;
   colorConfig: NormalizedColorConfig;

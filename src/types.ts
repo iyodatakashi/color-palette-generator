@@ -1,5 +1,7 @@
 // types.ts
 
+import type { Oklch, Rgb } from "culori";
+
 // =============================================================================
 // Palette Generation Types
 // =============================================================================
@@ -102,22 +104,11 @@ export type RandomColorConfig = {
 
 // Generated color (output)
 export type GeneratedColor = {
-  oklch: OKLCH;
-  rgb: RGB;
+  oklch: Oklch;
+  rgb: Rgb;
   hex: string;
   actualLightness: number;
 };
-
-// =============================================================================
-// Color Space Types
-// =============================================================================
-
-// Import color types from culori
-import type { Oklch, Rgb } from "culori";
-
-// Re-export color types for convenience
-export type RGB = Rgb;
-export type OKLCH = Oklch;
 
 // =============================================================================
 // Calculation Method Types

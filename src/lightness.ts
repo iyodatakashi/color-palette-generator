@@ -16,7 +16,7 @@ import {
   MAX_LEVEL,
   MIN_LEVEL,
 } from "./constants";
-import type { RGB } from "./types";
+import type { Rgb } from "culori";
 
 // =============================================================================
 // Lightness Calculation Functions

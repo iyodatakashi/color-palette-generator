@@ -52,8 +52,6 @@ export {
 export type {
   Palette,
   ColorConfig,
-  RGB,
-  OKLCH,
   HueShiftMode,
   CombinationType,
   BaseColorStrategy,
