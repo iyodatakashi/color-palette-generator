@@ -19,7 +19,6 @@ import {
  * Get lightness value from color using OKLCH
  */
 export const getLightness = (color: string): number => {
-  // Convert color to OKLCH for lightness calculation
   const colorObj = culori.parse(color);
   if (!colorObj) return 0;
 
@@ -35,7 +34,7 @@ export const getLightness = (color: string): number => {
 // =============================================================================
 
 /**
- * Adjust color to achieve specified lightness
+ * Adjust color to achieve specified lightness with optional chroma adjustment
  */
 export const adjustToLightness = ({
   h,
@@ -67,7 +66,6 @@ export const adjustToLightness = ({
       }) / 100 // Convert back to chroma scale
     : c;
 
-  // Apply perceptual lightness adjustment
   return adjustToPerceptualLightness({
     h,
     c: adjustedChroma,
@@ -77,7 +75,7 @@ export const adjustToLightness = ({
 };
 
 /**
- * Direct adjustment by perceptual lightness using OKLCH chroma preservation
+ * Create color with target lightness using OKLCH
  */
 export const adjustToPerceptualLightness = ({
   h,
@@ -93,20 +91,18 @@ export const adjustToPerceptualLightness = ({
   let originalOKLCH;
 
   if (baseColor) {
-    // Use actual base color's OKLCH for hue reference
     const baseColorObj = culori.parse(baseColor);
     originalOKLCH = culori.converter("oklch")(baseColorObj);
   }
 
-  // Create new OKLCH with target lightness and provided chroma/hue
+  // Create OKLCH with target lightness
   const newOKLCH = {
     mode: "oklch" as const,
     l: targetLightness / 100, // Convert to 0-1 range
-    c: c, // Use provided chroma
-    h: originalOKLCH?.h || h, // Use base color hue if available, otherwise provided hue
+    c: c,
+    h: originalOKLCH?.h || h,
   };
 
-  // Convert back to RGB
   const newRGB = culori.converter("rgb")(newOKLCH);
   return culori.formatHex(newRGB);
 };
