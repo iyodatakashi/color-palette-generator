@@ -90,6 +90,7 @@ export const generateColorPalette = (
   const adjustedLightnessScale = calculateEvenScale({
     inputLightness,
     baseLevel: closestLevel,
+    lightnessMethod: normalizedConfig.lightnessMethod,
   });
 
   const palette = generateOriginalPalette({
@@ -162,6 +163,7 @@ const generateOriginalPalette = ({
         lightnessMethod: colorConfig.lightnessMethod,
         enableSaturationAdjustment: colorConfig.enableSaturationAdjustment,
         baseLightness: originalLightness,
+        baseColor: colorConfig.color,
       });
 
       palette[`--${colorConfig.prefix}-${key}`] = generatedColor;

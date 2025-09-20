@@ -14,10 +14,20 @@ export { generateCombination } from "./combination";
 export { generateRandomPrimaryColor } from "./randomColor";
 
 // Lightness calculation features
-export { getLightness, adjustToLightness } from "./lightness";
+export {
+  getLightness,
+  adjustToLightness,
+  getHybridLightness,
+  calculateEvenScale,
+} from "./lightness";
 
 // Saturation calculation features
-export { getSaturation } from "./saturation";
+export {
+  getSaturation,
+  getTheoreticalSaturationCoefficient,
+  adjustSaturationForLightness,
+  getHybridSaturation,
+} from "./saturation";
 
 // Hue change features
 export { adjustColorToSameTone, generateHuePalette, HUE_NAMES } from "./hue";
@@ -29,9 +39,13 @@ export {
   hexToHSL,
   hslToRGB,
   rgbToHSL,
-  hexToOKLAB,
-  oklabToRGB,
-  getPerceptualChroma,
+  hslToHex,
+  hexToOKLCH,
+  rgbToOKLCH,
+  oklchToRGB,
+  oklchToHex,
+  hslToOKLCH,
+  oklchToHSL,
 } from "./colorUtils";
 
 // Apply to DOM
@@ -43,6 +57,7 @@ export {
   DEFAULT_BASE_COLOR_CONFIG,
   SCALE_LEVELS,
   STANDARD_LIGHTNESS_SCALE,
+  PERCEPTUAL_LIGHTNESS_SCALE,
   DEFAULT_LIGHTNESS_METHOD,
   DEFAULT_HUE_SHIFT_MODE,
   MIN_LEVEL,

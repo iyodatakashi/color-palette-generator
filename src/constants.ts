@@ -28,8 +28,34 @@ export const STANDARD_LIGHTNESS_SCALE: Record<number, number> = {
   950: 16,
 };
 
-export const MAX_LIGHTNESS = 96;
-export const MIN_LIGHTNESS = 16;
+/**
+ * Perceptual lightness scale definitions
+ */
+export const PERCEPTUAL_LIGHTNESS_SCALE: Record<number, number> = {
+  50: 97,
+  100: 93,
+  200: 85,
+  300: 77,
+  400: 69,
+  500: 61,
+  600: 53,
+  700: 45,
+  800: 37,
+  900: 29,
+  950: 25,
+};
+
+// Standard lightness scale limits
+export const STANDARD_MAX_LIGHTNESS = 96;
+export const STANDARD_MIN_LIGHTNESS = 16;
+
+// Perceptual lightness scale limits
+export const PERCEPTUAL_MAX_LIGHTNESS = 97;
+export const PERCEPTUAL_MIN_LIGHTNESS = 25;
+
+// Legacy constants for backward compatibility
+export const MAX_LIGHTNESS = STANDARD_MAX_LIGHTNESS;
+export const MIN_LIGHTNESS = STANDARD_MIN_LIGHTNESS;
 
 /**
  * Alpha value definitions
@@ -52,7 +78,7 @@ export const DEFAULT_COLOR_CONFIG = {
   bgColorLight: "#ffffff",
   bgColorDark: "#000000",
   transparentOriginLevel: 500,
-  enableSaturationAdjustment: true,
+  enableSaturationAdjustment: false,
 };
 
 export const DEFAULT_BASE_COLOR_CONFIG = {

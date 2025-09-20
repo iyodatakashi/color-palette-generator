@@ -1,7 +1,21 @@
 // hue.ts
 
-import { hexToHSL, validateHexColor } from "./colorUtils";
-import { getLightness, adjustToLightness } from "./lightness";
+import {
+  hexToHSL,
+  validateHexColor,
+  hexToRGB,
+  rgbToOKLCH,
+  oklchToRGB,
+} from "./colorUtils";
+import {
+  getLightness,
+  adjustToLightness,
+  adjustToHybridLightness,
+  adjustToPerceptualLightness,
+  adjustToHSLLightness,
+  getHybridLightness,
+} from "./lightness";
+import { getHybridSaturation } from "./saturation";
 import type {
   LightnessMethod,
   HuePaletteConfig,
@@ -44,13 +58,30 @@ export const adjustColorToSameTone = ({
     lightnessMethod,
   });
 
-  // Use existing adjustToLightness function to maintain perceived lightness
-  return adjustToLightness({
+  // For OKLCH-based methods, preserve OKLCH hue and chroma, only adjust lightness
+  if (lightnessMethod === "perceptual" || lightnessMethod === "hybrid") {
+    const originalRGB = hexToRGB(color);
+    const originalOKLCH = rgbToOKLCH(originalRGB);
+
+    // Create new OKLCH with target hue and original chroma
+    const newOKLCH = {
+      l: originalPerceivedLightness / 100, // Convert to 0-1 range
+      c: originalOKLCH.c, // Preserve original chroma
+      h: targetHue, // Use target hue
+    };
+
+    // Convert back to RGB
+    const newRGB = oklchToRGB(newOKLCH);
+    return `#${newRGB.r.toString(16).padStart(2, "0")}${newRGB.g
+      .toString(16)
+      .padStart(2, "0")}${newRGB.b.toString(16).padStart(2, "0")}`;
+  }
+
+  // For HSL method, use original logic
+  return adjustToHSLLightness({
     h: targetHue,
     s: hsl.s,
     targetLightness: originalPerceivedLightness,
-    lightnessMethod,
-    enableSaturationAdjustment: false, // Keep original saturation when changing hue
   });
 };
 

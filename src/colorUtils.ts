@@ -3,11 +3,11 @@
 import type { RGB, HSL } from "./types";
 import { createContextLogger } from "./logger";
 
-// Type definition for OKLAB color space
-type OKLAB = {
+// Type definition for OKLCH color space
+type OKLCH = {
   l: number; // Lightness (0-1)
-  a: number; // Green-Red axis (-0.4 to 0.4)
-  b: number; // Blue-Yellow axis (-0.4 to 0.4)
+  c: number; // Chroma (0-0.4)
+  h: number; // Hue (0-360)
 };
 
 const log = createContextLogger("ColorUtils");
@@ -245,15 +245,14 @@ export const hslToHex = ({ h, s, l }: HSL): string => {
 };
 
 // =============================================================================
-// OKLAB Color Space Functions
+// OKLCH Color Space Functions
 // =============================================================================
 
 /**
- * Convert RGB to OKLAB color space
- * Based on the OKLAB specification: https://bottosson.github.io/posts/oklab/
+ * Convert RGB to OKLCH color space directly
  */
-export const rgbToOKLAB = ({ r, g, b }: RGB): OKLAB => {
-  // First convert RGB to linear RGB
+export const rgbToOKLCH = ({ r, g, b }: RGB): OKLCH => {
+  // Convert RGB to linear RGB
   const toLinear = (c: number): number => {
     const normalized = Math.max(0, Math.min(255, c)) / 255;
     return normalized <= 0.04045
@@ -265,7 +264,7 @@ export const rgbToOKLAB = ({ r, g, b }: RGB): OKLAB => {
   const gLinear = toLinear(g);
   const bLinear = toLinear(b);
 
-  // Convert linear RGB to OKLAB
+  // Convert linear RGB to LMS color space
   const l =
     0.4122214708 * rLinear + 0.5363325363 * gLinear + 0.0514459929 * bLinear;
   const m =
@@ -273,23 +272,76 @@ export const rgbToOKLAB = ({ r, g, b }: RGB): OKLAB => {
   const s =
     0.0883024619 * rLinear + 0.2817188376 * gLinear + 0.6299787005 * bLinear;
 
-  // Apply cube root
-  const l_ = Math.cbrt(l);
-  const m_ = Math.cbrt(m);
-  const s_ = Math.cbrt(s);
+  // Apply cube root to get perceptual uniformity
+  const lRoot = Math.cbrt(l);
+  const mRoot = Math.cbrt(m);
+  const sRoot = Math.cbrt(s);
 
+  // Calculate OKLCH lightness directly
+  const lightness =
+    0.2104542553 * lRoot + 0.793617785 * mRoot - 0.0040720468 * sRoot;
+
+  // Calculate chroma and hue directly from LMS without intermediate a,b
+  const chromaX =
+    1.9779984951 * lRoot - 2.428592205 * mRoot + 0.4505937099 * sRoot;
+  const chromaY =
+    0.0259040371 * lRoot + 0.7827717662 * mRoot - 0.808675766 * sRoot;
+
+  const chroma = Math.sqrt(chromaX * chromaX + chromaY * chromaY);
+  let hue = Math.atan2(chromaY, chromaX) * (180 / Math.PI);
+  if (hue < 0) hue += 360;
+
+  return { l: lightness, c: chroma, h: hue };
+};
+
+/**
+ * Convert HEX to OKLCH color space
+ */
+export const hexToOKLCH = (hex: string): OKLCH => {
+  const rgb = hexToRGB(hex);
+  return rgbToOKLCH(rgb);
+};
+
+/**
+ * Convert OKLCH to RGB with lightness and hue priority gamut mapping
+ */
+export const oklchToRGB = (oklch: OKLCH): RGB => {
+  const { l, c, h } = oklch;
+
+  // Try with original chroma first
+  let rgb = oklchToRGBUnsafe({ l, c, h });
+
+  // If out of gamut, reduce chroma iteratively while preserving lightness and hue
+  if (!isRGBInGamut(rgb)) {
+    let adjustedChroma = c;
+    const chromaStep = c / 50; // Fine-grained reduction for better accuracy
+
+    while (adjustedChroma > 0.001 && !isRGBInGamut(rgb)) {
+      adjustedChroma = Math.max(0, adjustedChroma - chromaStep);
+      rgb = oklchToRGBUnsafe({ l, c: adjustedChroma, h });
+    }
+  }
+
+  // Final clamp to ensure valid RGB values
   return {
-    l: 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
-    a: 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
-    b: 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
+    r: Math.max(0, Math.min(255, Math.round(rgb.r))),
+    g: Math.max(0, Math.min(255, Math.round(rgb.g))),
+    b: Math.max(0, Math.min(255, Math.round(rgb.b))),
   };
 };
 
 /**
- * Convert OKLAB to RGB color space
+ * Convert OKLCH to RGB without gamut checking (unsafe)
  */
-export const oklabToRGB = ({ l, a, b }: OKLAB): RGB => {
-  // Convert OKLAB to linear RGB
+const oklchToRGBUnsafe = (oklch: OKLCH): RGB => {
+  const { l, c, h } = oklch;
+
+  // Convert OKLCH to Lab-like coordinates
+  const hRad = (h * Math.PI) / 180;
+  const a = c * Math.cos(hRad);
+  const b = c * Math.sin(hRad);
+
+  // Convert to LMS space (reverse of RGB→OKLCH)
   const l_ = l + 0.3963377774 * a + 0.2158037573 * b;
   const m_ = l - 0.1055613458 * a - 0.0638541728 * b;
   const s_ = l - 0.0894841775 * a - 1.291485548 * b;
@@ -299,7 +351,7 @@ export const oklabToRGB = ({ l, a, b }: OKLAB): RGB => {
   const mLinear = m_ * m_ * m_;
   const sLinear = s_ * s_ * s_;
 
-  // Convert to RGB
+  // Convert to linear RGB
   const rLinear =
     +4.0767416621 * lLinear - 3.3077115913 * mLinear + 0.2309699292 * sLinear;
   const gLinear =
@@ -307,39 +359,52 @@ export const oklabToRGB = ({ l, a, b }: OKLAB): RGB => {
   const bLinear =
     -0.0041960863 * lLinear - 0.7034186147 * mLinear + 1.707614701 * sLinear;
 
-  // Convert linear RGB to sRGB
+  // Convert to sRGB
   const toSRGB = (c: number): number => {
-    const clamped = Math.max(0, Math.min(1, c));
-    return clamped <= 0.0031308
-      ? 12.92 * clamped
-      : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
+    return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
   };
 
   return {
-    r: Math.round(toSRGB(rLinear) * 255),
-    g: Math.round(toSRGB(gLinear) * 255),
-    b: Math.round(toSRGB(bLinear) * 255),
+    r: toSRGB(rLinear) * 255,
+    g: toSRGB(gLinear) * 255,
+    b: toSRGB(bLinear) * 255,
   };
 };
 
 /**
- * Convert HEX to OKLAB color space
+ * Check if RGB values are within valid gamut
  */
-export const hexToOKLAB = (hex: string): OKLAB => {
-  const rgb = hexToRGB(hex);
-  return rgbToOKLAB(rgb);
+const isRGBInGamut = (rgb: RGB): boolean => {
+  return (
+    rgb.r >= 0 &&
+    rgb.r <= 255 &&
+    rgb.g >= 0 &&
+    rgb.g <= 255 &&
+    rgb.b >= 0 &&
+    rgb.b <= 255
+  );
 };
 
 /**
- * Calculate perceptual chroma (saturation) using OKLAB
- * C = √(a² + b²)
+ * Convert OKLCH to HEX with gamut mapping
  */
-export const getPerceptualChroma = ({
-  a,
-  b,
-}: {
-  a: number;
-  b: number;
-}): number => {
-  return Math.sqrt(a * a + b * b);
+export const oklchToHex = (oklch: OKLCH): string => {
+  const rgb = oklchToRGB(oklch);
+  return rgbToHex(rgb);
+};
+
+/**
+ * Convert HSL to OKLCH color space
+ */
+export const hslToOKLCH = ({ h, s, l }: HSL): OKLCH => {
+  const rgb = hslToRGB({ h, s, l });
+  return rgbToOKLCH(rgb);
+};
+
+/**
+ * Convert OKLCH to HSL color space
+ */
+export const oklchToHSL = (oklch: OKLCH): HSL => {
+  const rgb = oklchToRGB(oklch);
+  return rgbToHSL(rgb);
 };

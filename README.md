@@ -15,7 +15,7 @@ A full-featured color palette generator built with this library.
 - 🎲 **Random Color Generation**: Generate random colors with customizable parameters
 - 🔀 **Color Combinations**: Create harmonious color combinations (complementary, triadic, analogous, etc.)
 - 🎯 **Lightness Control**: Precise control over color lightness and contrast
-- ✨ **Perceptual Saturation Adjustment**: Advanced OKLAB-based saturation optimization for natural, consistent color vibrancy
+- ✨ **Perceptual Saturation Adjustment**: Advanced OKLCH-based saturation optimization for natural, consistent color vibrancy
 - 🔧 **Utility Functions**: Comprehensive color conversion utilities (HEX, RGB, HSL)
 - 🔍 **CSS Variable Resolution**: Follow nested CSS variable references (var(--primary-color) → var(--primary-500) → #3b82f6) to get final HEX values
 
@@ -169,7 +169,7 @@ const paletteOriginal = generateColorPalette({
   enableSaturationAdjustment: false,
 });
 
-// The saturation adjustment feature uses OKLAB color space to automatically
+// The saturation adjustment feature uses OKLCH color space to automatically
 // optimize saturation based on each hue's ideal lightness, ensuring consistent
 // visual vibrancy across all lightness levels (50, 100, 200, ..., 950)
 ```
@@ -222,7 +222,7 @@ const resolvedColor = resolveVariable({
 ```typescript
 import { getSaturation } from "@14ch/color-palette-generator";
 
-// Get perceptual saturation (OKLAB-based, more accurate)
+// Get perceptual saturation (OKLCH-based, more accurate)
 const perceptualSat = getSaturation({
   color: "#3b82f6",
   saturationMethod: "perceptual", // Default
@@ -273,7 +273,7 @@ interface ColorConfig {
   bgColorDark?: string;
   transparentOriginLevel?: number;
   enableSaturationAdjustment?: boolean; // Default: true - Optimize saturation for natural palettes
-  saturationMethod?: SaturationMethod; // Default: "oklab" - Method for saturation calculation
+  saturationMethod?: SaturationMethod; // Default: "perceptual" - Method for saturation calculation
 }
 
 interface Palette {
@@ -307,7 +307,7 @@ interface RandomColorConfig {
 }
 
 type LightnessMethod = "hybrid" | "hsl" | "perceptual" | "average";
-type SaturationMethod = "hsl" | "perceptual" | "oklab" | "hybrid";
+type SaturationMethod = "hsl" | "perceptual";
 type HueShiftMode = "fixed" | "natural" | "unnatural";
 type BaseColorStrategy = "harmonic" | "contrasting" | "neutral";
 type CombinationType =
@@ -359,7 +359,7 @@ Calculates the lightness of a color using the specified method.
 
 #### `getSaturation({ color: string, saturationMethod?: "hsl" | "perceptual" }): number`
 
-Calculates the saturation of a color using the specified method. Default is "perceptual" (OKLAB-based) for more accurate results.
+Calculates the saturation of a color using the specified method. Default is "perceptual" (OKLCH-based) for more accurate results.
 
 #### `adjustToLightness({ h, s, targetLightness, lightnessMethod?, enableSaturationAdjustment? }): string`
 

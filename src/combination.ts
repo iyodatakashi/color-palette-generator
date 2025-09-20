@@ -1,6 +1,6 @@
 // combination.ts
 
-import { hexToHSL } from "./colorUtils";
+import { hexToHSL, hexToRGB, rgbToOKLCH, oklchToRGB } from "./colorUtils";
 import { getLightness, adjustToLightness } from "./lightness";
 import { normalizeHue } from "./hueShift";
 import { adjustColorToSameTone } from "./hue";
@@ -192,6 +192,49 @@ const getBaseColor = ({
   strategy?: BaseColorStrategy;
 }): string => {
   const targetLightness = STANDARD_LIGHTNESS_SCALE[500]; // 500 level equivalent
+
+  // For OKLCH-based methods, use OKLCH chroma instead of HSL saturation
+  if (lightnessMethod === "perceptual" || lightnessMethod === "hybrid") {
+    const primaryRGB = hexToRGB(
+      `#${primaryHSL.h.toString(16).padStart(2, "0")}${primaryHSL.s
+        .toString(16)
+        .padStart(2, "0")}${primaryHSL.l.toString(16).padStart(2, "0")}`
+    );
+    const primaryOKLCH = rgbToOKLCH(primaryRGB);
+
+    // Calculate base chroma (low saturation for base colors)
+    const baseChroma = Math.max(0.02, Math.min(0.08, primaryOKLCH.c * 0.1));
+
+    const strategyMap: Record<
+      BaseColorStrategy,
+      { baseHue: number; finalChroma: number }
+    > = {
+      harmonic: { baseHue: primaryHSL.h, finalChroma: baseChroma },
+      contrasting: {
+        baseHue: normalizeHue(primaryHSL.h + 180),
+        finalChroma: baseChroma,
+      },
+      neutral: { baseHue: 0, finalChroma: 0.01 },
+    };
+
+    const { baseHue, finalChroma } =
+      strategyMap[strategy] || strategyMap.harmonic;
+
+    // Create OKLCH color with target lightness
+    const newOKLCH = {
+      l: targetLightness / 100, // Convert to 0-1 range
+      c: finalChroma,
+      h: baseHue,
+    };
+
+    // Convert back to RGB
+    const newRGB = oklchToRGB(newOKLCH);
+    return `#${newRGB.r.toString(16).padStart(2, "0")}${newRGB.g
+      .toString(16)
+      .padStart(2, "0")}${newRGB.b.toString(16).padStart(2, "0")}`;
+  }
+
+  // For HSL method, use original logic
   const baseSaturation = Math.max(5, Math.min(15, primaryHSL.s * 0.1));
 
   const strategyMap: Record<
@@ -213,8 +256,6 @@ const getBaseColor = ({
     h: baseHue,
     s: finalSaturation,
     targetLightness,
-    lightnessMethod: lightnessMethod,
-    enableSaturationAdjustment: false, // Keep original saturation for base colors
   });
 };
 

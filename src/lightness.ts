@@ -1,14 +1,29 @@
 // lightness.ts
 
-import { hslToRGB, rgbToHex, rgbToHSL, hexToHSL, hexToRGB } from "./colorUtils";
-import { adjustSaturationForLightness } from "./saturation";
+import {
+  hslToRGB,
+  rgbToHex,
+  rgbToHSL,
+  hexToHSL,
+  hexToRGB,
+  rgbToOKLCH,
+  oklchToRGB,
+} from "./colorUtils";
+import {
+  adjustSaturationForLightness,
+  getTheoreticalSaturationCoefficient,
+  getPerceptualSaturation,
+} from "./saturation";
 import {
   SCALE_LEVELS,
   STANDARD_LIGHTNESS_SCALE,
+  PERCEPTUAL_LIGHTNESS_SCALE,
+  STANDARD_MAX_LIGHTNESS,
+  STANDARD_MIN_LIGHTNESS,
+  PERCEPTUAL_MAX_LIGHTNESS,
+  PERCEPTUAL_MIN_LIGHTNESS,
   MAX_LEVEL,
   MIN_LEVEL,
-  MAX_LIGHTNESS,
-  MIN_LIGHTNESS,
 } from "./constants";
 import type { LightnessMethod, RGB } from "./types";
 
@@ -42,7 +57,7 @@ export const getLightness = ({
 };
 
 /**
- * Calculate perceptual lightness from RGB (CIE Lab* based)
+ * Calculate perceptual lightness from RGB (OKLCH based)
  */
 const getPerceptualLightness = ({
   r,
@@ -53,30 +68,11 @@ const getPerceptualLightness = ({
   g: number;
   b: number;
 }): number => {
-  const toLinear = ({ c }: { c: number }): number => {
-    if (isNaN(c) || !isFinite(c)) c = 0;
-    const normalized = Math.max(0, Math.min(255, c)) / 255;
-    return normalized <= 0.04045
-      ? normalized / 12.92
-      : Math.pow((normalized + 0.055) / 1.055, 2.4);
-  };
+  // Convert RGB directly to OKLCH to get lightness
+  const oklch = rgbToOKLCH({ r, g, b });
 
-  const rLinear = toLinear({ c: r });
-  const gLinear = toLinear({ c: g });
-  const bLinear = toLinear({ c: b });
-
-  const luminance = 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
-
-  // Accurate CIE L* calculation
-  const threshold = 216 / 24389;
-  const multiplier = 24389 / 27;
-
-  const result =
-    luminance > threshold
-      ? Math.pow(luminance, 1 / 3) * 116 - 16
-      : luminance * multiplier;
-
-  return isFinite(result) ? result : 0;
+  // OKLCH lightness is 0-1, convert to 0-100 scale
+  return oklch.l * 100;
 };
 
 /**
@@ -114,7 +110,7 @@ const getAverageLightness = ({
 /**
  * Get hybrid lightness (weighted average of perceptual lightness + HSL lightness)
  */
-const getHybridLightness = ({
+export const getHybridLightness = ({
   r,
   g,
   b,
@@ -143,6 +139,7 @@ export const adjustToLightness = ({
   lightnessMethod = "hybrid",
   enableSaturationAdjustment = true,
   baseLightness = 50,
+  baseColor,
 }: {
   h: number;
   s: number;
@@ -150,6 +147,7 @@ export const adjustToLightness = ({
   lightnessMethod?: LightnessMethod;
   enableSaturationAdjustment?: boolean;
   baseLightness?: number;
+  baseColor?: string;
 }): string => {
   h = isFinite(h) ? ((h % 360) + 360) % 360 : 0;
   s = isFinite(s) ? Math.max(0, Math.min(100, s)) : 0;
@@ -173,12 +171,29 @@ export const adjustToLightness = ({
         s: adjustedSaturation,
         targetLightness,
       });
+    case "perceptual":
+      // For perceptual lightness, use direct perceptual lightness adjustment
+      return adjustToPerceptualLightness({
+        h,
+        s: adjustedSaturation,
+        targetLightness,
+        baseColor,
+      });
+    case "hybrid":
+      // For hybrid lightness, use direct hybrid lightness adjustment
+      return adjustToHybridLightness({
+        h,
+        s: adjustedSaturation,
+        targetLightness,
+        baseColor,
+      });
     default:
       return adjustToLightnessByBinarySearch({
         h,
         s: adjustedSaturation,
         targetLightness,
         lightnessMethod,
+        baseLightness,
       });
   }
 };
@@ -186,7 +201,7 @@ export const adjustToLightness = ({
 /**
  * Direct adjustment by HSL lightness (100% round-trip consistency guaranteed)
  */
-const adjustToHSLLightness = ({
+export const adjustToHSLLightness = ({
   h,
   s,
   targetLightness,
@@ -201,57 +216,200 @@ const adjustToHSLLightness = ({
 };
 
 /**
- * Lightness adjustment by binary search
+ * Direct adjustment by perceptual lightness using OKLCH chroma preservation
+ */
+export const adjustToPerceptualLightness = ({
+  h,
+  s,
+  targetLightness,
+  baseColor,
+}: {
+  h: number;
+  s: number;
+  targetLightness: number;
+  baseColor?: string;
+}): string => {
+  let originalOKLCH;
+
+  if (baseColor) {
+    // Use actual base color's OKLCH chroma
+    const baseRGB = hexToRGB(baseColor);
+    originalOKLCH = rgbToOKLCH(baseRGB);
+  } else {
+    // Fallback to HSL-based calculation
+    const originalRGB = hslToRGB({ h, s, l: 50 });
+    originalOKLCH = rgbToOKLCH(originalRGB);
+  }
+
+  // Create new OKLCH with target lightness and original chroma
+  const newOKLCH = {
+    l: targetLightness / 100, // Convert to 0-1 range
+    c: originalOKLCH.c, // Preserve original chroma
+    h: originalOKLCH.h, // Use original hue from base color
+  };
+
+  // Convert back to RGB
+  const newRGB = oklchToRGB(newOKLCH);
+  return rgbToHex(newRGB);
+};
+
+/**
+ * Direct adjustment by hybrid lightness using OKLCH chroma preservation
+ */
+export const adjustToHybridLightness = ({
+  h,
+  s,
+  targetLightness,
+  baseColor,
+}: {
+  h: number;
+  s: number;
+  targetLightness: number;
+  baseColor?: string;
+}): string => {
+  let originalOKLCH;
+
+  if (baseColor) {
+    // Use actual base color's OKLCH chroma
+    const baseRGB = hexToRGB(baseColor);
+    originalOKLCH = rgbToOKLCH(baseRGB);
+  } else {
+    // Fallback to HSL-based calculation
+    const originalRGB = hslToRGB({ h, s, l: 50 });
+    originalOKLCH = rgbToOKLCH(originalRGB);
+  }
+
+  // Create new OKLCH with target lightness and original chroma
+  const newOKLCH = {
+    l: targetLightness / 100, // Convert to 0-1 range
+    c: originalOKLCH.c, // Preserve original chroma
+    h: originalOKLCH.h, // Use original hue from base color
+  };
+
+  // Convert back to RGB
+  const newRGB = oklchToRGB(newOKLCH);
+  return rgbToHex(newRGB);
+};
+
+/**
+ * Lightness adjustment with OKLCH chroma preservation using theoretical curve
  */
 const adjustToLightnessByBinarySearch = ({
   h,
   s,
   targetLightness,
   lightnessMethod = "hybrid",
+  baseLightness = 50,
 }: {
   h: number;
   s: number;
   targetLightness: number;
   lightnessMethod?: LightnessMethod;
+  baseLightness?: number;
 }): string => {
-  const MAX_ITERATIONS = 100;
+  // Step 1: Generate color with specified lightness method
+  const initialColor = adjustToHSLLightness({
+    h,
+    s,
+    targetLightness,
+  });
+
+  // Step 2: Use base color chroma directly (without theoretical curve)
+  const baseRgb = hslToRGB({ h, s, l: baseLightness });
+  const baseOKLCH = rgbToOKLCH(baseRgb);
+  const targetChroma = baseOKLCH.c; // Use base color chroma directly
+
+  // Get current OKLCH values
+  const currentRGB = hexToRGB(initialColor);
+  const currentOKLCH = rgbToOKLCH(currentRGB);
+
+  // If chroma is already close to target, return initial color
+  if (Math.abs(currentOKLCH.c - targetChroma) < 0.001) {
+    return initialColor;
+  }
+
+  // Step 3: Adjust HSL saturation to match target chroma
+  const adjustedColor = adjustHSLForOKLCHChroma({
+    h,
+    s,
+    l: targetLightness,
+    targetChroma,
+    lightnessMethod,
+    targetLightness,
+  });
+
+  return adjustedColor;
+};
+
+/**
+ * Adjust HSL saturation to match target OKLCH chroma
+ */
+const adjustHSLForOKLCHChroma = ({
+  h,
+  s,
+  l,
+  targetChroma,
+  lightnessMethod,
+  targetLightness,
+}: {
+  h: number;
+  s: number;
+  l: number;
+  targetChroma: number;
+  lightnessMethod: LightnessMethod;
+  targetLightness: number;
+}): string => {
+  const MAX_ITERATIONS = 50;
   const PRECISION_THRESHOLD = 0.001;
 
   let low = 0;
   let high = 100;
-  let bestL = 50;
+  let bestS = s;
   let bestDiff = Infinity;
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     const mid = (low + high) / 2;
-    const rgb = hslToRGB({ h, s, l: mid });
-    const currentLightness = getLightness({
-      color: rgbToHex(rgb),
-      lightnessMethod: lightnessMethod,
-    });
-    const diff = Math.abs(currentLightness - targetLightness);
+    const rgb = hslToRGB({ h, s: mid, l });
+    const currentOKLCH = rgbToOKLCH(rgb);
+    const chromaDiff = Math.abs(currentOKLCH.c - targetChroma);
 
-    // Record L value with minimum error
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      bestL = mid;
+    // Record S value with best chroma match
+    if (chromaDiff < bestDiff) {
+      bestDiff = chromaDiff;
+      bestS = mid;
     }
 
     // Exit if sufficient precision is reached
-    if (diff < PRECISION_THRESHOLD) break;
+    if (chromaDiff < PRECISION_THRESHOLD) break;
 
     // Exit if range becomes sufficiently small
     if (high - low < PRECISION_THRESHOLD) break;
 
-    if (currentLightness < targetLightness) {
+    if (currentOKLCH.c < targetChroma) {
       low = mid;
     } else {
       high = mid;
     }
   }
 
-  const finalRgb = hslToRGB({ h, s, l: bestL });
-  return rgbToHex(finalRgb);
+  // Step 4: Adjust lightness if it deviated from target
+  const finalRGB = hslToRGB({ h, s: bestS, l });
+  const finalLightness = getLightness({
+    color: rgbToHex(finalRGB),
+    lightnessMethod,
+  });
+  const lightnessDiff = Math.abs(finalLightness - targetLightness);
+
+  // If lightness deviated significantly, adjust it
+  if (lightnessDiff > 0.01) {
+    return adjustToHSLLightness({
+      h,
+      s: bestS,
+      targetLightness,
+    });
+  }
+
+  return rgbToHex(finalRGB);
 };
 
 // =============================================================================
@@ -274,6 +432,8 @@ export const findClosestLevel = ({
     const lightness =
       lightnessMethod !== "perceptual"
         ? getAdjustedLightness({ level: current, lightnessMethod })
+        : lightnessMethod === "perceptual"
+        ? PERCEPTUAL_LIGHTNESS_SCALE[current]
         : STANDARD_LIGHTNESS_SCALE[current];
 
     const currentDiff = Math.abs(inputLightness - lightness);
@@ -281,6 +441,8 @@ export const findClosestLevel = ({
       inputLightness -
         (lightnessMethod !== "perceptual"
           ? getAdjustedLightness({ level: closestLevel, lightnessMethod })
+          : lightnessMethod === "perceptual"
+          ? PERCEPTUAL_LIGHTNESS_SCALE[closestLevel]
           : STANDARD_LIGHTNESS_SCALE[closestLevel])
     );
 
@@ -294,15 +456,32 @@ export const findClosestLevel = ({
 export const calculateEvenScale = ({
   inputLightness,
   baseLevel,
+  lightnessMethod = "hybrid",
 }: {
   inputLightness: number;
   baseLevel: number;
+  lightnessMethod?: LightnessMethod;
 }): Record<number, number> => {
   if (!isFinite(inputLightness)) inputLightness = 50;
 
+  // Use appropriate scale and limits based on lightness method
+  const scale =
+    lightnessMethod === "perceptual"
+      ? PERCEPTUAL_LIGHTNESS_SCALE
+      : STANDARD_LIGHTNESS_SCALE;
+
+  const maxLightness =
+    lightnessMethod === "perceptual"
+      ? PERCEPTUAL_MAX_LIGHTNESS
+      : STANDARD_MAX_LIGHTNESS;
+  const minLightness =
+    lightnessMethod === "perceptual"
+      ? PERCEPTUAL_MIN_LIGHTNESS
+      : STANDARD_MIN_LIGHTNESS;
+
   const clampedInputLightness = Math.max(
-    MIN_LIGHTNESS,
-    Math.min(MAX_LIGHTNESS, inputLightness)
+    minLightness,
+    Math.min(maxLightness, inputLightness)
   );
 
   if (!SCALE_LEVELS.includes(baseLevel)) baseLevel = 500;
@@ -314,14 +493,24 @@ export const calculateEvenScale = ({
   const upwardSteps = baseIndex;
   const downwardSteps = totalSteps - baseIndex;
 
-  const availableUpward = MAX_LIGHTNESS - clampedInputLightness;
-  const availableDownward = clampedInputLightness - MIN_LIGHTNESS;
+  const availableUpward = maxLightness - clampedInputLightness;
+  const availableDownward = clampedInputLightness - minLightness;
 
   const upwardInterval = upwardSteps > 0 ? availableUpward / upwardSteps : 0;
   const downwardInterval =
     downwardSteps > 0 ? availableDownward / downwardSteps : 0;
 
   const evenScale: Record<number, number> = {};
+
+  // For perceptual lightness, use PERCEPTUAL_LIGHTNESS_SCALE directly
+  if (lightnessMethod === "perceptual") {
+    SCALE_LEVELS.forEach((level) => {
+      evenScale[level] = scale[level];
+    });
+    return evenScale;
+  }
+
+  // For other methods, use the original logic
   evenScale[baseLevel] = clampedInputLightness;
 
   // Upper levels (bright direction)
@@ -329,7 +518,7 @@ export const calculateEvenScale = ({
     const level = baseLevel - i * STEP_SIZE;
     const lightness = Math.min(
       clampedInputLightness + upwardInterval * i,
-      MAX_LIGHTNESS
+      maxLightness
     );
     evenScale[level] = lightness;
   }
@@ -339,7 +528,7 @@ export const calculateEvenScale = ({
     const level = baseLevel + i * STEP_SIZE;
     const lightness = Math.max(
       clampedInputLightness - downwardInterval * i,
-      MIN_LIGHTNESS
+      minLightness
     );
     evenScale[level] = lightness;
   }
@@ -349,8 +538,8 @@ export const calculateEvenScale = ({
   SCALE_LEVELS.forEach((level) => {
     if (evenScale[level] !== undefined) {
       adjustedLightnessScale[level] = Math.max(
-        MIN_LIGHTNESS,
-        Math.min(MAX_LIGHTNESS, evenScale[level])
+        minLightness,
+        Math.min(maxLightness, evenScale[level])
       );
     }
   });
@@ -377,13 +566,14 @@ const getAdjustedLightness = ({
   switch (lightnessMethod) {
     case "hsl":
     case "average":
-      return MAX_LIGHTNESS - normalizedLevel * (MAX_LIGHTNESS - MIN_LIGHTNESS);
+      return (
+        STANDARD_MAX_LIGHTNESS -
+        normalizedLevel * (STANDARD_MAX_LIGHTNESS - STANDARD_MIN_LIGHTNESS)
+      );
     case "hybrid":
-      const perceptualLightness = STANDARD_LIGHTNESS_SCALE[level];
-      const linearLightness =
-        MAX_LIGHTNESS - normalizedLevel * (MAX_LIGHTNESS - MIN_LIGHTNESS);
-      return perceptualLightness * 0.3 + linearLightness * 0.7;
+      return STANDARD_LIGHTNESS_SCALE[level];
     case "perceptual":
+      return PERCEPTUAL_LIGHTNESS_SCALE[level];
     default:
       return STANDARD_LIGHTNESS_SCALE[level];
   }
