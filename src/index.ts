@@ -32,22 +32,6 @@ export {
 // Hue change features
 export { adjustColorToSameTone, generateHuePalette, HUE_NAMES } from "./hue";
 
-// Basic color utilities
-export {
-  hexToRGB,
-  rgbToHex,
-  hexToHSL,
-  hslToRGB,
-  rgbToHSL,
-  hslToHex,
-  hexToOKLCH,
-  rgbToOKLCH,
-  oklchToRGB,
-  oklchToHex,
-  hslToOKLCH,
-  oklchToHSL,
-} from "./colorUtils";
-
 // Apply to DOM
 export { applyColorPaletteToDom } from "./applyToDom";
 

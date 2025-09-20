@@ -1,6 +1,6 @@
 // hueShift.ts
 
-import { hexToHSL } from "./colorUtils";
+import * as culori from "culori";
 import type { ColorConfig, HueShiftMode } from "./types";
 
 // =============================================================================
@@ -116,7 +116,22 @@ export const getHueShiftExplanation = ({
   darkerSign: string;
 } => {
   const { hueShiftMode } = colorConfig;
-  const baseHSL = hexToHSL(colorConfig.color);
+  // Convert color to HSL using culori
+  const colorObj = culori.parse(colorConfig.color);
+  if (!colorObj) {
+    throw new Error("Invalid color");
+  }
+
+  const baseHSLColor = culori.converter("hsl")(colorObj);
+  if (!baseHSLColor) {
+    throw new Error("Failed to convert color to HSL");
+  }
+
+  const baseHSL = {
+    h: baseHSLColor.h || 0,
+    s: (baseHSLColor.s || 0) * 100,
+    l: (baseHSLColor.l || 0) * 100,
+  };
   const hueCategory = getHueCategory(baseHSL.h);
   const category = getHueCategoryJapanese(baseHSL.h);
 

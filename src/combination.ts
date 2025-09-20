@@ -1,6 +1,6 @@
 // combination.ts
 
-import { hexToHSL, hexToRGB, rgbToOKLCH, oklchToRGB } from "./colorUtils";
+import * as culori from "culori";
 import { getLightness, adjustToLightness } from "./lightness";
 import { normalizeHue } from "./hueShift";
 import { adjustColorToSameTone } from "./hue";
@@ -28,7 +28,22 @@ import {
  */
 export const generateCombination = (config: CombinationConfig): Combination => {
   const combinationType = config.combinationType || "complementary";
-  const primaryHSL = hexToHSL(config.primaryColor);
+  // Convert primary color to HSL using culori
+  const primaryColorObj = culori.parse(config.primaryColor);
+  if (!primaryColorObj) {
+    throw new Error("Invalid primary color");
+  }
+
+  const primaryHSLColor = culori.converter("hsl")(primaryColorObj);
+  if (!primaryHSLColor) {
+    throw new Error("Failed to convert color to HSL");
+  }
+
+  const primaryHSL = {
+    h: primaryHSLColor.h || 0,
+    s: (primaryHSLColor.s || 0) * 100,
+    l: (primaryHSLColor.l || 0) * 100,
+  };
   const lightnessMethod = config.lightnessMethod || "hybrid";
   const baseColorStrategy = config.baseColorStrategy || "harmonic";
   // Use default saturation adjustment settings for each color type
@@ -85,7 +100,12 @@ const generateBaseColorConfig = ({
   strategy?: BaseColorStrategy;
   config: CombinationConfig;
 }): ColorConfig => {
-  const baseColor = getBaseColor({ primaryHSL, lightnessMethod, strategy });
+  const baseColor = getBaseColor({
+    primaryHSL,
+    lightnessMethod,
+    strategy,
+    config,
+  });
 
   return {
     lightnessMethod,
@@ -186,21 +206,27 @@ const getBaseColor = ({
   primaryHSL,
   lightnessMethod = "hybrid",
   strategy = "harmonic",
+  config,
 }: {
   primaryHSL: HSL;
   lightnessMethod?: LightnessMethod;
   strategy?: BaseColorStrategy;
+  config: CombinationConfig;
 }): string => {
   const targetLightness = STANDARD_LIGHTNESS_SCALE[500]; // 500 level equivalent
 
   // For OKLCH-based methods, use OKLCH chroma instead of HSL saturation
   if (lightnessMethod === "perceptual" || lightnessMethod === "hybrid") {
-    const primaryRGB = hexToRGB(
-      `#${primaryHSL.h.toString(16).padStart(2, "0")}${primaryHSL.s
-        .toString(16)
-        .padStart(2, "0")}${primaryHSL.l.toString(16).padStart(2, "0")}`
-    );
-    const primaryOKLCH = rgbToOKLCH(primaryRGB);
+    // Convert primary color to OKLCH using culori
+    const primaryColorObj = culori.parse(config.primaryColor);
+    if (!primaryColorObj) {
+      throw new Error("Invalid primary color");
+    }
+
+    const primaryOKLCH = culori.converter("oklch")(primaryColorObj);
+    if (!primaryOKLCH) {
+      throw new Error("Failed to convert color to OKLCH");
+    }
 
     // Calculate base chroma (low saturation for base colors)
     const baseChroma = Math.max(0.02, Math.min(0.08, primaryOKLCH.c * 0.1));
@@ -227,11 +253,18 @@ const getBaseColor = ({
       h: baseHue,
     };
 
-    // Convert back to RGB
-    const newRGB = oklchToRGB(newOKLCH);
-    return `#${newRGB.r.toString(16).padStart(2, "0")}${newRGB.g
-      .toString(16)
-      .padStart(2, "0")}${newRGB.b.toString(16).padStart(2, "0")}`;
+    // Convert back to RGB and then to HEX using culori
+    const newOKLCHObj = {
+      mode: "oklch" as const,
+      l: newOKLCH.l,
+      c: newOKLCH.c,
+      h: newOKLCH.h,
+    };
+    const newRGB = culori.converter("rgb")(newOKLCHObj);
+    if (!newRGB) {
+      return "#000000";
+    }
+    return culori.formatHex(newRGB);
   }
 
   // For HSL method, use original logic

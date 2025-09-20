@@ -1,7 +1,7 @@
 // transparentColor.ts
 
 import type { Palette, ColorConfig } from "./types";
-import { hexToRGB } from "./colorUtils";
+import * as culori from "culori";
 import { createContextLogger } from "./logger";
 import {
   SCALE_LEVELS,
@@ -143,7 +143,19 @@ const calculateTransparentColor = ({
   let bg: { r: number; g: number; b: number };
 
   try {
-    target = hexToRGB(targetSolidColor);
+    const targetColorObj = culori.parse(targetSolidColor);
+    if (!targetColorObj) {
+      log.error(`Failed to parse target color`, { targetSolidColor });
+      return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
+    }
+
+    const targetRGB = culori.converter("rgb")(targetColorObj);
+    if (!targetRGB) {
+      log.error(`Failed to convert target color to RGB`, { targetSolidColor });
+      return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
+    }
+
+    target = targetRGB;
 
     if (isNaN(target.r) || isNaN(target.g) || isNaN(target.b)) {
       log.error(`Invalid RGB from target color`, { targetSolidColor, target });
@@ -155,7 +167,21 @@ const calculateTransparentColor = ({
   }
 
   try {
-    bg = hexToRGB(backgroundColor);
+    const bgColorObj = culori.parse(backgroundColor);
+    if (!bgColorObj) {
+      log.error(`Failed to parse background color`, { backgroundColor });
+      return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
+    }
+
+    const bgRGB = culori.converter("rgb")(bgColorObj);
+    if (!bgRGB) {
+      log.error(`Failed to convert background color to RGB`, {
+        backgroundColor,
+      });
+      return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
+    }
+
+    bg = bgRGB;
 
     if (isNaN(bg.r) || isNaN(bg.g) || isNaN(bg.b)) {
       log.error(`Invalid RGB from background color`, { backgroundColor, bg });

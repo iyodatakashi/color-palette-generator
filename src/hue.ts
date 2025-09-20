@@ -1,12 +1,6 @@
 // hue.ts
 
-import {
-  hexToHSL,
-  validateHexColor,
-  hexToRGB,
-  rgbToOKLCH,
-  oklchToRGB,
-} from "./colorUtils";
+import * as culori from "culori";
 import {
   getLightness,
   adjustToLightness,
@@ -44,13 +38,24 @@ export const adjustColorToSameTone = ({
   targetHue = isFinite(targetHue) ? ((targetHue % 360) + 360) % 360 : 0;
 
   // Check if the color is valid
-  if (!validateHexColor(color)) {
+  const parsedColor = culori.parse(color);
+  if (!parsedColor) {
     // Fallback for invalid color
     return color;
   }
 
-  // Convert input color to HSL
-  const hsl = hexToHSL(color);
+  // Convert input color to HSL using culori
+  const colorObj = culori.parse(color);
+  if (!colorObj) return color;
+
+  const hslColor = culori.converter("hsl")(colorObj);
+  if (!hslColor) return color;
+
+  const hsl = {
+    h: hslColor.h || 0,
+    s: (hslColor.s || 0) * 100,
+    l: (hslColor.l || 0) * 100,
+  };
 
   // Calculate perceived lightness of original color using specified method
   const originalPerceivedLightness = getLightness({
@@ -58,31 +63,35 @@ export const adjustColorToSameTone = ({
     lightnessMethod,
   });
 
-  // For OKLCH-based methods, preserve OKLCH hue and chroma, only adjust lightness
-  if (lightnessMethod === "perceptual" || lightnessMethod === "hybrid") {
-    const originalRGB = hexToRGB(color);
-    const originalOKLCH = rgbToOKLCH(originalRGB);
-
-    // Create new OKLCH with target hue and original chroma
-    const newOKLCH = {
-      l: originalPerceivedLightness / 100, // Convert to 0-1 range
-      c: originalOKLCH.c, // Preserve original chroma
-      h: targetHue, // Use target hue
-    };
-
-    // Convert back to RGB
-    const newRGB = oklchToRGB(newOKLCH);
-    return `#${newRGB.r.toString(16).padStart(2, "0")}${newRGB.g
-      .toString(16)
-      .padStart(2, "0")}${newRGB.b.toString(16).padStart(2, "0")}`;
+  // Use culori for all color conversions to ensure consistency
+  // Convert original color to OKLCH using culori
+  const originalColor = culori.parse(color);
+  if (!originalColor) {
+    return color; // Fallback for invalid colors
   }
 
-  // For HSL method, use original logic
-  return adjustToHSLLightness({
-    h: targetHue,
-    s: hsl.s,
-    targetLightness: originalPerceivedLightness,
-  });
+  const originalOKLCH = culori.converter("oklch")(originalColor);
+  if (!originalOKLCH) {
+    return color; // Fallback for conversion failure
+  }
+
+  // Create new color with target hue, preserving lightness and chroma
+  // culori uses radians for OKLCH hue
+  const newOKLCH = {
+    mode: "oklch" as const,
+    l: originalPerceivedLightness / 100, // Convert to 0-1 range
+    c: originalOKLCH.c, // Preserve original chroma
+    h: targetHue, // Use target hue in degrees (culori uses degrees for OKLCH)
+  };
+
+  // Convert back to RGB and then to HEX using culori
+  const newRGB = culori.converter("rgb")(newOKLCH);
+  if (!newRGB) {
+    return color; // Fallback for conversion failure
+  }
+
+  // Use culori's formatHex for proper HEX formatting
+  return culori.formatHex(newRGB);
 };
 
 // =============================================================================
@@ -166,7 +175,8 @@ export const generateHueColors = ({
   hue: number;
   color: string;
 }> => {
-  if (!validateHexColor(color)) {
+  const parsedColor = culori.parse(color);
+  if (!parsedColor) {
     return [];
   }
 

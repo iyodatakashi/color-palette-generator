@@ -1,6 +1,6 @@
 // saturation.ts
 
-import { hslToRGB, rgbToHSL, hexToRGB, rgbToOKLCH } from "./colorUtils";
+import * as culori from "culori";
 import { STANDARD_LIGHTNESS_SCALE } from "./constants";
 import type { SaturationMethod, RGB } from "./types";
 
@@ -18,7 +18,11 @@ export const getSaturation = ({
   color: string;
   saturationMethod?: SaturationMethod;
 }): number => {
-  const rgb = hexToRGB(color);
+  const colorObj = culori.parse(color);
+  if (!colorObj) return 0;
+
+  const rgb = culori.converter("rgb")(colorObj);
+  if (!rgb) return 0;
 
   switch (saturationMethod) {
     case "hsl":
@@ -41,7 +45,13 @@ const getHSLSaturation = ({
   g: number;
   b: number;
 }): number => {
-  const hsl = rgbToHSL({ r, g, b });
+  const rgbObj = { mode: "rgb" as const, r: r / 255, g: g / 255, b: b / 255 };
+  const hslColor = culori.converter("hsl")(rgbObj);
+  const hsl = {
+    h: hslColor.h || 0,
+    s: (hslColor.s || 0) * 100,
+    l: (hslColor.l || 0) * 100,
+  };
   return hsl.s;
 };
 
@@ -57,7 +67,8 @@ export const getPerceptualSaturation = ({
   g: number;
   b: number;
 }): number => {
-  const oklch = rgbToOKLCH({ r, g, b });
+  const rgbObj = { mode: "rgb" as const, r: r / 255, g: g / 255, b: b / 255 };
+  const oklch = culori.converter("oklch")(rgbObj);
 
   // Normalize chroma to 0-100 scale
   // OKLCH chroma typically ranges from 0 to ~0.4
@@ -158,7 +169,13 @@ export const getHybridSaturation = ({
   b: number;
 }): number => {
   const perceptual = getPerceptualSaturation({ r, g, b });
-  const hsl = rgbToHSL({ r, g, b });
+  const rgbObj = { mode: "rgb" as const, r: r / 255, g: g / 255, b: b / 255 };
+  const hslColor = culori.converter("hsl")(rgbObj);
+  const hsl = {
+    h: hslColor.h || 0,
+    s: (hslColor.s || 0) * 100,
+    l: (hslColor.l || 0) * 100,
+  };
   // Weighted average of perceptual saturation and HSL saturation
   return perceptual * 0.4 + hsl.s * 0.6;
 };

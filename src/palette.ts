@@ -1,7 +1,7 @@
 // palette.ts
 
 import type { ColorConfig, NormalizedColorConfig, Palette, HSL } from "./types";
-import { hexToRGB, rgbToHSL, rgbToHex } from "./colorUtils";
+import * as culori from "culori";
 import {
   getLightness,
   adjustToLightness,
@@ -39,9 +39,28 @@ export const generateColorPalette = (
 
   // Handle single configuration
   const colorConfig = input;
-  const inputRGB = hexToRGB(colorConfig.color);
-  const normalizedColor = rgbToHex(inputRGB);
-  const inputHSL = rgbToHSL(inputRGB);
+  // Convert color using culori
+  const inputColorObj = culori.parse(colorConfig.color);
+  if (!inputColorObj) {
+    throw new Error("Invalid input color");
+  }
+
+  const inputRGB = culori.converter("rgb")(inputColorObj);
+  if (!inputRGB) {
+    throw new Error("Failed to convert color to RGB");
+  }
+
+  const normalizedColor = culori.formatHex(inputColorObj);
+  const inputHSLColor = culori.converter("hsl")(inputColorObj);
+  if (!inputHSLColor) {
+    throw new Error("Failed to convert color to HSL");
+  }
+
+  const inputHSL = {
+    h: inputHSLColor.h || 0,
+    s: (inputHSLColor.s || 0) * 100,
+    l: (inputHSLColor.l || 0) * 100,
+  };
 
   // Detect invalid color input and log output
   if (
@@ -229,8 +248,18 @@ const setTextColor = ({
     return;
   }
 
-  const inputRGB = hexToRGB(inputColor);
-  const normalizedColor = rgbToHex(inputRGB);
+  // Convert color using culori
+  const inputColorObj = culori.parse(inputColor);
+  if (!inputColorObj) {
+    throw new Error("Invalid input color");
+  }
+
+  const inputRGB = culori.converter("rgb")(inputColorObj);
+  if (!inputRGB) {
+    throw new Error("Failed to convert color to RGB");
+  }
+
+  const normalizedColor = culori.formatHex(inputColorObj);
   const inputPerceptualLightness = getLightness({
     color: normalizedColor,
     lightnessMethod: "perceptual",

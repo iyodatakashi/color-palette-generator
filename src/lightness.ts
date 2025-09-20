@@ -1,14 +1,6 @@
 // lightness.ts
 
-import {
-  hslToRGB,
-  rgbToHex,
-  rgbToHSL,
-  hexToHSL,
-  hexToRGB,
-  rgbToOKLCH,
-  oklchToRGB,
-} from "./colorUtils";
+import * as culori from "culori";
 import {
   adjustSaturationForLightness,
   getTheoreticalSaturationCoefficient,
@@ -41,7 +33,12 @@ export const getLightness = ({
   color: string;
   lightnessMethod?: LightnessMethod;
 }): number => {
-  const rgb = hexToRGB(color);
+  // Convert color using culori
+  const colorObj = culori.parse(color);
+  if (!colorObj) return 0;
+
+  const rgb = culori.converter("rgb")(colorObj);
+  if (!rgb) return 0;
 
   switch (lightnessMethod) {
     case "hsl":
@@ -69,7 +66,9 @@ const getPerceptualLightness = ({
   b: number;
 }): number => {
   // Convert RGB directly to OKLCH to get lightness
-  const oklch = rgbToOKLCH({ r, g, b });
+  // Convert RGB to OKLCH using culori
+  const rgbObj = { mode: "rgb" as const, r: r / 255, g: g / 255, b: b / 255 };
+  const oklch = culori.converter("oklch")(rgbObj);
 
   // OKLCH lightness is 0-1, convert to 0-100 scale
   return oklch.l * 100;
@@ -87,7 +86,14 @@ const getHSLLightness = ({
   g: number;
   b: number;
 }): number => {
-  const hsl = rgbToHSL({ r, g, b });
+  // Convert RGB to HSL using culori
+  const rgbObj = { mode: "rgb" as const, r: r / 255, g: g / 255, b: b / 255 };
+  const hslColor = culori.converter("hsl")(rgbObj);
+  const hsl = {
+    h: hslColor.h || 0,
+    s: (hslColor.s || 0) * 100,
+    l: (hslColor.l || 0) * 100,
+  };
   return hsl.l;
 };
 
@@ -120,7 +126,14 @@ export const getHybridLightness = ({
   b: number;
 }): number => {
   const perceptual = getPerceptualLightness({ r, g, b });
-  const hsl = rgbToHSL({ r, g, b });
+  // Convert RGB to HSL using culori
+  const rgbObj = { mode: "rgb" as const, r: r / 255, g: g / 255, b: b / 255 };
+  const hslColor = culori.converter("hsl")(rgbObj);
+  const hsl = {
+    h: hslColor.h || 0,
+    s: (hslColor.s || 0) * 100,
+    l: (hslColor.l || 0) * 100,
+  };
   // Weighted average of perceptual lightness and HSL lightness
   return perceptual * 0.3 + hsl.l * 0.7;
 };
@@ -211,8 +224,15 @@ export const adjustToHSLLightness = ({
   targetLightness: number;
 }): string => {
   const hsl = { h, s, l: targetLightness };
-  const rgb = hslToRGB(hsl);
-  return rgbToHex(rgb);
+  // Convert HSL to RGB using culori
+  const hslObj = {
+    mode: "hsl" as const,
+    h: hsl.h,
+    s: hsl.s / 100,
+    l: hsl.l / 100,
+  };
+  const rgb = culori.converter("rgb")(hslObj);
+  return culori.formatHex(rgb);
 };
 
 /**
@@ -233,24 +253,28 @@ export const adjustToPerceptualLightness = ({
 
   if (baseColor) {
     // Use actual base color's OKLCH chroma
-    const baseRGB = hexToRGB(baseColor);
-    originalOKLCH = rgbToOKLCH(baseRGB);
+    const baseColorObj = culori.parse(baseColor);
+    originalOKLCH = culori.converter("oklch")(baseColorObj);
   } else {
     // Fallback to HSL-based calculation
-    const originalRGB = hslToRGB({ h, s, l: 50 });
-    originalOKLCH = rgbToOKLCH(originalRGB);
+    const hslObj = { mode: "hsl" as const, h, s: s / 100, l: 0.5 };
+    const originalRGB = culori.converter("rgb")(hslObj);
+    originalOKLCH = culori.converter("oklch")(originalRGB);
   }
 
   // Create new OKLCH with target lightness and original chroma
+  if (!originalOKLCH) return "#000000";
+
   const newOKLCH = {
+    mode: "oklch" as const,
     l: targetLightness / 100, // Convert to 0-1 range
     c: originalOKLCH.c, // Preserve original chroma
     h: originalOKLCH.h, // Use original hue from base color
   };
 
   // Convert back to RGB
-  const newRGB = oklchToRGB(newOKLCH);
-  return rgbToHex(newRGB);
+  const newRGB = culori.converter("rgb")(newOKLCH);
+  return culori.formatHex(newRGB);
 };
 
 /**
@@ -271,24 +295,28 @@ export const adjustToHybridLightness = ({
 
   if (baseColor) {
     // Use actual base color's OKLCH chroma
-    const baseRGB = hexToRGB(baseColor);
-    originalOKLCH = rgbToOKLCH(baseRGB);
+    const baseColorObj = culori.parse(baseColor);
+    originalOKLCH = culori.converter("oklch")(baseColorObj);
   } else {
     // Fallback to HSL-based calculation
-    const originalRGB = hslToRGB({ h, s, l: 50 });
-    originalOKLCH = rgbToOKLCH(originalRGB);
+    const hslObj = { mode: "hsl" as const, h, s: s / 100, l: 0.5 };
+    const originalRGB = culori.converter("rgb")(hslObj);
+    originalOKLCH = culori.converter("oklch")(originalRGB);
   }
 
   // Create new OKLCH with target lightness and original chroma
+  if (!originalOKLCH) return "#000000";
+
   const newOKLCH = {
+    mode: "oklch" as const,
     l: targetLightness / 100, // Convert to 0-1 range
     c: originalOKLCH.c, // Preserve original chroma
     h: originalOKLCH.h, // Use original hue from base color
   };
 
   // Convert back to RGB
-  const newRGB = oklchToRGB(newOKLCH);
-  return rgbToHex(newRGB);
+  const newRGB = culori.converter("rgb")(newOKLCH);
+  return culori.formatHex(newRGB);
 };
 
 /**
@@ -315,13 +343,25 @@ const adjustToLightnessByBinarySearch = ({
   });
 
   // Step 2: Use base color chroma directly (without theoretical curve)
-  const baseRgb = hslToRGB({ h, s, l: baseLightness });
-  const baseOKLCH = rgbToOKLCH(baseRgb);
+  const hslObj = {
+    mode: "hsl" as const,
+    h,
+    s: s / 100,
+    l: baseLightness / 100,
+  };
+  const baseRgb = culori.converter("rgb")(hslObj);
+  const baseOKLCH = culori.converter("oklch")(baseRgb);
   const targetChroma = baseOKLCH.c; // Use base color chroma directly
 
   // Get current OKLCH values
-  const currentRGB = hexToRGB(initialColor);
-  const currentOKLCH = rgbToOKLCH(currentRGB);
+  const currentColorObj = culori.parse(initialColor);
+  if (!currentColorObj) return initialColor;
+
+  const currentRGB = culori.converter("rgb")(currentColorObj);
+  if (!currentRGB) return initialColor;
+
+  const currentOKLCH = culori.converter("oklch")(currentColorObj);
+  if (!currentOKLCH) return initialColor;
 
   // If chroma is already close to target, return initial color
   if (Math.abs(currentOKLCH.c - targetChroma) < 0.001) {
@@ -369,8 +409,9 @@ const adjustHSLForOKLCHChroma = ({
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     const mid = (low + high) / 2;
-    const rgb = hslToRGB({ h, s: mid, l });
-    const currentOKLCH = rgbToOKLCH(rgb);
+    const hslObj = { mode: "hsl" as const, h, s: mid / 100, l: l / 100 };
+    const rgb = culori.converter("rgb")(hslObj);
+    const currentOKLCH = culori.converter("oklch")(rgb);
     const chromaDiff = Math.abs(currentOKLCH.c - targetChroma);
 
     // Record S value with best chroma match
@@ -393,9 +434,10 @@ const adjustHSLForOKLCHChroma = ({
   }
 
   // Step 4: Adjust lightness if it deviated from target
-  const finalRGB = hslToRGB({ h, s: bestS, l });
+  const finalHslObj = { mode: "hsl" as const, h, s: bestS / 100, l: l / 100 };
+  const finalRGB = culori.converter("rgb")(finalHslObj);
   const finalLightness = getLightness({
-    color: rgbToHex(finalRGB),
+    color: culori.formatHex(finalRGB),
     lightnessMethod,
   });
   const lightnessDiff = Math.abs(finalLightness - targetLightness);
@@ -409,7 +451,7 @@ const adjustHSLForOKLCHChroma = ({
     });
   }
 
-  return rgbToHex(finalRGB);
+  return culori.formatHex(finalRGB);
 };
 
 // =============================================================================
