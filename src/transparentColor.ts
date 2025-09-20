@@ -155,7 +155,12 @@ const calculateTransparentColor = ({
     return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
   }
 
-  target = targetRGB;
+  // Convert culori RGB (0-1) to 0-255 range
+  target = {
+    r: targetRGB.r * 255,
+    g: targetRGB.g * 255,
+    b: targetRGB.b * 255,
+  };
 
   // Parse and convert background color - culori handles validation
   const bgColorObj = culori.parse(backgroundColor);
@@ -170,7 +175,12 @@ const calculateTransparentColor = ({
     return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
   }
 
-  bg = bgRGB;
+  // Convert culori RGB (0-1) to 0-255 range
+  bg = {
+    r: bgRGB.r * 255,
+    g: bgRGB.g * 255,
+    b: bgRGB.b * 255,
+  };
 
   // Prevent division by zero
   if (fixedAlpha === 0) {
