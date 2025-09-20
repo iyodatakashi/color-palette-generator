@@ -28,7 +28,7 @@ import {
  */
 export const generateCombination = (config: CombinationConfig): Combination => {
   const combinationType = config.combinationType || "complementary";
-  // Convert primary color to OKLCH using culori
+  // Parse and convert primary color to OKLCH
   const primaryColorObj = culori.parse(config.primaryColor);
   if (!primaryColorObj) {
     throw new Error("Invalid primary color");
@@ -238,7 +238,7 @@ const getBaseColor = ({
     h: baseHue,
   };
 
-  // Convert back to RGB and then to HEX using culori
+  // Convert OKLCH to HEX color
   const newRGB = culori.converter("rgb")(newOKLCHObj);
   if (!newRGB) {
     return "#000000";

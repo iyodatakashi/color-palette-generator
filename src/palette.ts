@@ -44,7 +44,7 @@ export const generateColorPalette = (
 
   // Handle single configuration
   const colorConfig = input;
-  // Convert color using culori
+  // Parse input color
   const inputColorObj = culori.parse(colorConfig.color);
   if (!inputColorObj) {
     throw new Error("Invalid input color");
@@ -61,8 +61,7 @@ export const generateColorPalette = (
     throw new Error("Failed to convert color to OKLCH");
   }
 
-  // culori.parse already handles validation - if we get here, the color is valid
-  // Log the normalized color for debugging if needed
+  // Log color normalization for debugging
   if (colorConfig.color !== normalizedColor) {
     log.info("Color normalized", {
       originalColor: colorConfig.color,
@@ -243,7 +242,7 @@ const setTextColor = ({
     return;
   }
 
-  // Convert color using culori
+  // Parse input color
   const inputColorObj = culori.parse(inputColor);
   if (!inputColorObj) {
     throw new Error("Invalid input color");

@@ -29,7 +29,7 @@ export const adjustColorToSameTone = ({
   // Normalize target hue to 0-360 range
   targetHue = isFinite(targetHue) ? ((targetHue % 360) + 360) % 360 : 0;
 
-  // Parse input color using culori
+  // Parse input color
   const colorObj = culori.parse(color);
   if (!colorObj) {
     // Fallback for invalid color
@@ -42,7 +42,7 @@ export const adjustColorToSameTone = ({
     lightnessMethod,
   });
 
-  // Convert original color to OKLCH using culori
+  // Get OKLCH values from original color
   const originalOKLCH = culori.converter("oklch")(colorObj);
   if (!originalOKLCH) {
     return color; // Fallback for conversion failure
@@ -57,13 +57,12 @@ export const adjustColorToSameTone = ({
     h: targetHue, // Use target hue in degrees (culori uses degrees for OKLCH)
   };
 
-  // Convert back to RGB and then to HEX using culori
+  // Convert OKLCH to HEX color
   const newRGB = culori.converter("rgb")(newOKLCH);
   if (!newRGB) {
     return color; // Fallback for conversion failure
   }
 
-  // Use culori's formatHex for proper HEX formatting
   return culori.formatHex(newRGB);
 };
 

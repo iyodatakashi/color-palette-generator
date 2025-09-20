@@ -24,7 +24,7 @@ export const getSaturation = ({
   const rgb = culori.converter("rgb")(colorObj);
   if (!rgb) return 0;
 
-  // All saturation calculations now use OKLCH chroma-based saturation
+  // Calculate saturation using OKLCH chroma
   return getPerceptualSaturation(rgb);
 };
 

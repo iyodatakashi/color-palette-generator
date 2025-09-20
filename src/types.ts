@@ -129,10 +129,10 @@ export type OKLCH = Oklch;
 // =============================================================================
 
 // Lightness calculation method type definition
-export type LightnessMethod = "perceptual"; // OKLCH perceptual lightness
+export type LightnessMethod = "perceptual";
 
 // Saturation calculation method type definition
-export type SaturationMethod = "perceptual"; // OKLCH chroma-based saturation
+export type SaturationMethod = "perceptual";
 
 // Hue shift mode type definition
 export type HueShiftMode = "fixed" | "natural" | "unnatural";

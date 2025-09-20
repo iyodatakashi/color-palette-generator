@@ -116,7 +116,7 @@ export const getHueShiftExplanation = ({
   darkerSign: string;
 } => {
   const { hueShiftMode } = colorConfig;
-  // Convert color to OKLCH using culori
+  // Parse color and get hue value
   const colorObj = culori.parse(colorConfig.color);
   if (!colorObj) {
     throw new Error("Invalid color");

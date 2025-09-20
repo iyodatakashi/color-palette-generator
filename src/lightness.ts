@@ -33,7 +33,7 @@ export const getLightness = ({
   color: string;
   lightnessMethod?: LightnessMethod;
 }): number => {
-  // Convert color directly to OKLCH using culori
+  // Convert color to OKLCH for lightness calculation
   const colorObj = culori.parse(color);
   if (!colorObj) return 0;
 
@@ -83,7 +83,7 @@ export const adjustToLightness = ({
       }) / 100 // Convert back to chroma scale
     : c;
 
-  // All lightness adjustments now use OKLCH perceptual lightness
+  // Apply perceptual lightness adjustment
   return adjustToPerceptualLightness({
     h,
     c: adjustedChroma,
@@ -278,6 +278,6 @@ const getAdjustedLightness = ({
 }): number => {
   const normalizedLevel = (level - MIN_LEVEL) / (MAX_LEVEL - MIN_LEVEL);
 
-  // All lightness calculations now use perceptual (OKLCH) scale
+  // Calculate lightness using perceptual scale
   return PERCEPTUAL_LIGHTNESS_SCALE[level];
 };
