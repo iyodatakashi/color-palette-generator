@@ -66,28 +66,7 @@ export const adjustToLightness = ({
       }) / 100 // Convert back to chroma scale
     : c;
 
-  return adjustToPerceptualLightness({
-    h,
-    c: adjustedChroma,
-    targetLightness,
-    baseColor,
-  });
-};
-
-/**
- * Create color with target lightness using OKLCH
- */
-export const adjustToPerceptualLightness = ({
-  h,
-  c,
-  targetLightness,
-  baseColor,
-}: {
-  h: number;
-  c: number;
-  targetLightness: number;
-  baseColor?: string;
-}): string => {
+  // Apply gamut mapping directly
   let originalOKLCH;
 
   if (baseColor) {
@@ -95,16 +74,26 @@ export const adjustToPerceptualLightness = ({
     originalOKLCH = culori.converter("oklch")(baseColorObj);
   }
 
-  // Create OKLCH with target lightness
-  const newOKLCH = {
+  // Use original hue or provided hue
+  const targetHue = originalOKLCH?.h || h;
+
+  // Create OKLCH with target lightness and hue
+  let targetOKLCH = {
     mode: "oklch" as const,
     l: targetLightness / 100, // Convert to 0-1 range
-    c: c,
-    h: originalOKLCH?.h || h,
+    c: adjustedChroma,
+    h: targetHue,
   };
 
-  const newRGB = culori.converter("rgb")(newOKLCH);
-  return culori.formatHex(newRGB);
+  // Apply gamut mapping using culori's toGamut with LAB Euclidean distance
+  const gamutMapper = culori.toGamut(
+    "rgb",
+    "oklch",
+    culori.differenceEuclidean("lab")
+  );
+  const gamutMappedColor = gamutMapper(targetOKLCH);
+
+  return culori.formatHex(gamutMappedColor);
 };
 
 // =============================================================================

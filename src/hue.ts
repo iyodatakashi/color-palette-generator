@@ -39,21 +39,22 @@ export const adjustColorToSameTone = ({
   }
 
   // Create new color with target hue, preserving lightness and chroma
-  // culori uses radians for OKLCH hue
-  const newOKLCH = {
+  let targetOKLCH = {
     mode: "oklch" as const,
     l: originalPerceivedLightness / 100, // Convert to 0-1 range
     c: originalOKLCH.c, // Preserve original chroma
     h: targetHue, // Use target hue in degrees (culori uses degrees for OKLCH)
   };
 
-  // Convert OKLCH to HEX color
-  const newRGB = culori.converter("rgb")(newOKLCH);
-  if (!newRGB) {
-    return color; // Fallback for conversion failure
-  }
+  // Apply gamut mapping using culori's toGamut with LAB Euclidean distance
+  const gamutMapper = culori.toGamut(
+    "rgb",
+    "oklch",
+    culori.differenceEuclidean("lab")
+  );
+  const gamutMappedColor = gamutMapper(targetOKLCH);
 
-  return culori.formatHex(newRGB);
+  return culori.formatHex(gamutMappedColor);
 };
 
 // =============================================================================
