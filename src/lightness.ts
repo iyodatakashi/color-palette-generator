@@ -1,10 +1,7 @@
 // lightness.ts
 
 import * as culori from "culori";
-import {
-  adjustChromaForLightness,
-  getTheoreticalChromaCoefficient,
-} from "./chroma";
+import { adjustChromaForLightness } from "./chroma";
 import {
   SCALE_LEVELS,
   STANDARD_LIGHTNESS_SCALE,
@@ -13,7 +10,6 @@ import {
   MAX_LEVEL,
   MIN_LEVEL,
 } from "./constants";
-import type { Rgb } from "culori";
 
 // =============================================================================
 // Lightness Calculation Functions

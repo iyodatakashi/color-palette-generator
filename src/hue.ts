@@ -1,7 +1,7 @@
 // hue.ts
 
 import * as culori from "culori";
-import { getLightness, adjustToLightness } from "./lightness";
+import { getLightness } from "./lightness";
 import type { HuePaletteConfig, ColorConfig, Palette } from "./types";
 import { generateColorPalette } from "./palette";
 
