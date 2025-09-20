@@ -1,6 +1,11 @@
 // palette.ts
 
-import type { ColorConfig, NormalizedColorConfig, Palette, HSL } from "./types";
+import type {
+  ColorConfig,
+  NormalizedColorConfig,
+  Palette,
+  OKLCH,
+} from "./types";
 import * as culori from "culori";
 import {
   getLightness,
@@ -51,16 +56,10 @@ export const generateColorPalette = (
   }
 
   const normalizedColor = culori.formatHex(inputColorObj);
-  const inputHSLColor = culori.converter("hsl")(inputColorObj);
-  if (!inputHSLColor) {
-    throw new Error("Failed to convert color to HSL");
+  const inputOKLCH = culori.converter("oklch")(inputColorObj);
+  if (!inputOKLCH) {
+    throw new Error("Failed to convert color to OKLCH");
   }
-
-  const inputHSL = {
-    h: inputHSLColor.h || 0,
-    s: (inputHSLColor.s || 0) * 100,
-    l: (inputHSLColor.l || 0) * 100,
-  };
 
   // Detect invalid color input and log output
   if (
@@ -114,7 +113,7 @@ export const generateColorPalette = (
 
   const palette = generateOriginalPalette({
     colorConfig: normalizedConfig,
-    inputHSL,
+    inputOKLCH,
     closestLevel,
     adjustedLightnessScale,
   });
@@ -151,11 +150,11 @@ export const generateColorPalette = (
  */
 const generateOriginalPalette = ({
   colorConfig,
-  inputHSL,
+  inputOKLCH,
   closestLevel,
   adjustedLightnessScale,
 }: {
-  inputHSL: HSL;
+  inputOKLCH: OKLCH;
   closestLevel: number;
   adjustedLightnessScale: Record<number, number>;
   colorConfig: NormalizedColorConfig;
@@ -168,7 +167,7 @@ const generateOriginalPalette = ({
       palette[`--${colorConfig.prefix}-${key}`] = colorConfig.color;
     } else {
       const adjustedHue = calculateHueShift({
-        baseHue: inputHSL.h,
+        baseHue: inputOKLCH.h || 0,
         baseLightness: originalLightness,
         targetLightness,
         adjustedLightnessScale,
@@ -177,7 +176,7 @@ const generateOriginalPalette = ({
 
       const generatedColor = adjustToLightness({
         h: adjustedHue,
-        s: inputHSL.s,
+        c: inputOKLCH.c || 0,
         targetLightness,
         lightnessMethod: colorConfig.lightnessMethod,
         enableSaturationAdjustment: colorConfig.enableSaturationAdjustment,

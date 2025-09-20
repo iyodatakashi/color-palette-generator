@@ -4,12 +4,9 @@ import * as culori from "culori";
 import {
   getLightness,
   adjustToLightness,
-  adjustToHybridLightness,
   adjustToPerceptualLightness,
-  adjustToHSLLightness,
-  getHybridLightness,
 } from "./lightness";
-import { getHybridSaturation } from "./saturation";
+import { getSaturation } from "./saturation";
 import type {
   LightnessMethod,
   HuePaletteConfig,
@@ -28,7 +25,7 @@ import { generateColorPalette } from "./palette";
 export const adjustColorToSameTone = ({
   color,
   targetHue,
-  lightnessMethod = "hybrid",
+  lightnessMethod = "perceptual",
 }: {
   color: string;
   targetHue: number;
@@ -44,18 +41,9 @@ export const adjustColorToSameTone = ({
     return color;
   }
 
-  // Convert input color to HSL using culori
+  // Parse input color using culori
   const colorObj = culori.parse(color);
   if (!colorObj) return color;
-
-  const hslColor = culori.converter("hsl")(colorObj);
-  if (!hslColor) return color;
-
-  const hsl = {
-    h: hslColor.h || 0,
-    s: (hslColor.s || 0) * 100,
-    l: (hslColor.l || 0) * 100,
-  };
 
   // Calculate perceived lightness of original color using specified method
   const originalPerceivedLightness = getLightness({
@@ -134,7 +122,7 @@ export const HUE_NAMES = {
 export const generateHuePalette = ({
   color,
   divisions = 24,
-  lightnessMethod = "hybrid",
+  lightnessMethod = "perceptual",
   hueShiftMode = "natural",
   includeTransparent = false,
   bgColorLight = "#ffffff",
@@ -169,7 +157,7 @@ export const generateHuePalette = ({
 export const generateHueColors = ({
   color,
   divisions = 24,
-  lightnessMethod = "hybrid",
+  lightnessMethod = "perceptual",
 }: Pick<HuePaletteConfig, "color" | "divisions" | "lightnessMethod">): Array<{
   name: string;
   hue: number;

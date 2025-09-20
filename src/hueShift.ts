@@ -116,24 +116,20 @@ export const getHueShiftExplanation = ({
   darkerSign: string;
 } => {
   const { hueShiftMode } = colorConfig;
-  // Convert color to HSL using culori
+  // Convert color to OKLCH using culori
   const colorObj = culori.parse(colorConfig.color);
   if (!colorObj) {
     throw new Error("Invalid color");
   }
 
-  const baseHSLColor = culori.converter("hsl")(colorObj);
-  if (!baseHSLColor) {
-    throw new Error("Failed to convert color to HSL");
+  const baseOKLCHColor = culori.converter("oklch")(colorObj);
+  if (!baseOKLCHColor) {
+    throw new Error("Failed to convert color to OKLCH");
   }
 
-  const baseHSL = {
-    h: baseHSLColor.h || 0,
-    s: (baseHSLColor.s || 0) * 100,
-    l: (baseHSLColor.l || 0) * 100,
-  };
-  const hueCategory = getHueCategory(baseHSL.h);
-  const category = getHueCategoryJapanese(baseHSL.h);
+  const baseHue = baseOKLCHColor.h || 0;
+  const hueCategory = getHueCategory(baseHue);
+  const category = getHueCategoryJapanese(baseHue);
 
   // Fixed mode has no change
   if (hueShiftMode === "fixed") {
@@ -147,7 +143,7 @@ export const getHueShiftExplanation = ({
   }
 
   // Get intensity value from dynamic calculation
-  const intensity = calculateHueIntensityByHue(baseHSL.h);
+  const intensity = calculateHueIntensityByHue(baseHue);
   const directions =
     HUE_DIRECTION_EXPLANATION_MAP[
       hueCategory as keyof typeof HUE_DIRECTION_EXPLANATION_MAP

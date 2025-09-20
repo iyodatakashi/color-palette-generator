@@ -17,7 +17,6 @@ export { generateRandomPrimaryColor } from "./randomColor";
 export {
   getLightness,
   adjustToLightness,
-  getHybridLightness,
   calculateEvenScale,
 } from "./lightness";
 
@@ -26,7 +25,6 @@ export {
   getSaturation,
   getTheoreticalSaturationCoefficient,
   adjustSaturationForLightness,
-  getHybridSaturation,
 } from "./saturation";
 
 // Hue change features
@@ -55,7 +53,7 @@ export type {
   Palette,
   ColorConfig,
   RGB,
-  HSL,
+  OKLCH,
   LightnessMethod,
   SaturationMethod,
   HueShiftMode,

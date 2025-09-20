@@ -24,35 +24,8 @@ export const getSaturation = ({
   const rgb = culori.converter("rgb")(colorObj);
   if (!rgb) return 0;
 
-  switch (saturationMethod) {
-    case "hsl":
-      return getHSLSaturation(rgb);
-    case "perceptual":
-    default:
-      return getPerceptualSaturation(rgb);
-  }
-};
-
-/**
- * Get HSL saturation
- */
-const getHSLSaturation = ({
-  r,
-  g,
-  b,
-}: {
-  r: number;
-  g: number;
-  b: number;
-}): number => {
-  const rgbObj = { mode: "rgb" as const, r: r / 255, g: g / 255, b: b / 255 };
-  const hslColor = culori.converter("hsl")(rgbObj);
-  const hsl = {
-    h: hslColor.h || 0,
-    s: (hslColor.s || 0) * 100,
-    l: (hslColor.l || 0) * 100,
-  };
-  return hsl.s;
+  // All saturation calculations now use OKLCH chroma-based saturation
+  return getPerceptualSaturation(rgb);
 };
 
 /**
@@ -154,28 +127,4 @@ export const adjustSaturationForLightness = ({
 
   // Keep reasonable bounds
   return Math.max(10, Math.min(95, targetSaturation));
-};
-
-/**
- * Get hybrid saturation (weighted average of perceptual saturation + HSL saturation)
- */
-export const getHybridSaturation = ({
-  r,
-  g,
-  b,
-}: {
-  r: number;
-  g: number;
-  b: number;
-}): number => {
-  const perceptual = getPerceptualSaturation({ r, g, b });
-  const rgbObj = { mode: "rgb" as const, r: r / 255, g: g / 255, b: b / 255 };
-  const hslColor = culori.converter("hsl")(rgbObj);
-  const hsl = {
-    h: hslColor.h || 0,
-    s: (hslColor.s || 0) * 100,
-    l: (hslColor.l || 0) * 100,
-  };
-  // Weighted average of perceptual saturation and HSL saturation
-  return perceptual * 0.4 + hsl.s * 0.6;
 };

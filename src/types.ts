@@ -107,7 +107,7 @@ export type RandomColorConfig = {
 
 // Generated color (output)
 export type GeneratedColor = {
-  hsl: HSL;
+  oklch: OKLCH;
   rgb: RGB;
   hex: string;
   actualLightness: number;
@@ -117,35 +117,22 @@ export type GeneratedColor = {
 // Color Space Types
 // =============================================================================
 
-// RGB color type definition
-export type RGB = {
-  r: number;
-  g: number;
-  b: number;
-};
+// Import color types from culori
+import type { Oklch, Rgb } from "culori";
 
-// HSL color type definition
-export type HSL = {
-  h: number;
-  s: number;
-  l: number;
-};
+// Re-export color types for convenience
+export type RGB = Rgb;
+export type OKLCH = Oklch;
 
 // =============================================================================
 // Calculation Method Types
 // =============================================================================
 
 // Lightness calculation method type definition
-export type LightnessMethod =
-  | "hybrid" // Balanced lightness (recommended)
-  | "hsl" // HSL lightness (consistency focused)
-  | "perceptual" // Perceptual lightness (accuracy focused)
-  | "average"; // RGB average lightness (simple)
+export type LightnessMethod = "perceptual"; // OKLCH perceptual lightness
 
 // Saturation calculation method type definition
-export type SaturationMethod =
-  | "hsl" // HSL saturation
-  | "perceptual"; // OKLCH chroma-based saturation
+export type SaturationMethod = "perceptual"; // OKLCH chroma-based saturation
 
 // Hue shift mode type definition
 export type HueShiftMode = "fixed" | "natural" | "unnatural";
