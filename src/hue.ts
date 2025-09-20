@@ -1,6 +1,12 @@
 // hue.ts
 
-import { hexToHSL, validateHexColor, hexToRGB, rgbToOKLCH } from "./colorUtils";
+import {
+  hexToHSL,
+  validateHexColor,
+  hexToRGB,
+  rgbToOKLCH,
+  oklchToRGB,
+} from "./colorUtils";
 import {
   getLightness,
   adjustToLightness,
@@ -52,30 +58,31 @@ export const adjustColorToSameTone = ({
     lightnessMethod,
   });
 
-  // Use the same lightness method as specified to maintain consistency
-  switch (lightnessMethod) {
-    case "hsl":
-      return adjustToHSLLightness({
-        h: targetHue,
-        s: hsl.s,
-        targetLightness: originalPerceivedLightness,
-      });
-    case "perceptual":
-      return adjustToPerceptualLightness({
-        h: targetHue,
-        s: hsl.s,
-        targetLightness: originalPerceivedLightness,
-      });
-    case "hybrid":
-    default:
-      const originalRGB = hexToRGB(color);
-      const originalHybridLightness = getHybridLightness(originalRGB);
-      return adjustToHybridLightness({
-        h: targetHue,
-        s: hsl.s,
-        targetLightness: originalHybridLightness,
-      });
+  // For OKLCH-based methods, preserve OKLCH hue and chroma, only adjust lightness
+  if (lightnessMethod === "perceptual" || lightnessMethod === "hybrid") {
+    const originalRGB = hexToRGB(color);
+    const originalOKLCH = rgbToOKLCH(originalRGB);
+
+    // Create new OKLCH with target hue and original chroma
+    const newOKLCH = {
+      l: originalPerceivedLightness / 100, // Convert to 0-1 range
+      c: originalOKLCH.c, // Preserve original chroma
+      h: targetHue, // Use target hue
+    };
+
+    // Convert back to RGB
+    const newRGB = oklchToRGB(newOKLCH);
+    return `#${newRGB.r.toString(16).padStart(2, "0")}${newRGB.g
+      .toString(16)
+      .padStart(2, "0")}${newRGB.b.toString(16).padStart(2, "0")}`;
   }
+
+  // For HSL method, use original logic
+  return adjustToHSLLightness({
+    h: targetHue,
+    s: hsl.s,
+    targetLightness: originalPerceivedLightness,
+  });
 };
 
 // =============================================================================

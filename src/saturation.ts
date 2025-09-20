@@ -1,6 +1,7 @@
 // saturation.ts
 
 import { hslToRGB, rgbToHSL, hexToRGB, rgbToOKLCH } from "./colorUtils";
+import { STANDARD_LIGHTNESS_SCALE } from "./constants";
 import type { SaturationMethod, RGB } from "./types";
 
 // =============================================================================
@@ -78,16 +79,25 @@ export const getTheoreticalSaturationCoefficient = (
   // Normalize lightness to 0-1 range
   const normalizedL = Math.max(0, Math.min(100, lightness)) / 100;
 
-  // Use parabolic curve with peak at 56% lightness (500 level)
-  // Shift the curve so that 0.56 (56%) becomes the peak
-  const shiftedL = normalizedL - 0.56;
-  const baseCoeff = 1 - (shiftedL * shiftedL) / (0.56 * 0.56);
+  // Define smooth saturation curve: peak at 56% lightness (500 level), lower at extremes
+  // Use a smooth curve that reduces saturation at both ends
+  let coefficient;
 
-  // Apply steeper power curve for more pronounced peak
-  let coefficient = Math.pow(Math.max(0, baseCoeff), 0.6);
+  if (normalizedL <= 0.56) {
+    // For lightness <= 56%, use a curve that peaks at 56% and reduces towards 0%
+    coefficient = Math.pow(normalizedL / 0.56, 0.8);
+  } else {
+    // For lightness > 56%, use a curve that reduces towards 100%
+    coefficient = Math.pow((1 - normalizedL) / (1 - 0.56), 0.8);
+  }
 
-  // Wider range for more dramatic saturation variation
-  return Math.max(0.2, Math.min(1.2, coefficient));
+  // Apply additional reduction for extreme lightness levels
+  const extremeReduction =
+    Math.pow(Math.min(normalizedL, 1 - normalizedL) * 2, 2) * 0.3;
+  coefficient = coefficient * (1 - extremeReduction);
+
+  // Ensure reasonable bounds
+  return Math.max(0.1, Math.min(1.0, coefficient));
 };
 
 /**
@@ -104,43 +114,35 @@ export const adjustSaturationForLightness = ({
   baseLightness: number;
   targetLightness: number;
 }): number => {
-  // OKLCH perceptual method: use theoretical saturation curve based on lightness
-  // Step 1: Get base color's perceptual saturation from HSL values
-  const baseColor = hslToRGB({ h, s, l: baseLightness });
-  const basePerceptualSat = getPerceptualSaturation(baseColor);
+  // Step 1: Define saturation curve (peak at 500 level)
+  const getSaturationCurve = (lightness: number): number => {
+    const normalizedL = Math.max(0, Math.min(100, lightness)) / 100;
 
-  // Step 2: Get current scale color's perceptual saturation (before adjustment)
-  const currentColor = hslToRGB({ h, s, l: targetLightness });
-  const currentPerceptualSat = getPerceptualSaturation(currentColor);
+    // Get the peak lightness value from STANDARD_LIGHTNESS_SCALE
+    const peakLightness = STANDARD_LIGHTNESS_SCALE[500] / 100; // Convert to 0-1 range
 
-  // Step 3: Calculate baseline perceptual saturations for both lightness levels
-  const baseLightnessCoeff = getTheoreticalSaturationCoefficient(
-    baseLightness,
-    h
-  );
-  const targetLightnessCoeff = getTheoreticalSaturationCoefficient(
-    targetLightness,
-    h
-  );
+    // Smooth curve: peak at 500 level lightness
+    // Use a smooth curve that peaks at the 500 level lightness and falls to 0.3 at extremes
+    const distanceFromPeak = Math.abs(normalizedL - peakLightness);
+    const maxDistance = peakLightness; // Distance from peak to extreme (0 or 1)
 
-  // Calculate theoretical perceptual saturations (not just coefficients)
-  const baselinePerceptualSat = basePerceptualSat; // Base color's actual perceptual saturation
+    // Use quadratic curve for smooth falloff
+    const normalizedDistance = distanceFromPeak / maxDistance;
+    const curveValue = 1.0 - Math.pow(normalizedDistance, 2) * 0.5; // Less aggressive falloff
 
-  // Calculate target saturation based on theoretical curve
-  const targetBaselinePerceptualSat =
-    baselinePerceptualSat * (targetLightnessCoeff / baseLightnessCoeff);
+    return Math.max(0.6, Math.min(1.0, curveValue));
+  };
 
-  // Apply saturation adjustment to normalize vividness across hues at same lightness level
-  const saturationRatio =
-    targetBaselinePerceptualSat / Math.max(currentPerceptualSat, 1);
+  // Step 2: Calculate correction factor from base color
+  const baseCurveValue = getSaturationCurve(baseLightness);
+  const correctionFactor = s / baseCurveValue;
 
-  // Apply stronger correction to align with theoretical curve
-  const blendRatio = 0.8; // Maximum adjustment for visible effect
-  const adjustedSaturation =
-    s * (1 - blendRatio + blendRatio * saturationRatio);
+  // Step 3: Calculate target saturation directly from target lightness
+  const targetCurveValue = getSaturationCurve(targetLightness);
+  const targetSaturation = targetCurveValue * correctionFactor;
 
   // Keep reasonable bounds
-  return Math.max(10, Math.min(95, adjustedSaturation));
+  return Math.max(10, Math.min(95, targetSaturation));
 };
 
 /**
