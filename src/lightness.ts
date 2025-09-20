@@ -101,21 +101,59 @@ export const adjustToLightness = ({
 // =============================================================================
 
 /**
- * Find the closest lightness level to the specified color
+ * Get maximum chroma for a given hue using color-space aware gamut mapping
+ */
+const getMaxChromaForHue = (hue: number): number => {
+  let maxChroma = 0;
+
+  // Search across lightness range to find absolute maximum chroma for this hue
+  for (let l = 0.1; l <= 0.9; l += 0.01) {
+    const highChromaColor = { mode: "oklch" as const, l, c: 1.0, h: hue };
+    const clampedColor = culori.clampChroma(highChromaColor, "oklch", "rgb");
+    const oklchResult = culori.converter("oklch")(clampedColor);
+
+    if (oklchResult && oklchResult.c > maxChroma) {
+      maxChroma = oklchResult.c;
+    }
+  }
+
+  return maxChroma || 0.2; // Fallback value
+};
+
+/**
+ * Find the closest lightness level using relative chroma adjustment
  */
 export const findClosestLevel = ({
   inputLightness,
+  inputChroma,
+  inputHue,
 }: {
   inputLightness: number;
+  inputChroma?: number;
+  inputHue?: number;
 }): number => {
   if (!isFinite(inputLightness)) inputLightness = 50;
+  if (!inputChroma || !isFinite(inputChroma)) inputChroma = 0;
+  if (!inputHue || !isFinite(inputHue)) inputHue = 0;
+
+  // Calculate relative chroma (chroma as percentage of maximum possible for this hue)
+  const maxChroma = getMaxChromaForHue(inputHue);
+  const relativeChroma = inputChroma / maxChroma;
+
+  // High chroma colors should be pulled toward level 500 (52 lightness)
+  const targetLightness = 52; // Level 500 lightness
+  const pullStrength = relativeChroma * 0.6; // Strength of pull toward level 500
+
+  // Interpolate between original lightness and target lightness based on chroma
+  const adjustedLightness =
+    inputLightness * (1 - pullStrength) + targetLightness * pullStrength;
 
   return SCALE_LEVELS.reduce((closestLevel, current) => {
     const lightness = STANDARD_LIGHTNESS_SCALE[current];
 
-    const currentDiff = Math.abs(inputLightness - lightness);
+    const currentDiff = Math.abs(adjustedLightness - lightness);
     const closestDiff = Math.abs(
-      inputLightness - STANDARD_LIGHTNESS_SCALE[closestLevel]
+      adjustedLightness - STANDARD_LIGHTNESS_SCALE[closestLevel]
     );
 
     return currentDiff < closestDiff ? current : closestLevel;

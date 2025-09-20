@@ -88,6 +88,8 @@ export const generateColorPalette = (
 
   const closestLevel = findClosestLevel({
     inputLightness,
+    inputChroma: inputOKLCH.c,
+    inputHue: inputOKLCH.h,
   });
 
   const adjustedLightnessScale = calculateEvenScale({
@@ -245,8 +247,11 @@ const setTextColor = ({
   const inputPerceptualLightness = getLightness(normalizedColor);
 
   // Find the primary color level (the level closest to input color)
+  const inputColorOKLCH = culori.converter("oklch")(culori.parse(inputColor));
   const primaryLevel = findClosestLevel({
     inputLightness: inputPerceptualLightness,
+    inputChroma: inputColorOKLCH?.c,
+    inputHue: inputColorOKLCH?.h,
   });
 
   // Get primary color and its lightness
