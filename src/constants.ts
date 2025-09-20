@@ -15,23 +15,6 @@ export const MAX_LEVEL = 950;
  * Lightness scale definitions
  */
 export const STANDARD_LIGHTNESS_SCALE: Record<number, number> = {
-  50: 96,
-  100: 92,
-  200: 83,
-  300: 74,
-  400: 65,
-  500: 56,
-  600: 47,
-  700: 38,
-  800: 29,
-  900: 20,
-  950: 16,
-};
-
-/**
- * Perceptual lightness scale definitions
- */
-export const PERCEPTUAL_LIGHTNESS_SCALE: Record<number, number> = {
   50: 97,
   100: 93,
   200: 85,
@@ -45,17 +28,9 @@ export const PERCEPTUAL_LIGHTNESS_SCALE: Record<number, number> = {
   950: 25,
 };
 
-// Standard lightness scale limits
-export const STANDARD_MAX_LIGHTNESS = 96;
-export const STANDARD_MIN_LIGHTNESS = 16;
-
-// Perceptual lightness scale limits
-export const PERCEPTUAL_MAX_LIGHTNESS = 97;
-export const PERCEPTUAL_MIN_LIGHTNESS = 25;
-
-// Legacy constants for backward compatibility
-export const MAX_LIGHTNESS = STANDARD_MAX_LIGHTNESS;
-export const MIN_LIGHTNESS = STANDARD_MIN_LIGHTNESS;
+// Lightness scale limits
+export const MAX_LIGHTNESS = 97;
+export const MIN_LIGHTNESS = 25;
 
 /**
  * Alpha value definitions
@@ -66,7 +41,6 @@ export const MAX_ALPHA = 1.0;
 /**
  * Default settings
  */
-export const DEFAULT_LIGHTNESS_METHOD = "perceptual" as const;
 
 export const DEFAULT_HUE_SHIFT_MODE = "natural" as const;
 

@@ -8,11 +8,8 @@ import {
 import {
   SCALE_LEVELS,
   STANDARD_LIGHTNESS_SCALE,
-  PERCEPTUAL_LIGHTNESS_SCALE,
-  STANDARD_MAX_LIGHTNESS,
-  STANDARD_MIN_LIGHTNESS,
-  PERCEPTUAL_MAX_LIGHTNESS,
-  PERCEPTUAL_MIN_LIGHTNESS,
+  MAX_LIGHTNESS,
+  MIN_LIGHTNESS,
   MAX_LEVEL,
   MIN_LEVEL,
 } from "./constants";
@@ -133,11 +130,11 @@ export const findClosestLevel = ({
   if (!isFinite(inputLightness)) inputLightness = 50;
 
   return SCALE_LEVELS.reduce((closestLevel, current) => {
-    const lightness = PERCEPTUAL_LIGHTNESS_SCALE[current];
+    const lightness = STANDARD_LIGHTNESS_SCALE[current];
 
     const currentDiff = Math.abs(inputLightness - lightness);
     const closestDiff = Math.abs(
-      inputLightness - PERCEPTUAL_LIGHTNESS_SCALE[closestLevel]
+      inputLightness - STANDARD_LIGHTNESS_SCALE[closestLevel]
     );
 
     return currentDiff < closestDiff ? current : closestLevel;
@@ -157,9 +154,9 @@ export const calculateEvenScale = ({
   if (!isFinite(inputLightness)) inputLightness = 50;
 
   // Use perceptual scale and limits
-  const scale = PERCEPTUAL_LIGHTNESS_SCALE;
-  const maxLightness = PERCEPTUAL_MAX_LIGHTNESS;
-  const minLightness = PERCEPTUAL_MIN_LIGHTNESS;
+  const scale = STANDARD_LIGHTNESS_SCALE;
+  const maxLightness = MAX_LIGHTNESS;
+  const minLightness = MIN_LIGHTNESS;
 
   const clampedInputLightness = Math.max(
     minLightness,
@@ -184,7 +181,7 @@ export const calculateEvenScale = ({
 
   const evenScale: Record<number, number> = {};
 
-  // Use PERCEPTUAL_LIGHTNESS_SCALE directly
+  // Use STANDARD_LIGHTNESS_SCALE directly
   SCALE_LEVELS.forEach((level) => {
     evenScale[level] = scale[level];
   });
@@ -211,5 +208,5 @@ export const calculateEvenScale = ({
  * Get adjusted lightness using perceptual scale
  */
 const getAdjustedLightness = ({ level }: { level: number }): number => {
-  return PERCEPTUAL_LIGHTNESS_SCALE[level];
+  return STANDARD_LIGHTNESS_SCALE[level];
 };
