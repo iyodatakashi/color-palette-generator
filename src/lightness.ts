@@ -33,33 +33,12 @@ export const getLightness = ({
   color: string;
   lightnessMethod?: LightnessMethod;
 }): number => {
-  // Convert color using culori
+  // Convert color directly to OKLCH using culori
   const colorObj = culori.parse(color);
   if (!colorObj) return 0;
 
-  const rgb = culori.converter("rgb")(colorObj);
-  if (!rgb) return 0;
-
-  // All lightness calculations now use OKLCH perceptual lightness
-  return getPerceptualLightness(rgb);
-};
-
-/**
- * Calculate perceptual lightness from RGB (OKLCH based)
- */
-const getPerceptualLightness = ({
-  r,
-  g,
-  b,
-}: {
-  r: number;
-  g: number;
-  b: number;
-}): number => {
-  // Convert RGB directly to OKLCH to get lightness
-  // Convert RGB to OKLCH using culori
-  const rgbObj = { mode: "rgb" as const, r: r / 255, g: g / 255, b: b / 255 };
-  const oklch = culori.converter("oklch")(rgbObj);
+  const oklch = culori.converter("oklch")(colorObj);
+  if (!oklch) return 0;
 
   // OKLCH lightness is 0-1, convert to 0-100 scale
   return oklch.l * 100;

@@ -142,55 +142,35 @@ const calculateTransparentColor = ({
   let target: { r: number; g: number; b: number };
   let bg: { r: number; g: number; b: number };
 
-  try {
-    const targetColorObj = culori.parse(targetSolidColor);
-    if (!targetColorObj) {
-      log.error(`Failed to parse target color`, { targetSolidColor });
-      return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
-    }
-
-    const targetRGB = culori.converter("rgb")(targetColorObj);
-    if (!targetRGB) {
-      log.error(`Failed to convert target color to RGB`, { targetSolidColor });
-      return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
-    }
-
-    target = targetRGB;
-
-    if (isNaN(target.r) || isNaN(target.g) || isNaN(target.b)) {
-      log.error(`Invalid RGB from target color`, { targetSolidColor, target });
-      return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
-    }
-  } catch (error) {
-    log.error(`Error converting target color`, { targetSolidColor, error });
+  // Parse and convert target color - culori handles validation
+  const targetColorObj = culori.parse(targetSolidColor);
+  if (!targetColorObj) {
+    log.error(`Invalid target color`, { targetSolidColor });
     return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
   }
 
-  try {
-    const bgColorObj = culori.parse(backgroundColor);
-    if (!bgColorObj) {
-      log.error(`Failed to parse background color`, { backgroundColor });
-      return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
-    }
-
-    const bgRGB = culori.converter("rgb")(bgColorObj);
-    if (!bgRGB) {
-      log.error(`Failed to convert background color to RGB`, {
-        backgroundColor,
-      });
-      return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
-    }
-
-    bg = bgRGB;
-
-    if (isNaN(bg.r) || isNaN(bg.g) || isNaN(bg.b)) {
-      log.error(`Invalid RGB from background color`, { backgroundColor, bg });
-      return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
-    }
-  } catch (error) {
-    log.error(`Error converting background color`, { backgroundColor, error });
+  const targetRGB = culori.converter("rgb")(targetColorObj);
+  if (!targetRGB) {
+    log.error(`Failed to convert target color to RGB`, { targetSolidColor });
     return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
   }
+
+  target = targetRGB;
+
+  // Parse and convert background color - culori handles validation
+  const bgColorObj = culori.parse(backgroundColor);
+  if (!bgColorObj) {
+    log.error(`Invalid background color`, { backgroundColor });
+    return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
+  }
+
+  const bgRGB = culori.converter("rgb")(bgColorObj);
+  if (!bgRGB) {
+    log.error(`Failed to convert background color to RGB`, { backgroundColor });
+    return `rgba(0, 0, 0, ${fixedAlpha.toFixed(3)})`;
+  }
+
+  bg = bgRGB;
 
   // Prevent division by zero
   if (fixedAlpha === 0) {

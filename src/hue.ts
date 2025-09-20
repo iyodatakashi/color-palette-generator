@@ -1,12 +1,7 @@
 // hue.ts
 
 import * as culori from "culori";
-import {
-  getLightness,
-  adjustToLightness,
-  adjustToPerceptualLightness,
-} from "./lightness";
-import { getSaturation } from "./saturation";
+import { getLightness, adjustToLightness } from "./lightness";
 import type {
   LightnessMethod,
   HuePaletteConfig,
@@ -34,16 +29,12 @@ export const adjustColorToSameTone = ({
   // Normalize target hue to 0-360 range
   targetHue = isFinite(targetHue) ? ((targetHue % 360) + 360) % 360 : 0;
 
-  // Check if the color is valid
-  const parsedColor = culori.parse(color);
-  if (!parsedColor) {
+  // Parse input color using culori
+  const colorObj = culori.parse(color);
+  if (!colorObj) {
     // Fallback for invalid color
     return color;
   }
-
-  // Parse input color using culori
-  const colorObj = culori.parse(color);
-  if (!colorObj) return color;
 
   // Calculate perceived lightness of original color using specified method
   const originalPerceivedLightness = getLightness({
@@ -51,14 +42,8 @@ export const adjustColorToSameTone = ({
     lightnessMethod,
   });
 
-  // Use culori for all color conversions to ensure consistency
   // Convert original color to OKLCH using culori
-  const originalColor = culori.parse(color);
-  if (!originalColor) {
-    return color; // Fallback for invalid colors
-  }
-
-  const originalOKLCH = culori.converter("oklch")(originalColor);
+  const originalOKLCH = culori.converter("oklch")(colorObj);
   if (!originalOKLCH) {
     return color; // Fallback for conversion failure
   }

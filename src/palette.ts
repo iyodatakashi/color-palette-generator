@@ -61,16 +61,12 @@ export const generateColorPalette = (
     throw new Error("Failed to convert color to OKLCH");
   }
 
-  // Detect invalid color input and log output
-  if (
-    inputRGB.r === 0 &&
-    inputRGB.g === 0 &&
-    inputRGB.b === 0 &&
-    colorConfig.color !== "#000000"
-  ) {
-    log.warn("Invalid color input detected, using black fallback", {
+  // culori.parse already handles validation - if we get here, the color is valid
+  // Log the normalized color for debugging if needed
+  if (colorConfig.color !== normalizedColor) {
+    log.info("Color normalized", {
       originalColor: colorConfig.color,
-      fallbackColor: normalizedColor,
+      normalizedColor: normalizedColor,
       prefix: colorConfig.prefix,
     });
   }
