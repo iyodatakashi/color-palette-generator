@@ -8,8 +8,8 @@ import type { HueShiftMode, RandomColorConfig } from "./types";
 export const SCALE_LEVELS = [
   50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950,
 ];
-export const MIN_LEVEL = 50;
-export const MAX_LEVEL = 950;
+export const MIN_LEVEL = 0;
+export const MAX_LEVEL = 1000;
 
 /**
  * Lightness scale definitions
@@ -29,8 +29,8 @@ export const STANDARD_LIGHTNESS_SCALE: Record<number, number> = {
 };
 
 // Lightness scale limits
-export const MAX_LIGHTNESS = 97;
-export const MIN_LIGHTNESS = 25;
+export const MAX_LIGHTNESS = 100;
+export const MIN_LIGHTNESS = 20;
 
 /**
  * Alpha value definitions

@@ -50,7 +50,7 @@ export const adjustColorToSameTone = ({
   const gamutMapper = culori.toGamut(
     "rgb",
     "oklch",
-    culori.differenceEuclidean("lab")
+    culori.differenceEuclidean("lab") as any
   );
   const gamutMappedColor = gamutMapper(targetOKLCH);
 

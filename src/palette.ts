@@ -94,7 +94,8 @@ export const generateColorPalette = (
 
   const adjustedLightnessScale = calculateEvenScale({
     inputLightness,
-    baseLevel: closestLevel,
+    inputChroma: inputOKLCH.c || 0,
+    inputHue: inputOKLCH.h || 0,
   });
 
   const palette = generateOriginalPalette({
@@ -102,6 +103,7 @@ export const generateColorPalette = (
     inputOKLCH,
     closestLevel,
     adjustedLightnessScale,
+    inputLightness,
   });
 
   setVariationColors({
@@ -139,38 +141,33 @@ const generateOriginalPalette = ({
   inputOKLCH,
   closestLevel,
   adjustedLightnessScale,
+  inputLightness,
 }: {
   inputOKLCH: Oklch;
   closestLevel: number;
   adjustedLightnessScale: Record<number, number>;
   colorConfig: NormalizedColorConfig;
+  inputLightness: number;
 }): Palette => {
   const palette: Palette = {};
-  const originalLightness = adjustedLightnessScale[closestLevel];
+  const originalLightness = inputLightness; // Use original input lightness, not adjusted scale value
 
   Object.entries(adjustedLightnessScale).forEach(([key, targetLightness]) => {
-    if (parseInt(key) === closestLevel) {
-      palette[`--${colorConfig.prefix}-${key}`] = colorConfig.color;
-    } else {
-      const adjustedHue = calculateHueShift({
-        baseHue: inputOKLCH.h || 0,
-        baseLightness: originalLightness,
-        targetLightness,
-        adjustedLightnessScale,
-        hueShiftMode: colorConfig.hueShiftMode,
-      });
+    const adjustedHue = calculateHueShift({
+      baseHue: inputOKLCH.h || 0,
+      baseLightness: originalLightness,
+      targetLightness,
+      adjustedLightnessScale,
+      hueShiftMode: colorConfig.hueShiftMode,
+    });
 
-      const generatedColor = adjustToLightness({
-        h: adjustedHue,
-        c: inputOKLCH.c || 0,
-        targetLightness,
-        enableChromaAdjustment: colorConfig.enableChromaAdjustment,
-        baseLightness: originalLightness,
-        baseColor: colorConfig.color,
-      });
+    const generatedColor = adjustToLightness({
+      h: adjustedHue,
+      c: inputOKLCH.c || 0,
+      targetLightness,
+    });
 
-      palette[`--${colorConfig.prefix}-${key}`] = generatedColor;
-    }
+    palette[`--${colorConfig.prefix}-${key}`] = generatedColor;
   });
 
   return palette;

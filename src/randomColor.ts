@@ -37,6 +37,5 @@ export function generateRandomPrimaryColor(
     h: hue,
     c: chroma,
     targetLightness: lightness,
-    enableChromaAdjustment: false, // Keep original chroma for random color generation
   });
 }
