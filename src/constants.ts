@@ -78,7 +78,7 @@ export const DEFAULT_COLOR_CONFIG = {
   bgColorLight: "#ffffff",
   bgColorDark: "#000000",
   transparentOriginLevel: 500,
-  enableSaturationAdjustment: false,
+  enableChromaAdjustment: false,
 };
 
 export const DEFAULT_BASE_COLOR_CONFIG = {
@@ -89,14 +89,14 @@ export const DEFAULT_BASE_COLOR_CONFIG = {
   bgColorLight: "#ffffff",
   bgColorDark: "#000000",
   transparentOriginLevel: 950,
-  enableSaturationAdjustment: false,
+  enableChromaAdjustment: false,
 };
 
 /**
  * Default options
  */
 export const DEFAULT_RANDOM_COLOR_CONFIG: Required<RandomColorConfig> = {
-  saturationRange: [35, 75], // Moderate saturation
+  chromaRange: [35, 75], // Moderate chroma
   lightnessRange: [
     STANDARD_LIGHTNESS_SCALE[300],
     STANDARD_LIGHTNESS_SCALE[700],

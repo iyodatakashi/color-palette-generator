@@ -85,9 +85,9 @@ export const generateColorPalette = (
     transparentOriginLevel:
       colorConfig.transparentOriginLevel ||
       DEFAULT_COLOR_CONFIG.transparentOriginLevel,
-    enableSaturationAdjustment:
-      colorConfig.enableSaturationAdjustment ??
-      DEFAULT_COLOR_CONFIG.enableSaturationAdjustment,
+    enableChromaAdjustment:
+      colorConfig.enableChromaAdjustment ??
+      DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
   };
 
   const inputLightness = getLightness({
@@ -174,7 +174,7 @@ const generateOriginalPalette = ({
         c: inputOKLCH.c || 0,
         targetLightness,
         lightnessMethod: colorConfig.lightnessMethod,
-        enableSaturationAdjustment: colorConfig.enableSaturationAdjustment,
+        enableChromaAdjustment: colorConfig.enableChromaAdjustment,
         baseLightness: originalLightness,
         baseColor: colorConfig.color,
       });

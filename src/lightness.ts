@@ -2,10 +2,10 @@
 
 import * as culori from "culori";
 import {
-  adjustSaturationForLightness,
-  getTheoreticalSaturationCoefficient,
-  getPerceptualSaturation,
-} from "./saturation";
+  adjustChromaForLightness,
+  getTheoreticalChromaCoefficient,
+  getPerceptualChroma,
+} from "./chroma";
 import {
   SCALE_LEVELS,
   STANDARD_LIGHTNESS_SCALE,
@@ -56,7 +56,7 @@ export const adjustToLightness = ({
   c,
   targetLightness,
   lightnessMethod = "perceptual",
-  enableSaturationAdjustment = true,
+  enableChromaAdjustment = true,
   baseLightness = 50,
   baseColor,
 }: {
@@ -64,7 +64,7 @@ export const adjustToLightness = ({
   c: number;
   targetLightness: number;
   lightnessMethod?: LightnessMethod;
-  enableSaturationAdjustment?: boolean;
+  enableChromaAdjustment?: boolean;
   baseLightness?: number;
   baseColor?: string;
 }): string => {
@@ -74,8 +74,8 @@ export const adjustToLightness = ({
   baseLightness = isFinite(baseLightness) ? baseLightness : 50;
 
   // Adjust chroma based on lightness change if enabled
-  const adjustedChroma = enableSaturationAdjustment
-    ? adjustSaturationForLightness({
+  const adjustedChroma = enableChromaAdjustment
+    ? adjustChromaForLightness({
         h,
         s: c * 100, // Convert chroma to saturation-like scale for compatibility
         baseLightness,

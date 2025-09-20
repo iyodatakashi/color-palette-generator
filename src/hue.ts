@@ -15,7 +15,7 @@ import { generateColorPalette } from "./palette";
 // =============================================================================
 
 /**
- * Adjust color hue while maintaining the same tone (saturation/lightness)
+ * Adjust color hue while maintaining the same tone (chroma/lightness)
  */
 export const adjustColorToSameTone = ({
   color,

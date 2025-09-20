@@ -20,12 +20,12 @@ export {
   calculateEvenScale,
 } from "./lightness";
 
-// Saturation calculation features
+// Chroma calculation features
 export {
-  getSaturation,
-  getTheoreticalSaturationCoefficient,
-  adjustSaturationForLightness,
-} from "./saturation";
+  getChroma,
+  getTheoreticalChromaCoefficient,
+  adjustChromaForLightness,
+} from "./chroma";
 
 // Hue change features
 export { adjustColorToSameTone, generateHuePalette, HUE_NAMES } from "./hue";
@@ -55,7 +55,7 @@ export type {
   RGB,
   OKLCH,
   LightnessMethod,
-  SaturationMethod,
+  ChromaMethod,
   HueShiftMode,
   CombinationType,
   BaseColorStrategy,

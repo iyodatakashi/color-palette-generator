@@ -40,7 +40,7 @@ export const generateCombination = (config: CombinationConfig): Combination => {
   }
   const lightnessMethod = config.lightnessMethod || "perceptual";
   const baseColorStrategy = config.baseColorStrategy || "harmonic";
-  // Use default saturation adjustment settings for each color type
+  // Use default chroma adjustment settings for each color type
 
   const baseColorConfig = generateBaseColorConfig({
     primaryOKLCH,
@@ -60,7 +60,7 @@ export const generateCombination = (config: CombinationConfig): Combination => {
     transparentOriginLevel:
       config.transparentOriginLevel ??
       DEFAULT_COLOR_CONFIG.transparentOriginLevel,
-    enableSaturationAdjustment: DEFAULT_COLOR_CONFIG.enableSaturationAdjustment,
+    enableChromaAdjustment: DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
     id: "primary",
     prefix: "primary",
     color: config.primaryColor,
@@ -113,8 +113,7 @@ const generateBaseColorConfig = ({
     transparentOriginLevel:
       config.baseTransparentOriginLevel ??
       DEFAULT_BASE_COLOR_CONFIG.transparentOriginLevel,
-    enableSaturationAdjustment:
-      DEFAULT_BASE_COLOR_CONFIG.enableSaturationAdjustment,
+    enableChromaAdjustment: DEFAULT_BASE_COLOR_CONFIG.enableChromaAdjustment,
     id: "base",
     prefix: "base",
     color: baseColor,
@@ -177,8 +176,7 @@ const generateSecondaryColorConfigs = ({
         transparentOriginLevel:
           config.transparentOriginLevel ??
           DEFAULT_COLOR_CONFIG.transparentOriginLevel,
-        enableSaturationAdjustment:
-          DEFAULT_COLOR_CONFIG.enableSaturationAdjustment,
+        enableChromaAdjustment: DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
         id,
         prefix,
         color,
@@ -209,7 +207,7 @@ const getBaseColor = ({
 }): string => {
   const targetLightness = STANDARD_LIGHTNESS_SCALE[500]; // 500 level equivalent
 
-  // Calculate base chroma (low saturation for base colors)
+  // Calculate base chroma (low chroma for base colors)
   const baseChroma = Math.max(
     0.02,
     Math.min(0.08, (primaryOKLCH.c || 0) * 0.1)

@@ -27,10 +27,10 @@ export function generateRandomPrimaryColor(
   const lightness =
     Math.random() * (maxLightness - minLightness) + minLightness;
 
-  // Generate random chroma (convert saturation range to chroma range)
-  const [minSat, maxSat] = perfectConfig.saturationRange;
-  const saturation = Math.random() * (maxSat - minSat) + minSat;
-  const chroma = saturation / 100; // Convert saturation percentage to chroma (0-1 range)
+  // Generate random chroma
+  const [minChroma, maxChroma] = perfectConfig.chromaRange;
+  const chromaValue = Math.random() * (maxChroma - minChroma) + minChroma;
+  const chroma = chromaValue / 100; // Convert chroma percentage to 0-1 range
 
   // Adjust to specified lightness and return HEX string
   return adjustToLightness({
@@ -38,6 +38,6 @@ export function generateRandomPrimaryColor(
     c: chroma,
     targetLightness: lightness,
     lightnessMethod: perfectConfig.lightnessMethod,
-    enableSaturationAdjustment: false, // Keep original chroma for random color generation
+    enableChromaAdjustment: false, // Keep original chroma for random color generation
   });
 }

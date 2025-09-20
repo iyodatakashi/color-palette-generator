@@ -16,7 +16,7 @@ export type ColorConfig = {
   bgColorDark?: string;
   transparentOriginLevel?: number;
   includeTextColors?: boolean;
-  enableSaturationAdjustment?: boolean; // Whether to apply saturation adjustment in palette generation
+  enableChromaAdjustment?: boolean; // Whether to apply chroma adjustment in palette generation
 };
 
 // Normalized color configuration (internal use)
@@ -29,7 +29,7 @@ export type NormalizedColorConfig = ColorConfig & {
   bgColorLight: string;
   bgColorDark: string;
   transparentOriginLevel: number;
-  enableSaturationAdjustment: boolean;
+  enableChromaAdjustment: boolean;
 };
 
 // Color palette (output)
@@ -95,8 +95,8 @@ export type BaseColorStrategy = "harmonic" | "contrasting" | "neutral";
 
 // Random color generation configuration (input)
 export type RandomColorConfig = {
-  /** Saturation range [min, max] (0-100) */
-  saturationRange?: [number, number];
+  /** Chroma range [min, max] (0-100) */
+  chromaRange?: [number, number];
   /** Target lightness (0-100) */
   lightnessRange?: [number, number];
   /** Lightness calculation method */
@@ -131,8 +131,8 @@ export type OKLCH = Oklch;
 // Lightness calculation method type definition
 export type LightnessMethod = "perceptual";
 
-// Saturation calculation method type definition
-export type SaturationMethod = "perceptual";
+// Chroma calculation method type definition
+export type ChromaMethod = "perceptual";
 
 // Hue shift mode type definition
 export type HueShiftMode = "fixed" | "natural" | "unnatural";
