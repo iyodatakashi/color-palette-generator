@@ -18,6 +18,7 @@ export type ColorConfig = {
   transparentOriginLevel?: number;
   includeTextColors?: boolean;
   enableChromaAdjustment?: boolean; // Whether to apply chroma adjustment in palette generation
+  combinationHueShift?: number; // Hue shift for combination colors (degrees)
 };
 
 // Normalized color configuration (internal use)
@@ -30,6 +31,7 @@ export type NormalizedColorConfig = ColorConfig & {
   bgColorDark: string;
   transparentOriginLevel: number;
   enableChromaAdjustment: boolean;
+  combinationHueShift?: number;
 };
 
 // Color palette (output)

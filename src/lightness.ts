@@ -1,7 +1,6 @@
 // lightness.ts
 
 import * as culori from "culori";
-import { adjustChromaForLightness } from "./chroma";
 import {
   SCALE_LEVELS,
   MAX_LIGHTNESS,

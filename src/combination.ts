@@ -2,7 +2,7 @@
 
 import * as culori from "culori";
 import { normalizeHue } from "./hueShift";
-import { adjustColorToSameTone } from "./hue";
+import { fitOklchToRgb8 } from "./colorUtils";
 import type {
   ColorConfig,
   CombinationType,
@@ -10,6 +10,7 @@ import type {
   CombinationConfig,
   Combination,
 } from "./types";
+import { generateColorPalette } from "./palette";
 import type { Oklch } from "culori";
 import {
   STANDARD_LIGHTNESS_SCALE,
@@ -60,14 +61,28 @@ export const generateCombination = (config: CombinationConfig): Combination => {
     prefix: "primary",
     color: config.primaryColor,
   };
-  const secondaryColorConfigs = generateSecondaryColorConfigs({
+  // Remove old function call
+
+  // Generate base and primary palettes first
+  const baseConfig = {
+    ...baseColorConfig,
+    palette: generateColorPalette(baseColorConfig),
+  };
+
+  const primaryConfig = {
+    ...primaryColorConfig,
+    palette: generateColorPalette(primaryColorConfig),
+  };
+
+  // Generate secondary palettes by hue-shifting primary palette levels
+  const secondaryConfigs = generateSecondaryPalettesFromPrimary({
+    primaryPalette: primaryConfig.palette,
     primaryOKLCH,
     combinationType,
-    primaryColor: config.primaryColor,
     config,
   });
 
-  return [baseColorConfig, primaryColorConfig, ...secondaryColorConfigs];
+  return [baseConfig, primaryConfig, ...secondaryConfigs];
 };
 
 // =============================================================================
@@ -111,47 +126,124 @@ const generateBaseColorConfig = ({
 };
 
 /**
- * Generate secondary color group Configs
+ * Get hue shift values for secondary colors without generating actual colors
  */
-const generateSecondaryColorConfigs = ({
+const getSecondaryHueShifts = ({
   primaryOKLCH,
   combinationType,
-  primaryColor,
-  config,
 }: {
   primaryOKLCH: Oklch;
   combinationType: CombinationType;
-  primaryColor: string;
+}): {
+  secondary?: number;
+  secondary2?: number;
+  secondary3?: number;
+} => {
+  const primaryHue = primaryOKLCH.h || 0;
+
+  const combinationMap: Record<CombinationType, any> = {
+    complementary: {
+      secondary: (primaryHue + 180) % 360,
+    },
+    triadic: {
+      secondary: (primaryHue + 120) % 360,
+      secondary2: (primaryHue + 240) % 360,
+    },
+    tetradic: {
+      secondary: (primaryHue + 90) % 360,
+      secondary2: (primaryHue + 180) % 360,
+      secondary3: (primaryHue + 270) % 360,
+    },
+    analogous: {
+      secondary: (primaryHue + 30) % 360,
+      secondary2: (primaryHue - 30 + 360) % 360,
+    },
+    splitComplementary: {
+      secondary: (primaryHue + 150) % 360,
+      secondary2: (primaryHue + 210) % 360,
+    },
+    doubleComplementary: {
+      secondary: (primaryHue + 180) % 360,
+      secondary2: (primaryHue + 30) % 360,
+      secondary3: (primaryHue + 210) % 360,
+    },
+    doubleComplementaryReverse: {
+      secondary: (primaryHue + 180) % 360,
+      secondary2: (primaryHue - 30 + 360) % 360,
+      secondary3: (primaryHue + 150) % 360,
+    },
+    monochromatic: {},
+  };
+
+  return combinationMap[combinationType] || {};
+};
+
+/**
+ * Generate secondary palettes by hue-shifting primary palette levels
+ */
+const generateSecondaryPalettesFromPrimary = ({
+  primaryPalette,
+  primaryOKLCH,
+  combinationType,
+  config,
+}: {
+  primaryPalette: Record<string, string>;
+  primaryOKLCH: Oklch;
+  combinationType: CombinationType;
   config: CombinationConfig;
-}): ColorConfig[] => {
+}) => {
   if (combinationType === "monochromatic") {
     return [];
   }
 
-  const secondaryColors = getSecondaryColors({
+  // Get hue shift values for each secondary color
+  const hueShifts = getSecondaryHueShifts({
     primaryOKLCH,
     combinationType,
-    primaryColor,
   });
-  const configs: ColorConfig[] = [];
+
+  const results = [];
 
   const secondaryColorMap = [
-    { id: "secondary", prefix: "secondary", color: secondaryColors.secondary }, // Second
-    {
-      id: "secondary2",
-      prefix: "secondary2",
-      color: secondaryColors.secondary2,
-    }, // Third
-    {
-      id: "secondary3",
-      prefix: "secondary3",
-      color: secondaryColors.secondary3,
-    }, // Fourth
+    { id: "secondary", prefix: "secondary", hueShift: hueShifts.secondary },
+    { id: "secondary2", prefix: "secondary2", hueShift: hueShifts.secondary2 },
+    { id: "secondary3", prefix: "secondary3", hueShift: hueShifts.secondary3 },
   ];
 
-  for (const { id, color, prefix } of secondaryColorMap) {
-    if (color) {
-      configs.push({
+  for (const { id, prefix, hueShift } of secondaryColorMap) {
+    if (hueShift !== undefined) {
+      // Generate secondary palette by hue-shifting each primary level
+      const secondaryPalette: Record<string, string> = {};
+
+      Object.entries(primaryPalette).forEach(([key, primaryColor]) => {
+        // Convert primary color to OKLCH
+        const primaryColorOKLCH = culori.oklch(primaryColor);
+        if (!primaryColorOKLCH) return;
+
+        // Apply hue shift
+        const secondaryOKLCH = {
+          mode: "oklch" as const,
+          l: primaryColorOKLCH.l || 0.5,
+          c: primaryColorOKLCH.c || 0,
+          h: hueShift,
+        };
+
+        // Apply optimized gamut mapping for saturation preservation
+        const rgb8 = fitOklchToRgb8(secondaryOKLCH);
+        const hexColor = `#${rgb8.r.toString(16).padStart(2, "0")}${rgb8.g
+          .toString(16)
+          .padStart(2, "0")}${rgb8.b.toString(16).padStart(2, "0")}`;
+
+        // Add to secondary palette
+        const secondaryKey = key.replace("primary", prefix);
+        secondaryPalette[secondaryKey] = hexColor;
+      });
+
+      results.push({
+        id,
+        prefix,
+        color: secondaryPalette[`--${prefix}-500`] || "#000000", // Use level 500 as representative color
+        palette: secondaryPalette,
         hueShiftMode: "natural" as const,
         includeTransparent:
           config.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
@@ -163,14 +255,47 @@ const generateSecondaryColorConfigs = ({
           config.transparentOriginLevel ??
           DEFAULT_COLOR_CONFIG.transparentOriginLevel,
         enableChromaAdjustment: DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
-        id,
-        prefix,
-        color,
       });
     }
   }
 
-  return configs;
+  return results;
+};
+
+// =============================================================================
+// Gamut Mapping for Combination Colors
+// =============================================================================
+
+/**
+ * Generate color with same tone (impression) for combination and hue palette generation
+ * Specialized for maintaining visual consistency across color variations
+ */
+export const generateSameToneColor = ({
+  h,
+  c,
+  targetLightness,
+}: {
+  h: number;
+  c: number;
+  targetLightness: number;
+}): string => {
+  // Validate and normalize inputs
+  h = isFinite(h) ? ((h % 360) + 360) % 360 : 0;
+  c = isFinite(c) ? Math.max(0, c) : 0;
+  targetLightness = isFinite(targetLightness) ? targetLightness : 50;
+
+  const targetColor = {
+    mode: "oklch" as const,
+    l: targetLightness / 100,
+    c: c,
+    h: h,
+  };
+
+  // Use optimized gamut mapping for same-tone generation
+  const rgb8 = fitOklchToRgb8(targetColor);
+  return `#${rgb8.r.toString(16).padStart(2, "0")}${rgb8.g
+    .toString(16)
+    .padStart(2, "0")}${rgb8.b.toString(16).padStart(2, "0")}`;
 };
 
 // =============================================================================
@@ -298,13 +423,20 @@ const getSecondaryColors = ({
     secondary3?: string;
   } = {};
 
+  // Get primary color OKLCH for flexible gamut mapping
+  const primaryOKLCHForGamut = culori.converter("oklch")(
+    culori.parse(primaryColor)
+  );
+
   const keys = ["secondary", "secondary2", "secondary3"] as const;
   for (const key of keys) {
     const targetHue = hueValues[key];
-    if (targetHue !== undefined) {
-      result[key] = adjustColorToSameTone({
-        color: primaryColor,
-        targetHue,
+    if (targetHue !== undefined && primaryOKLCHForGamut) {
+      // Use specialized same-tone color generation
+      result[key] = generateSameToneColor({
+        h: targetHue,
+        c: primaryOKLCHForGamut.c || 0,
+        targetLightness: (primaryOKLCHForGamut.l || 0.5) * 100,
       });
     }
   }

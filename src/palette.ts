@@ -9,6 +9,8 @@ import {
   findClosestLevel,
   calculateEvenScale,
 } from "./lightness";
+import { fitOklchToRgb8 } from "./colorUtils";
+import { generateSameToneColor } from "./combination";
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
 import { createContextLogger } from "./logger";
@@ -155,25 +157,43 @@ const generateOriginalPalette = ({
   Object.entries(adjustedLightnessScale).forEach(([key, targetLightness]) => {
     const level = parseInt(key);
 
+    // Calculate base hue with hue shift mode
+    const baseHue = inputOKLCH.h || 0;
     const adjustedHue = calculateHueShift({
-      baseHue: inputOKLCH.h || 0,
+      baseHue,
       baseLightness: originalLightness,
       targetLightness,
       adjustedLightnessScale,
       hueShiftMode: colorConfig.hueShiftMode,
     });
 
-    const generatedColor = adjustToLightness({
-      h: adjustedHue,
-      c: inputOKLCH.c || 0,
-      targetLightness,
-    });
+    // Apply combination hue shift if present (for secondary colors)
+    const finalHue =
+      colorConfig.combinationHueShift !== undefined
+        ? colorConfig.combinationHueShift
+        : adjustedHue;
+
+    const generatedColor =
+      colorConfig.combinationHueShift !== undefined
+        ? generateSameToneColor({
+            h: finalHue,
+            c: inputOKLCH.c || 0,
+            targetLightness,
+          })
+        : adjustToLightness({
+            h: adjustedHue,
+            c: inputOKLCH.c || 0,
+            targetLightness,
+          });
 
     palette[`--${colorConfig.prefix}-${key}`] = generatedColor;
   });
 
   // Override the closest level with the original input color for accuracy
-  palette[`--${colorConfig.prefix}-${closestLevel}`] = colorConfig.color;
+  // (But only for non-combination colors)
+  if (colorConfig.combinationHueShift === undefined) {
+    palette[`--${colorConfig.prefix}-${closestLevel}`] = colorConfig.color;
+  }
 
   return palette;
 };

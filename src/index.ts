@@ -8,7 +8,7 @@
 export { generateColorPalette, resolveVariable } from "./palette";
 
 // Color combination features
-export { generateCombination } from "./combination";
+export { generateCombination, generateSameToneColor } from "./combination";
 
 // Random color generation features
 export { generateRandomPrimaryColor } from "./randomColor";
@@ -20,15 +20,8 @@ export {
   calculateEvenScale,
 } from "./lightness";
 
-// Chroma calculation features
-export {
-  getChroma,
-  getTheoreticalChromaCoefficient,
-  adjustChromaForLightness,
-} from "./chroma";
-
 // Hue change features
-export { adjustColorToSameTone, generateHuePalette, HUE_NAMES } from "./hue";
+export { generateHuePalette, HUE_NAMES } from "./hue";
 
 // Apply to DOM
 export { applyColorPaletteToDom } from "./applyToDom";

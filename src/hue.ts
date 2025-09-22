@@ -2,60 +2,13 @@
 
 import * as culori from "culori";
 import { getLightness } from "./lightness";
+import { generateSameToneColor } from "./combination";
 import type { HuePaletteConfig, ColorConfig, Palette } from "./types";
 import { generateColorPalette } from "./palette";
 
 // =============================================================================
 // Hue Change Functions
 // =============================================================================
-
-/**
- * Adjust color hue while maintaining the same tone (chroma/lightness)
- */
-export const adjustColorToSameTone = ({
-  color,
-  targetHue,
-}: {
-  color: string;
-  targetHue: number;
-}): string => {
-  // Normalize target hue to 0-360 range
-  targetHue = isFinite(targetHue) ? ((targetHue % 360) + 360) % 360 : 0;
-
-  // Parse input color
-  const colorObj = culori.parse(color);
-  if (!colorObj) {
-    // Fallback for invalid color
-    return color;
-  }
-
-  // Calculate perceived lightness of original color
-  const originalPerceivedLightness = getLightness(color);
-
-  // Get OKLCH values from original color
-  const originalOKLCH = culori.converter("oklch")(colorObj);
-  if (!originalOKLCH) {
-    return color; // Fallback for conversion failure
-  }
-
-  // Create new color with target hue, preserving lightness and chroma
-  let targetOKLCH = {
-    mode: "oklch" as const,
-    l: originalPerceivedLightness / 100, // Convert to 0-1 range
-    c: originalOKLCH.c, // Preserve original chroma
-    h: targetHue, // Use target hue in degrees (culori uses degrees for OKLCH)
-  };
-
-  // Apply gamut mapping using culori's toGamut with LAB Euclidean distance
-  const gamutMapper = culori.toGamut(
-    "rgb",
-    "oklch",
-    culori.differenceEuclidean("lab") as any
-  );
-  const gamutMappedColor = gamutMapper(targetOKLCH);
-
-  return culori.formatHex(gamutMappedColor);
-};
 
 // =============================================================================
 // Hue Palette Generation
@@ -151,9 +104,15 @@ export const generateHueColors = ({
     const hue = i * hueStep;
     const normalizedHue = Math.round(hue);
 
-    const adjustedColor = adjustColorToSameTone({
-      color,
-      targetHue: hue,
+    // Get OKLCH values from original color for generateSameToneColor
+    const colorObj = culori.parse(color);
+    const originalOKLCH = colorObj ? culori.converter("oklch")(colorObj) : null;
+    const originalPerceivedLightness = getLightness(color);
+
+    const adjustedColor = generateSameToneColor({
+      h: hue,
+      c: originalOKLCH?.c || 0,
+      targetLightness: originalPerceivedLightness,
     });
 
     // Get name from predefined names or generate generic name
