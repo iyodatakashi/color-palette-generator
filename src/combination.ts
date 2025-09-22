@@ -13,11 +13,7 @@ import type {
 } from "./types";
 import { generateColorPalette } from "./palette";
 import type { Oklch } from "culori";
-import {
-  STANDARD_LIGHTNESS_SCALE,
-  DEFAULT_COLOR_CONFIG,
-  DEFAULT_BASE_COLOR_CONFIG,
-} from "./constants";
+import { DEFAULT_COLOR_CONFIG, DEFAULT_BASE_COLOR_CONFIG } from "./constants";
 
 // =============================================================================
 // Color Combination Generation
@@ -400,7 +396,7 @@ const getBaseColor = ({
   strategy?: BaseColorStrategy;
   config: CombinationConfig;
 }): string => {
-  const targetLightness = STANDARD_LIGHTNESS_SCALE[500]; // 500 level equivalent
+  const targetLightness = 61; // Level 500 equivalent (middle lightness)
 
   // Calculate base chroma (moderate chroma for base colors)
   const baseChroma = Math.max(

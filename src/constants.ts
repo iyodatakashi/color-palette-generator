@@ -12,21 +12,9 @@ export const MIN_LEVEL = 0;
 export const MAX_LEVEL = 1000;
 
 /**
- * Lightness scale definitions
+ * Lightness scale definitions - DEPRECATED: Now using sigmoid function
  */
-export const STANDARD_LIGHTNESS_SCALE: Record<number, number> = {
-  50: 97,
-  100: 93,
-  200: 85,
-  300: 77,
-  400: 69,
-  500: 61,
-  600: 53,
-  700: 45,
-  800: 37,
-  900: 29,
-  950: 25,
-};
+// STANDARD_LIGHTNESS_SCALE removed - using dynamic sigmoid calculation
 
 // Lightness scale limits
 export const MAX_LIGHTNESS = 100;
@@ -69,9 +57,6 @@ export const DEFAULT_BASE_COLOR_CONFIG = {
  */
 export const DEFAULT_RANDOM_COLOR_CONFIG: Required<RandomColorConfig> = {
   chromaRange: [35, 75], // Moderate chroma
-  lightnessRange: [
-    STANDARD_LIGHTNESS_SCALE[300],
-    STANDARD_LIGHTNESS_SCALE[700],
-  ], // Specified lightness
+  lightnessRange: [75, 35], // レベル300-700相当の明度範囲
   hueRange: [0, 360], // All hues
 };

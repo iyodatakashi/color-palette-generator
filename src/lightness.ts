@@ -102,8 +102,8 @@ const calculateOptimalK = (
     // Adjust k based on error direction
     // If we need higher lightness, decrease k (less steep)
     // If we need lower lightness, increase k (more steep)
-    const adjustment = error * 0.01; // Larger adjustment factor
-    currentK = Math.max(0.1, Math.min(2.0, currentK + adjustment));
+    const adjustment = error * 0.01;
+    currentK = Math.max(0.1, Math.min(10.0, currentK + adjustment));
   }
 
   return currentK;
@@ -114,8 +114,6 @@ const calculateOptimalK = (
  * Maps level 0-1000 to lightness 100%-20% with configurable steepness
  */
 const getBaseSigmoidLightness = (level: number, k: number = 0.18): number => {
-  const MIN_LIGHTNESS_LOCAL = 10; // 10% to 100% range
-  const MAX_LIGHTNESS_LOCAL = 100;
   const xRange = 10;
   const x = (level / 1000) * xRange;
   // Fixed center at 10 (use upper curve only)
@@ -125,17 +123,17 @@ const getBaseSigmoidLightness = (level: number, k: number = 0.18): number => {
   const minRaw = 1 / (1 + Math.exp(-k * (0 - center)));
   const maxRaw = 1 / (1 + Math.exp(-k * (xRange - center)));
   const scaledSigmoid =
-    1.0 - ((1.0 - 0.1) * (rawSigmoid - minRaw)) / (maxRaw - minRaw);
+    MAX_LIGHTNESS / 100 -
+    ((MAX_LIGHTNESS / 100 - MIN_LIGHTNESS / 100) * (rawSigmoid - minRaw)) /
+      (maxRaw - minRaw);
 
   const lightness =
-    MIN_LIGHTNESS_LOCAL +
-    (MAX_LIGHTNESS_LOCAL - MIN_LIGHTNESS_LOCAL) *
-      ((scaledSigmoid - 0.1) / (1.0 - 0.1));
+    MIN_LIGHTNESS +
+    (MAX_LIGHTNESS - MIN_LIGHTNESS) *
+      ((scaledSigmoid - MIN_LIGHTNESS / 100) /
+        (MAX_LIGHTNESS / 100 - MIN_LIGHTNESS / 100));
 
-  return Math.max(
-    MIN_LIGHTNESS_LOCAL,
-    Math.min(MAX_LIGHTNESS_LOCAL, lightness)
-  );
+  return lightness;
 };
 
 /**
@@ -331,7 +329,7 @@ const getMaxChromaForHue = (hue: number): number => {
   let maxChroma = 0;
 
   // Search across lightness range to find absolute maximum chroma for this hue
-  for (let l = 0.1; l <= 0.9; l += 0.01) {
+  for (let l = MIN_LIGHTNESS / 100; l <= MAX_LIGHTNESS / 100; l += 0.01) {
     const highChromaColor = { mode: "oklch" as const, l, c: 1.0, h: hue };
     const clampedColor = culori.clampChroma(highChromaColor, "oklch", "rgb");
     const oklchResult = culori.converter("oklch")(clampedColor);
