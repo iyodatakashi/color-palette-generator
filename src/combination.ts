@@ -402,10 +402,10 @@ const getBaseColor = ({
 }): string => {
   const targetLightness = STANDARD_LIGHTNESS_SCALE[500]; // 500 level equivalent
 
-  // Calculate base chroma (low chroma for base colors)
+  // Calculate base chroma (moderate chroma for base colors)
   const baseChroma = Math.max(
     0.02,
-    Math.min(0.08, (primaryOKLCH.c || 0) * 0.1)
+    Math.min(0.06, (primaryOKLCH.c || 0) * 0.08)
   );
 
   const strategyMap: Record<

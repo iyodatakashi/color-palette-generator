@@ -9,6 +9,7 @@ import {
   findClosestLevel,
   calculateEvenScale,
 } from "./lightness";
+import { MIN_LIGHTNESS, MAX_LIGHTNESS } from "./constants";
 import { fitOklchToRgb } from "./colorUtils";
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
@@ -135,6 +136,33 @@ export const generateColorPalette = (
 // =============================================================================
 
 /**
+ * Calculate natural chroma distribution based on lightness
+ * Uses smooth Gaussian curve with peak at medium lightness
+ */
+const calculateNaturalChroma = ({
+  targetLevel,
+  baseChroma,
+}: {
+  targetLevel: number;
+  baseChroma: number;
+}): number => {
+  // Smooth Gaussian curve - peak at level 500
+  const peak = 500;
+  const width = 200; // Level-based width
+
+  // Gaussian distribution for natural chroma falloff
+  const chromaMultiplier = Math.exp(
+    -Math.pow(targetLevel - peak, 2) / (2 * Math.pow(width, 2))
+  );
+
+  // Minimum chroma at extremes (0%), maximum at peak (100%)
+  const minChroma = 0.0;
+  const adjustedMultiplier = minChroma + (1.0 - minChroma) * chromaMultiplier;
+
+  return baseChroma * adjustedMultiplier;
+};
+
+/**
  * Generate basic color palette
  */
 const generateOriginalPalette = ({
@@ -172,9 +200,19 @@ const generateOriginalPalette = ({
         ? colorConfig.combinationHueShift
         : adjustedHue;
 
+    // Calculate natural chroma distribution if enabled
+    let targetChroma = inputOKLCH.c || 0;
+    if (colorConfig.enableChromaAdjustment) {
+      const originalChroma = inputOKLCH.c || 0;
+      targetChroma = calculateNaturalChroma({
+        targetLevel: level,
+        baseChroma: originalChroma,
+      });
+    }
+
     const generatedColor = adjustToLightness({
       h: finalHue,
-      c: inputOKLCH.c || 0,
+      c: targetChroma,
       targetLightness,
     });
 
@@ -182,8 +220,11 @@ const generateOriginalPalette = ({
   });
 
   // Override the closest level with the original input color for accuracy
-  // (But only for non-combination colors)
-  if (colorConfig.combinationHueShift === undefined) {
+  // (But only for non-combination colors and when chroma adjustment is disabled)
+  if (
+    colorConfig.combinationHueShift === undefined &&
+    !colorConfig.enableChromaAdjustment
+  ) {
     palette[`--${colorConfig.prefix}-${closestLevel}`] = colorConfig.color;
   }
 
