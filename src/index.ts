@@ -50,4 +50,6 @@ export type {
   CombinationConfig,
   RandomColorConfig,
   GeneratedColor,
+  GeneratedColorPalette,
+  CombinationResult,
 } from "./types";

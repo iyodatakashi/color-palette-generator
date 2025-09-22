@@ -57,10 +57,22 @@ export const adjustToLightness = ({
     h: h,
   };
 
-  // Clamp chroma only - keeps lightness and hue fixed
-  const clampedColor = culori.clampChroma(targetOKLCH, "oklch", "rgb");
+  // Use perceptual distance-based gamut mapping (CIE DE2000)
+  const gamutMapper = (culori as any).toGamut(
+    "rgb",
+    "oklch",
+    (culori as any).differenceCiede2000("oklch")
+  );
+  const mappedColor = gamutMapper(targetOKLCH);
 
-  return culori.formatHex(clampedColor);
+  // Fallback to clampChroma if toGamut fails
+  if (!mappedColor || typeof mappedColor !== "object") {
+    const clampedColor = culori.clampChroma(targetOKLCH, "oklch", "rgb");
+    return culori.formatHex(clampedColor);
+  }
+
+  const hexResult = culori.formatHex(mappedColor as any);
+  return hexResult || "#000000"; // Ultimate fallback
 };
 
 // =============================================================================

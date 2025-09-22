@@ -2,13 +2,14 @@
 
 import * as culori from "culori";
 import { normalizeHue } from "./hueShift";
-import { fitOklchToRgb8 } from "./colorUtils";
+import { fitOklchToRgb } from "./colorUtils";
+import { findClosestLevel, getLightness } from "./lightness";
 import type {
   ColorConfig,
   CombinationType,
   BaseColorStrategy,
   CombinationConfig,
-  Combination,
+  CombinationResult,
 } from "./types";
 import { generateColorPalette } from "./palette";
 import type { Oklch } from "culori";
@@ -25,7 +26,9 @@ import {
 /**
  * Generate harmonious color combination from primary color
  */
-export const generateCombination = (config: CombinationConfig): Combination => {
+export const generateCombination = (
+  config: CombinationConfig
+): CombinationResult => {
   const combinationType = config.combinationType || "complementary";
   // Parse and convert primary color to OKLCH
   const primaryColorObj = culori.parse(config.primaryColor);
@@ -74,15 +77,23 @@ export const generateCombination = (config: CombinationConfig): Combination => {
     palette: generateColorPalette(primaryColorConfig),
   };
 
+  // Find primary base level using findClosestLevel
+  const primaryBaseLevel = findClosestLevel({
+    inputLightness: getLightness(config.primaryColor),
+    inputChroma: primaryOKLCH.c,
+    inputHue: primaryOKLCH.h,
+  });
+
   // Generate secondary palettes by hue-shifting primary palette levels
   const secondaryConfigs = generateSecondaryPalettesFromPrimary({
     primaryPalette: primaryConfig.palette,
     primaryOKLCH,
+    primaryBaseLevel,
     combinationType,
     config,
   });
 
-  return [baseConfig, primaryConfig, ...secondaryConfigs];
+  return [baseConfig, primaryConfig, ...secondaryConfigs] as CombinationResult;
 };
 
 // =============================================================================
@@ -184,11 +195,13 @@ const getSecondaryHueShifts = ({
 const generateSecondaryPalettesFromPrimary = ({
   primaryPalette,
   primaryOKLCH,
+  primaryBaseLevel,
   combinationType,
   config,
 }: {
   primaryPalette: Record<string, string>;
   primaryOKLCH: Oklch;
+  primaryBaseLevel: number;
   combinationType: CombinationType;
   config: CombinationConfig;
 }) => {
@@ -212,37 +225,47 @@ const generateSecondaryPalettesFromPrimary = ({
 
   for (const { id, prefix, hueShift } of secondaryColorMap) {
     if (hueShift !== undefined) {
-      // Generate secondary palette by hue-shifting each primary level
-      const secondaryPalette: Record<string, string> = {};
+      // NEW APPROACH: Generate coherent secondary scale from peak chroma color
 
-      Object.entries(primaryPalette).forEach(([key, primaryColor]) => {
-        // Convert primary color to OKLCH
-        const primaryColorOKLCH = culori.oklch(primaryColor);
-        if (!primaryColorOKLCH) return;
+      // 1. Find primary peak chroma level and color for scale generation
+      const primaryPeak = findPrimaryPeakChromaLevel(primaryPalette);
 
-        // Apply hue shift
-        const secondaryOKLCH = {
-          mode: "oklch" as const,
-          l: primaryColorOKLCH.l || 0.5,
-          c: primaryColorOKLCH.c || 0,
-          h: hueShift,
-        };
+      // 2. Generate secondary provisional base color from primary peak chroma
+      const secondaryProvisionalBaseColor = generateSecondaryBaseColor(
+        primaryPeak.color,
+        hueShift
+      );
 
-        // Apply optimized gamut mapping for saturation preservation
-        const rgb8 = fitOklchToRgb8(secondaryOKLCH);
-        const hexColor = `#${rgb8.r.toString(16).padStart(2, "0")}${rgb8.g
-          .toString(16)
-          .padStart(2, "0")}${rgb8.b.toString(16).padStart(2, "0")}`;
+      // 3. Generate complete secondary palette using provisional base color
+      const secondaryConfig = {
+        id: id,
+        prefix: prefix,
+        color: secondaryProvisionalBaseColor,
+        hueShiftMode: "natural" as const,
+        includeTransparent:
+          config.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
+        includeTextColors:
+          config.includeTextColors ?? DEFAULT_COLOR_CONFIG.includeTextColors,
+        bgColorLight: config.bgColorLight ?? DEFAULT_COLOR_CONFIG.bgColorLight,
+        bgColorDark: config.bgColorDark ?? DEFAULT_COLOR_CONFIG.bgColorDark,
+        transparentOriginLevel:
+          config.transparentOriginLevel ??
+          DEFAULT_COLOR_CONFIG.transparentOriginLevel,
+        enableChromaAdjustment: DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
+      };
 
-        // Add to secondary palette
-        const secondaryKey = key.replace("primary", prefix);
-        secondaryPalette[secondaryKey] = hexColor;
-      });
+      // 4. Generate secondary palette using provisional base color
+      const secondaryPalette = generateColorPalette(secondaryConfig);
+
+      // 5. Set formal base color from the generated scale (same level as primary)
+      const secondaryFormalBaseColor =
+        (secondaryPalette as any)[`--${prefix}-${primaryBaseLevel}`] ||
+        "#000000";
 
       results.push({
         id,
         prefix,
-        color: secondaryPalette[`--${prefix}-500`] || "#000000", // Use level 500 as representative color
+        color: secondaryFormalBaseColor,
         palette: secondaryPalette,
         hueShiftMode: "natural" as const,
         includeTransparent:
@@ -260,6 +283,69 @@ const generateSecondaryPalettesFromPrimary = ({
   }
 
   return results;
+};
+
+// =============================================================================
+// Secondary Palette Generation Utilities
+// =============================================================================
+
+/**
+ * Find the level with highest chroma in primary palette
+ */
+const findPrimaryPeakChromaLevel = (
+  primaryPalette: Record<string, string>
+): {
+  level: number;
+  color: string;
+  chroma: number;
+} => {
+  let maxChroma = -1;
+  let peakLevel = 500; // fallback
+  let peakColor = "";
+
+  Object.entries(primaryPalette).forEach(([key, color]) => {
+    // Extract level from key like "--primary-500"
+    const levelMatch = key.match(/--primary-(\d+)/);
+    if (levelMatch) {
+      const level = parseInt(levelMatch[1]);
+      const oklch = culori.oklch(color);
+      if (oklch && oklch.c > maxChroma) {
+        maxChroma = oklch.c;
+        peakLevel = level;
+        peakColor = color;
+      }
+    }
+  });
+
+  return { level: peakLevel, color: peakColor, chroma: maxChroma };
+};
+
+/**
+ * Generate secondary provisional base color from primary peak chroma color
+ * Uses fitOklchToRgb for advanced gamut mapping
+ */
+const generateSecondaryBaseColor = (
+  primaryPeakColor: string,
+  targetHue: number
+): string => {
+  const primaryOklch = culori.oklch(primaryPeakColor);
+  if (!primaryOklch) {
+    throw new Error("Failed to convert primary peak color to OKLCH");
+  }
+
+  // Create secondary color with same lightness and chroma, but different hue
+  const secondaryOklch = {
+    mode: "oklch" as const,
+    l: primaryOklch.l,
+    c: primaryOklch.c,
+    h: targetHue,
+  };
+
+  // Apply gamut mapping to ensure the color is displayable
+  const rgb8 = fitOklchToRgb(secondaryOklch);
+  return `#${rgb8.r.toString(16).padStart(2, "0")}${rgb8.g
+    .toString(16)
+    .padStart(2, "0")}${rgb8.b.toString(16).padStart(2, "0")}`;
 };
 
 // =============================================================================
@@ -292,7 +378,7 @@ export const generateSameToneColor = ({
   };
 
   // Use optimized gamut mapping for same-tone generation
-  const rgb8 = fitOklchToRgb8(targetColor);
+  const rgb8 = fitOklchToRgb(targetColor);
   return `#${rgb8.r.toString(16).padStart(2, "0")}${rgb8.g
     .toString(16)
     .padStart(2, "0")}${rgb8.b.toString(16).padStart(2, "0")}`;

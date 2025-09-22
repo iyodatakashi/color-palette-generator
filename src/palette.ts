@@ -9,8 +9,7 @@ import {
   findClosestLevel,
   calculateEvenScale,
 } from "./lightness";
-import { fitOklchToRgb8 } from "./colorUtils";
-import { generateSameToneColor } from "./combination";
+import { fitOklchToRgb } from "./colorUtils";
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
 import { createContextLogger } from "./logger";
@@ -173,18 +172,11 @@ const generateOriginalPalette = ({
         ? colorConfig.combinationHueShift
         : adjustedHue;
 
-    const generatedColor =
-      colorConfig.combinationHueShift !== undefined
-        ? generateSameToneColor({
-            h: finalHue,
-            c: inputOKLCH.c || 0,
-            targetLightness,
-          })
-        : adjustToLightness({
-            h: adjustedHue,
-            c: inputOKLCH.c || 0,
-            targetLightness,
-          });
+    const generatedColor = adjustToLightness({
+      h: finalHue,
+      c: inputOKLCH.c || 0,
+      targetLightness,
+    });
 
     palette[`--${colorConfig.prefix}-${key}`] = generatedColor;
   });

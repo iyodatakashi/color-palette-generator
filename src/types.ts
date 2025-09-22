@@ -72,7 +72,24 @@ export type CombinationConfig = {
   transparentOriginLevel?: number;
 };
 
-// Color combination result (output)
+// Color combination result (output) - New implementation with generated palettes
+export type GeneratedColorPalette = {
+  id?: string;
+  prefix: string;
+  color: string; // Representative color
+  palette: Palette; // Generated color palette
+  hueShiftMode?: HueShiftMode;
+  includeTransparent?: boolean;
+  includeTextColors?: boolean;
+  bgColorLight?: string;
+  bgColorDark?: string;
+  transparentOriginLevel?: number;
+  enableChromaAdjustment?: boolean;
+};
+
+export type CombinationResult = GeneratedColorPalette[];
+
+// Legacy type (deprecated)
 export type Combination = ColorConfig[];
 
 // Color combination types
