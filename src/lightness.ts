@@ -85,14 +85,23 @@ export const adjustToLightness = ({
 const calculateOptimalK = (
   targetLevel: number,
   targetLightness: number
-): number => {
+): { k: number; gamma: number } => {
   const tolerance = 0.1;
   const maxIterations = 100;
 
   let currentK = 0.18; // Start with optimized default for level 500 ≈ 63%
 
+  // Determine gamma based on shift direction
+  // If targetLevel < 500 (upward shift), use gamma < 1 for better curve shape
+  // If targetLevel > 500 (downward shift), use gamma > 1
+  const gamma = targetLevel < 500 ? 0.7 : targetLevel > 500 ? 1.5 : 1.0;
+
   for (let i = 0; i < maxIterations; i++) {
-    const currentLightness = getBaseSigmoidLightness(targetLevel, currentK);
+    const currentLightness = getBaseSigmoidLightness(
+      targetLevel,
+      currentK,
+      gamma
+    );
     const error = targetLightness - currentLightness;
 
     if (Math.abs(error) < tolerance) {
@@ -106,26 +115,39 @@ const calculateOptimalK = (
     currentK = Math.max(0.1, Math.min(10.0, currentK + adjustment));
   }
 
-  return currentK;
+  return { k: currentK, gamma };
 };
 
 /**
  * Base sigmoid function for lightness distribution
  * Maps level 0-1000 to lightness 100%-20% with configurable steepness
  */
-const getBaseSigmoidLightness = (level: number, k: number = 0.18): number => {
+const getBaseSigmoidLightness = (
+  level: number,
+  k: number = 0.18,
+  gamma: number = 1.0
+): number => {
   const xRange = 10;
   const x = (level / 1000) * xRange;
   // Fixed center at 10 (use upper curve only)
   const center = 10;
-  const rawSigmoid = 1 / (1 + Math.exp(-k * (x - center)));
+  const rawSigmoid = 1 / (1 + Math.exp(-Math.abs(k) * (x - center)));
 
-  const minRaw = 1 / (1 + Math.exp(-k * (0 - center)));
-  const maxRaw = 1 / (1 + Math.exp(-k * (xRange - center)));
+  const minRaw = 1 / (1 + Math.exp(-Math.abs(k) * (0 - center)));
+  const maxRaw = 1 / (1 + Math.exp(-Math.abs(k) * (xRange - center)));
+
+  // Normalize sigmoid to 0-1 range
+  const normalizedSigmoid = (rawSigmoid - minRaw) / (maxRaw - minRaw);
+
+  // Apply gamma correction to change curve shape
+  // gamma < 1: left concave, right convex (good for upward shifts)
+  // gamma > 1: left convex, right concave (good for downward shifts)
+  const gammaCorrected = Math.pow(normalizedSigmoid, gamma);
+
+  // Scale to lightness range (inverted: level 0 = bright, level 1000 = dark)
   const scaledSigmoid =
     MAX_LIGHTNESS / 100 -
-    ((MAX_LIGHTNESS / 100 - MIN_LIGHTNESS / 100) * (rawSigmoid - minRaw)) /
-      (maxRaw - minRaw);
+    (MAX_LIGHTNESS / 100 - MIN_LIGHTNESS / 100) * gammaCorrected;
 
   const lightness =
     MIN_LIGHTNESS +
@@ -307,12 +329,15 @@ export const generateAdjustedLightnessScale = (
   // Step 3: Target lightness = original input lightness (to preserve input color characteristics)
   const targetLightness = inputLightness;
 
-  // Step 4: Generate adjusted sigmoid by tuning k parameter
+  // Step 4: Generate adjusted sigmoid by tuning k parameter and gamma
   // Use fixed center=10 (upper curve only) and adjust k to hit target lightness
-  const adjustedK = calculateOptimalK(targetLevel, targetLightness);
+  const { k: adjustedK, gamma } = calculateOptimalK(
+    targetLevel,
+    targetLightness
+  );
 
   SCALE_LEVELS.forEach((level) => {
-    scale[level] = getBaseSigmoidLightness(level, adjustedK);
+    scale[level] = getBaseSigmoidLightness(level, adjustedK, gamma);
   });
 
   return scale;
