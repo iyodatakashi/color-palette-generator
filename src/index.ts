@@ -21,7 +21,7 @@ export {
 } from "./lightness";
 
 // Hue change features
-export { generateHuePalette, HUE_NAMES } from "./hue";
+// export { generateHuePalette, HUE_NAMES } from "./hue";
 
 // Apply to DOM
 export { applyColorPaletteToDom } from "./applyToDom";
@@ -49,6 +49,6 @@ export type {
   CombinationConfig,
   RandomColorConfig,
   GeneratedColor,
-  GeneratedColorPalette,
+  CombinationResults,
   CombinationResult,
 } from "./types";

@@ -9,7 +9,8 @@ import type { Oklch, Rgb } from "culori";
 // Color configuration (input)
 export type ColorConfig = {
   prefix: string;
-  color: string | import("culori").Oklch;
+  oklch: Oklch;
+  color: string;
   id?: string; // Optional for internal unique management
   hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;
@@ -56,26 +57,16 @@ export type CombinationConfig = {
   includeTextColors?: boolean;
   bgColorLight?: string;
   bgColorDark?: string;
-  baseTransparentOriginLevel?: number;
   transparentOriginLevel?: number;
+  baseTransparentOriginLevel?: number;
 };
 
 // Color combination result (output) - New implementation with generated palettes
-export type GeneratedColorPalette = {
-  id?: string;
-  prefix: string;
-  color: string; // Representative color
-  palette: Palette; // Generated color palette
-  hueShiftMode?: HueShiftMode;
-  includeTransparent?: boolean;
-  includeTextColors?: boolean;
-  bgColorLight?: string;
-  bgColorDark?: string;
-  transparentOriginLevel?: number;
-  enableChromaAdjustment?: boolean;
-};
+export type CombinationResults = CombinationResult[];
 
-export type CombinationResult = GeneratedColorPalette[];
+export type CombinationResult = ColorConfig & {
+  palette: Palette;
+};
 
 // Legacy type (deprecated)
 export type Combination = ColorConfig[];

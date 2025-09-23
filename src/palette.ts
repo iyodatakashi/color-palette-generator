@@ -1,6 +1,6 @@
 // palette.ts
 
-import type { ColorConfig, Palette } from "./types";
+import type { CombinationConfig, Palette } from "./types";
 import type { Oklch } from "culori";
 import * as culori from "culori";
 import {
@@ -12,6 +12,7 @@ import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
 import { createContextLogger } from "./logger";
 import { DEFAULT_COLOR_CONFIG, SCALE_LEVELS } from "./constants";
+import type { ColorConfig } from "./types";
 
 const log = createContextLogger("Palette");
 
@@ -45,7 +46,7 @@ export const generateColorPalette = (
     colorConfig.id !== "primary" && colorConfig.id !== "base";
 
   if (isCombinationColor) {
-    return generateCombinationPalette(colorConfig);
+    return generateSecondaryPalette({ colorConfig });
   } else {
     return generatePrimaryBasePalette(colorConfig);
   }
@@ -55,37 +56,17 @@ export const generateColorPalette = (
  * Generate primary/base color palette (from HEX input)
  */
 const generatePrimaryBasePalette = (colorConfig: ColorConfig): Palette => {
-  // Parse HEX input
-  const inputColorObj = culori.parse(colorConfig.color as string);
-  if (!inputColorObj) {
-    throw new Error("Invalid input color");
-  }
-
-  const inputOKLCH = culori.converter("oklch")(inputColorObj);
-  if (!inputOKLCH) {
-    throw new Error("Failed to convert color to OKLCH");
-  }
-
-  const normalizedColor = culori.formatHex(inputColorObj) || "#000000";
-
   // Generate base palette
-  const palette = generatePaletteFromProcessedInput(colorConfig, inputOKLCH);
+  const palette = generatePaletteFromProcessedInput({ colorConfig });
 
   // Primary/Base specific override processing
-  console.log(
-    `OVERRIDE CHECK: id=${colorConfig.id}, prefix=${colorConfig.prefix}, enableChromaAdjustment=${colorConfig.enableChromaAdjustment}, color=${colorConfig.color}`
-  );
   if (!colorConfig.enableChromaAdjustment) {
-    console.log(
-      `OVERRIDE APPLIED: placing original color at closest level for ${colorConfig.prefix}`
-    );
-    const inputLightness = getLightness(normalizedColor);
     const closestLevel = findClosestLevel({
-      inputLightness,
-      inputChroma: inputOKLCH.c,
-      inputHue: inputOKLCH.h,
+      inputLightness: colorConfig.oklch.l,
+      inputChroma: colorConfig.oklch.c,
+      inputHue: colorConfig.oklch.h,
     });
-    palette[`--${colorConfig.prefix}-${closestLevel}`] = normalizedColor;
+    palette[`--${colorConfig.prefix}-${closestLevel}`] = "#ff0000"; // ガマットマッピング未調整→あとで直す！！！
   }
 
   return palette;
@@ -94,45 +75,54 @@ const generatePrimaryBasePalette = (colorConfig: ColorConfig): Palette => {
 /**
  * Generate combination (secondary) color palette (from OKLCH input)
  */
-const generateCombinationPalette = (colorConfig: ColorConfig): Palette => {
-  const inputOKLCH = colorConfig.color as Oklch;
-
+const generateSecondaryPalette = ({
+  colorConfig,
+}: {
+  colorConfig: ColorConfig;
+}): Palette => {
   // Combination colors: no normalization, no override
-  return generatePaletteFromProcessedInput(colorConfig, inputOKLCH);
+  return generatePaletteFromProcessedInput({
+    colorConfig,
+  });
 };
 
 /**
  * Common palette generation logic after input processing
  */
-const generatePaletteFromProcessedInput = (
-  colorConfig: ColorConfig,
-  inputOKLCH: Oklch
-): Palette => {
+const generatePaletteFromProcessedInput = ({
+  colorConfig,
+}: {
+  colorConfig: ColorConfig;
+}): Palette => {
   // Validate input OKLCH
   if (
-    !inputOKLCH ||
-    !isFinite(inputOKLCH.l) ||
-    !isFinite(inputOKLCH.c) ||
-    !isFinite(inputOKLCH.h || 0)
+    !colorConfig.oklch ||
+    !isFinite(colorConfig.oklch.l) ||
+    !isFinite(colorConfig.oklch.c) ||
+    !isFinite(colorConfig.oklch.h || 0)
   ) {
-    console.error("Invalid OKLCH input:", inputOKLCH);
     throw new Error("Invalid OKLCH input");
   }
 
+  /*
   const inputRGB = culori.converter("rgb")(inputOKLCH);
   if (!inputRGB) {
     throw new Error("Failed to convert color to RGB");
   }
+  */
 
+  /*
   // Helper function to convert OKLCH to HEX with chroma-only gamut mapping
   const oklchToHex = (oklch: Oklch): string => {
     const clampedOklch = culori.clampChroma(oklch, "oklch", "rgb");
     return culori.formatHex(clampedOklch) || "#000000";
   };
+  */
 
+  /*
   const normalizedConfig = {
-    ...colorConfig,
-    id: colorConfig.id || "unknown", // Provide default value
+    ...combinationConfig,
+    id,
     color: oklchToHex(inputOKLCH), // Convert OKLCH to HEX
     hueShiftMode: colorConfig.hueShiftMode || DEFAULT_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
@@ -150,33 +140,35 @@ const generatePaletteFromProcessedInput = (
     enableLightnessAdjustment: colorConfig.enableLightnessAdjustment ?? true,
     combinationHueShift: colorConfig.combinationHueShift,
   };
+  */
 
+  /*
   const inputLightness = getLightness(oklchToHex(inputOKLCH));
+  */
 
   const closestLevel = findClosestLevel({
-    inputLightness,
-    inputChroma: inputOKLCH.c,
-    inputHue: inputOKLCH.h,
+    inputLightness: colorConfig.oklch.l,
+    inputChroma: colorConfig.oklch.c,
+    inputHue: colorConfig.oklch.h,
   });
 
   const adjustedLightnessScale = calculateEvenScale({
-    inputLightness,
-    inputChroma: inputOKLCH.c || 0,
-    inputHue: inputOKLCH.h || 0,
-    enableLightnessAdjustment:
-      normalizedConfig.enableLightnessAdjustment ?? true,
+    inputLightness: colorConfig.oklch.l,
+    inputChroma: colorConfig.oklch.c || 0,
+    inputHue: colorConfig.oklch.h || 0,
+    enableLightnessAdjustment: true,
   });
 
   const palette = generateOriginalPalette({
-    colorConfig: normalizedConfig,
-    inputOKLCH,
+    colorConfig,
+    inputOKLCH: colorConfig.oklch,
     closestLevel,
     adjustedLightnessScale,
-    inputLightness,
+    inputLightness: colorConfig.oklch.l,
   });
 
   setVariationColors({
-    colorConfig: normalizedConfig,
+    colorConfig,
     closestLevel,
     palette,
   });
@@ -184,14 +176,14 @@ const generatePaletteFromProcessedInput = (
   if (colorConfig.includeTransparent) {
     setTransparentPalette({
       palette,
-      colorConfig: normalizedConfig,
+      colorConfig,
     });
   }
 
   // Generate text colors last to ensure proper order
   setTextColor({
-    colorConfig: normalizedConfig,
-    inputColor: oklchToHex(inputOKLCH),
+    colorConfig,
+    inputOKLCH: colorConfig.oklch,
     palette,
   });
 
@@ -217,30 +209,57 @@ const calculateOriginalChromaForLevel = ({
   inputHue: number;
   targetLightness: number;
 }): number => {
-  // Create OKLCH color at target lightness with input chroma
-  const testColor: Oklch = {
-    mode: "oklch" as const,
-    l: targetLightness / 100,
-    c: inputChroma,
-    h: inputHue,
-  };
+  // Calculate the maximum chroma possible at this lightness and hue
+  const maxChromaAtLightness = getMaxChromaAtLightness(
+    targetLightness,
+    inputHue
+  );
 
-  // Apply gamut mapping to get the maximum achievable chroma at this lightness
-  const clampedColor = culori.clampChroma(testColor, "oklch", "rgb");
-  const result = clampedColor.c || inputChroma;
+  // Use a reasonable fraction of max chroma as the natural chroma for this level
+  // This represents what the level should naturally have before any enhancement
+  const naturalChromaRatio = Math.min(inputChroma / maxChromaAtLightness, 0.8); // Cap at 80% of max
+  const naturalChroma = maxChromaAtLightness * naturalChromaRatio;
 
   // Debug: ensure valid result
-  if (!isFinite(result) || result < 0) {
-    console.warn(
-      `Invalid chroma calculated for level ${level}:`,
-      result,
-      "using input chroma:",
-      inputChroma
-    );
+  if (!isFinite(naturalChroma) || naturalChroma < 0) {
     return inputChroma;
   }
 
-  return result;
+  return naturalChroma;
+};
+
+/**
+ * Get maximum chroma at specific lightness for a hue
+ */
+const getMaxChromaAtLightness = (lightness: number, hue: number): number => {
+  let maxChroma = 0;
+
+  // Test different chroma values to find the maximum that stays in gamut
+  for (let c = 0; c <= 0.4; c += 0.01) {
+    const testColor: Oklch = {
+      mode: "oklch" as const,
+      l: lightness / 100,
+      c: c,
+      h: hue,
+    };
+
+    const rgbResult = culori.converter("rgb")(testColor);
+    if (
+      rgbResult &&
+      rgbResult.r >= 0 &&
+      rgbResult.r <= 1 &&
+      rgbResult.g >= 0 &&
+      rgbResult.g <= 1 &&
+      rgbResult.b >= 0 &&
+      rgbResult.b <= 1
+    ) {
+      maxChroma = c;
+    } else {
+      break;
+    }
+  }
+
+  return maxChroma || 0.1; // Fallback value
 };
 
 /**
@@ -284,23 +303,6 @@ const calculateNaturalChromaCurve = ({
   // Apply chroma upper limit: never exceed original target color's chroma
   if (originalTargetChroma !== undefined) {
     result = Math.min(result, originalTargetChroma);
-  }
-
-  // デバッグ情報
-  if (targetLevel === 200 || targetLevel === 500) {
-    console.log(
-      `CHROMA DEBUG: level=${targetLevel}, referenceLevel=${referenceLevel}, referenceChroma=${referenceChroma.toFixed(
-        3
-      )}, targetMultiplier=${targetMultiplier.toFixed(
-        3
-      )}, referenceMultiplier=${referenceMultiplier.toFixed(
-        3
-      )}, baseChroma=${baseChroma.toFixed(3)}, beforeLimit=${(
-        baseChroma * targetAdjusted
-      ).toFixed(3)}, originalLimit=${
-        originalTargetChroma?.toFixed(3) || "none"
-      }, result=${result.toFixed(3)}`
-    );
   }
 
   return result;
@@ -370,17 +372,6 @@ const generateOriginalPalette = ({
         referenceChroma: originalChroma,
         originalTargetChroma,
       });
-
-      // デバッグログ
-      if (level === 50) {
-        console.log(
-          `DEBUG PRIMARY: level=${level}, targetChroma=${targetChroma.toFixed(
-            3
-          )}, referenceLevel=${closestLevel}, referenceChroma=${originalChroma.toFixed(
-            3
-          )}`
-        );
-      }
     }
 
     // Create OKLCH color and convert to HEX with chroma-only gamut mapping
@@ -441,11 +432,11 @@ const setVariationColors = ({
  */
 const setTextColor = ({
   colorConfig,
-  inputColor,
+  inputOKLCH,
   palette,
 }: {
   colorConfig: any;
-  inputColor: string;
+  inputOKLCH: Oklch;
   palette: Palette;
 }): void => {
   // Only generate text colors if includeTextColors is enabled
@@ -453,26 +444,11 @@ const setTextColor = ({
     return;
   }
 
-  // Parse input color
-  const inputColorObj = culori.parse(inputColor);
-  if (!inputColorObj) {
-    throw new Error("Invalid input color");
-  }
-
-  const inputRGB = culori.converter("rgb")(inputColorObj);
-  if (!inputRGB) {
-    throw new Error("Failed to convert color to RGB");
-  }
-
-  const normalizedColor = culori.formatHex(inputColorObj);
-  const inputPerceptualLightness = getLightness(normalizedColor);
-
   // Find the primary color level (the level closest to input color)
-  const inputColorOKLCH = culori.converter("oklch")(culori.parse(inputColor));
   const primaryLevel = findClosestLevel({
-    inputLightness: inputPerceptualLightness,
-    inputChroma: inputColorOKLCH?.c,
-    inputHue: inputColorOKLCH?.h,
+    inputLightness: inputOKLCH.l,
+    inputChroma: inputOKLCH?.c,
+    inputHue: inputOKLCH?.h,
   });
 
   // Get primary color and its lightness
