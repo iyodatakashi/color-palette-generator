@@ -98,6 +98,8 @@ export const generateColorPalette = (
     inputLightness,
     inputChroma: inputOKLCH.c || 0,
     inputHue: inputOKLCH.h || 0,
+    enableLightnessAdjustment:
+      normalizedConfig.enableLightnessAdjustment ?? true,
   });
 
   const palette = generateOriginalPalette({

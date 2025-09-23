@@ -18,6 +18,7 @@ export type ColorConfig = {
   transparentOriginLevel?: number;
   includeTextColors?: boolean;
   enableChromaAdjustment?: boolean; // Whether to apply chroma adjustment in palette generation
+  enableLightnessAdjustment?: boolean; // Whether to apply K-value lightness adjustment in palette generation
   combinationHueShift?: number; // Hue shift for combination colors (degrees)
 };
 

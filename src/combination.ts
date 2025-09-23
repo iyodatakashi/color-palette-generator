@@ -238,6 +238,7 @@ const generateSecondaryPalettesFromPrimary = ({
         prefix: prefix,
         color: secondaryProvisionalBaseColor,
         hueShiftMode: "natural" as const,
+        enableLightnessAdjustment: false, // セカンダリではK値調整を無効化
         includeTransparent:
           config.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
         includeTextColors:

@@ -84,76 +84,139 @@ export const adjustToLightness = ({
  */
 const calculateOptimalK = (
   targetLevel: number,
-  targetLightness: number
-): { k: number; gamma: number } => {
-  const tolerance = 0.1;
-  const maxIterations = 100;
+  targetLightness: number,
+  kSign: 1 | -1 = 1 // ← 追加: 膨らみ方向を選ぶ（+1 上凸 / -1 下凸）
+): number => {
+  const tolerance = 0.1; // 明度[%]の許容誤差
+  const maxIterations = 60;
 
-  let currentK = 0.18; // Start with optimized default for level 500 ≈ 63%
+  // 初期値（強さの初期大きさ）
+  let kMag = 0.18; // 以前のチューニング値を流用
+  const kMin = 0.0005;
+  const kMax = 20;
 
-  // Determine gamma based on shift direction
-  // Disable gamma correction completely
-  const gamma = 1.0;
+  const evalL = (km: number) =>
+    getBaseSigmoidLightness(targetLevel, kSign * km);
 
+  // 数値微分で安全に更新方向を決める
   for (let i = 0; i < maxIterations; i++) {
-    const currentLightness = getBaseSigmoidLightness(
-      targetLevel,
-      currentK,
-      gamma
-    );
-    const error = targetLightness - currentLightness;
-
-    if (Math.abs(error) < tolerance) {
+    const L = evalL(kMag);
+    const err = targetLightness - L;
+    if (Math.abs(err) < tolerance) {
+      // console.log(`K調整完了: |k|=${kMag.toFixed(4)}, 符号=${kSign}, 反復=${i+1}`);
       break;
     }
 
-    // Adjust k based on error direction
-    // If we need higher lightness, decrease k (less steep)
-    // If we need lower lightness, increase k (more steep)
-    const adjustment = error * 0.01;
-    currentK = Math.max(0.1, Math.min(10.0, currentK + adjustment));
+    // 局所的な dL/d|k| をサンプル
+    const delta = Math.max(1e-4, kMag * 0.05);
+    const L2 = evalL(Math.min(kMag + delta, kMax));
+    const dLdK = (L2 - L) / (Math.min(kMag + delta, kMax) - kMag); // 変化率
+
+    // 勾配符号に合わせて |k| を更新（クリップ付き）
+    // 係数は安定のため控えめに
+    const step = 0.5;
+    const direction = dLdK === 0 ? 1 : Math.sign(dLdK); // 0回避
+    let kNext = kMag + step * err * direction;
+
+    kNext = Math.min(Math.max(kNext, kMin), kMax);
+    kMag = kNext;
   }
 
-  return { k: currentK, gamma };
+  // 返すのは符号付き k
+  return kSign * kMag;
 };
 
 /**
  * Base sigmoid function for lightness distribution
  * Maps level 50-950 to lightness 97%-25% with configurable steepness
  */
+/**
+ * 非対称シグモイド（Richards, 右下がり固定）
+ * - 強さ: |k|（k=0でも kMin で右下がり維持）
+ * - 膨らみ方向: sign(k) で v0 ↔ 1/v0
+ * - (xAnchor, yAnchor) を必ず通過（x0 を動的決定）
+ *
+ * zeroSign: k===0 のときだけ膨らみ方向の既定符号（+1 or -1）
+ *           既知の直前符号を渡すのがおすすめ。未指定なら +1。
+ */
+function sigmoidRichardsThrough(
+  x: number,
+  kSigned: number, // 符号つき k: 符号=膨らみ方向, 大きさ=強さ
+  xAnchor: number,
+  yAnchor: number, // 0<y<1 を想定
+  vBase: number = 2.0, // 非対称ベース（決め打ち）
+  kMin: number = 1e-6, // 最小傾き（右下がり死守）
+  zeroSign: 1 | -1 = 1 // k=0 のときの向き既定
+): number {
+  const yClamped = Math.min(Math.max(yAnchor, 1e-9), 1 - 1e-9);
+
+  // 符号=向き、|k|=強さ（右下がりは |k| を使って固定）
+  const sign = kSigned === 0 ? zeroSign : Math.sign(kSigned);
+  const kEff = Math.max(Math.abs(kSigned), kMin);
+  const nu = sign >= 0 ? vBase : 1 / vBase;
+
+  // x0 を解いてアンカーを厳密通過
+  const A = Math.pow(1 - yClamped, -nu) - 1; // >0
+  const x0 = xAnchor + Math.log(A) / kEff;
+
+  const t = 1 + Math.exp(-kEff * (x - x0));
+  return 1 - Math.pow(t, -1 / nu);
+}
+
+// level, kSigned（符号で膨らみ反転）, アンカー(level, lightness)を渡す版
 const getBaseSigmoidLightness = (
   level: number,
-  k: number = 0.18,
-  gamma: number = 1.0
+  kSigned: number = 0.18, // +で左上凸寄り / -で左下凸寄り
+  anchorLevel: number = 500, // 通したいレベル
+  anchorLightness: number = 61.0, // 通したい明度[%]
+  vBase: number = 2.0, // 非対称ベース（決め打ち）
+  kMin: number = 1e-6 // 極小傾きガード
 ): number => {
-  // Map level 50-950 to normalized range [0, 10]
+  // 1) level→x 正規化（50..950 → 0..10）
   const minLevel = 50;
   const maxLevel = 950;
-  const normalizedLevel = (level - minLevel) / (maxLevel - minLevel);
   const xRange = 10;
-  const x = normalizedLevel * xRange;
+  const x = ((level - minLevel) / (maxLevel - minLevel)) * xRange;
 
-  // Fixed center at 10 (corresponds to level 950, the darkest level)
-  const center = 10;
+  // 2) アンカーを (xAnchor, yAnchor) に設定
+  const xAnchor = ((anchorLevel - minLevel) / (maxLevel - minLevel)) * xRange;
+  const yAnchor = (anchorLightness - 25) / (97 - 25); // 25..97 を 0..1 に
 
-  const rawSigmoid = 1 / (1 + Math.exp(-Math.abs(k) * (x - center)));
+  // 3) シグモイド値（同一k・同一アンカーで端点も算出）
+  const sVal = sigmoidRichardsThrough(
+    x,
+    kSigned,
+    xAnchor,
+    yAnchor,
+    vBase,
+    kMin,
+    1
+  );
+  const sL50 = sigmoidRichardsThrough(
+    0,
+    kSigned,
+    xAnchor,
+    yAnchor,
+    vBase,
+    kMin,
+    1
+  );
+  const sL950 = sigmoidRichardsThrough(
+    10,
+    kSigned,
+    xAnchor,
+    yAnchor,
+    vBase,
+    kMin,
+    1
+  );
 
-  const minRaw = 1 / (1 + Math.exp(-Math.abs(k) * (0 - center)));
-  const maxRaw = 1 / (1 + Math.exp(-Math.abs(k) * (xRange - center)));
-
-  // Normalize sigmoid to 0-1 range
-  const normalizedSigmoid = (rawSigmoid - minRaw) / (maxRaw - minRaw);
-
-  // Apply gamma correction to change curve shape
-  const gammaCorrected = Math.pow(normalizedSigmoid, gamma);
-
-  // Map to target lightness range: 97% to 25% (inverted: level 50 = bright, level 950 = dark)
+  // 4) 0..1 正規化 → 25..97 へ射影
+  const eps = 1e-12;
+  const normalized = (sVal - sL950) / (sL50 - sL950 + eps);
   const maxLightness = 97;
   const minLightness = 25;
-  const lightness =
-    minLightness + (maxLightness - minLightness) * (1 - gammaCorrected);
-
-  return lightness;
+  return minLightness + (maxLightness - minLightness) * normalized;
 };
 
 /**
@@ -162,18 +225,21 @@ const getBaseSigmoidLightness = (
 export const generateAdjustedLightnessScale = (
   inputLightness: number,
   inputChroma: number,
-  inputHue: number
+  inputHue: number,
+  // 追加: 形の強さと膨らみ方向（符号）を外から決められるように
+  kSigned: number = 0.18, // 例: -0.18 にすれば左下凸寄り
+  vBase: number = 2.0
 ): Record<number, number> => {
   const scale: Record<number, number> = {};
 
-  // Determine target level based on relative chroma
+  // 1) 相対彩度で「中心寄せ」補正（現状ロジックを踏襲）
   const maxChroma = getMaxChromaForHue(inputHue);
   const relativeChroma = inputChroma / maxChroma;
 
-  // Step 1: Find initial level using new sigmoid (center=10)
+  // 基準スケール（K=0.18, アンカー=500/61）で初期レベルを推定
   const baseScale: Record<number, number> = {};
   SCALE_LEVELS.forEach((level) => {
-    baseScale[level] = getBaseSigmoidLightness(level, 0.18);
+    baseScale[level] = getBaseSigmoidLightness(level, 0.18, 500, 61.0, vBase);
   });
 
   let initialLevel = 500;
@@ -186,14 +252,14 @@ export const generateAdjustedLightnessScale = (
     }
   });
 
-  // Step 2: Apply chroma-based level correction
+  // 中心寄せ補正（既存ロジック）
   const pullStrength = relativeChroma * 0.3;
-  const targetDeepLevel = 500; // Pull toward center-deep levels
+  const targetDeepLevel = 500;
   const correctedLevel = Math.round(
     initialLevel * (1 - pullStrength) + targetDeepLevel * pullStrength
   );
 
-  // Clamp to valid levels
+  // 有効レベルに丸め
   const validLevels = SCALE_LEVELS.filter((level) => level <= 950);
   const targetLevel = validLevels.reduce((prev, curr) =>
     Math.abs(curr - correctedLevel) < Math.abs(prev - correctedLevel)
@@ -201,18 +267,19 @@ export const generateAdjustedLightnessScale = (
       : prev
   );
 
-  // Step 3: Target lightness = original input lightness (to preserve input color characteristics)
-  const targetLightness = inputLightness;
+  // 2) ★★ 相対Chromaシフト考慮：最終配置レベルで元明度を通る曲線を生成 ★★
+  const anchorLevel = targetLevel; // シフト後の最終配置レベル
+  const anchorLightness = inputLightness; // 元の入力色明度
 
-  // Step 4: Generate adjusted sigmoid by tuning k parameter and gamma
-  // Use fixed center=10 (upper curve only) and adjust k to hit target lightness
-  const { k: adjustedK, gamma } = calculateOptimalK(
-    targetLevel,
-    targetLightness
-  );
-
+  // 3) スケール生成：Kはそのまま（最適化しない）
   SCALE_LEVELS.forEach((level) => {
-    scale[level] = getBaseSigmoidLightness(level, adjustedK, gamma);
+    scale[level] = getBaseSigmoidLightness(
+      level,
+      kSigned,
+      anchorLevel,
+      anchorLightness,
+      vBase
+    );
   });
 
   return scale;
@@ -303,23 +370,33 @@ export const calculateEvenScale = ({
   inputLightness,
   inputChroma,
   inputHue,
+  enableLightnessAdjustment = true,
 }: {
   inputLightness: number;
   inputChroma: number;
   inputHue: number;
+  enableLightnessAdjustment?: boolean;
 }): Record<number, number> => {
   if (!isFinite(inputLightness)) inputLightness = 50;
   if (!inputChroma || !isFinite(inputChroma)) inputChroma = 0;
   if (!inputHue || !isFinite(inputHue)) inputHue = 0;
 
-  // Generate asymmetric lightness scale with chroma correction
-  const adjustedScale = generateAdjustedLightnessScale(
-    inputLightness,
-    inputChroma,
-    inputHue
-  );
-
-  return adjustedScale;
+  if (enableLightnessAdjustment) {
+    // Generate asymmetric lightness scale with chroma correction and K-value adjustment
+    const adjustedScale = generateAdjustedLightnessScale(
+      inputLightness,
+      inputChroma,
+      inputHue
+    );
+    return adjustedScale;
+  } else {
+    // Generate default sigmoid scale without K-value adjustment
+    const scale: Record<number, number> = {};
+    SCALE_LEVELS.forEach((level) => {
+      scale[level] = getBaseSigmoidLightness(level, 0.18); // Use default K
+    });
+    return scale;
+  }
 };
 
 // =============================================================================
