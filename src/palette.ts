@@ -108,6 +108,17 @@ const generatePaletteFromProcessedInput = (
   colorConfig: ColorConfig,
   inputOKLCH: Oklch
 ): Palette => {
+  // Validate input OKLCH
+  if (
+    !inputOKLCH ||
+    !isFinite(inputOKLCH.l) ||
+    !isFinite(inputOKLCH.c) ||
+    !isFinite(inputOKLCH.h || 0)
+  ) {
+    console.error("Invalid OKLCH input:", inputOKLCH);
+    throw new Error("Invalid OKLCH input");
+  }
+
   const inputRGB = culori.converter("rgb")(inputOKLCH);
   if (!inputRGB) {
     throw new Error("Failed to convert color to RGB");
@@ -192,6 +203,47 @@ const generatePaletteFromProcessedInput = (
 // =============================================================================
 
 /**
+ * Calculate the original chroma a level should have (before unified curve)
+ * This represents the natural maximum chroma for gamut mapping
+ */
+const calculateOriginalChromaForLevel = ({
+  level,
+  inputChroma,
+  inputHue,
+  targetLightness,
+}: {
+  level: number;
+  inputChroma: number;
+  inputHue: number;
+  targetLightness: number;
+}): number => {
+  // Create OKLCH color at target lightness with input chroma
+  const testColor: Oklch = {
+    mode: "oklch" as const,
+    l: targetLightness / 100,
+    c: inputChroma,
+    h: inputHue,
+  };
+
+  // Apply gamut mapping to get the maximum achievable chroma at this lightness
+  const clampedColor = culori.clampChroma(testColor, "oklch", "rgb");
+  const result = clampedColor.c || inputChroma;
+
+  // Debug: ensure valid result
+  if (!isFinite(result) || result < 0) {
+    console.warn(
+      `Invalid chroma calculated for level ${level}:`,
+      result,
+      "using input chroma:",
+      inputChroma
+    );
+    return inputChroma;
+  }
+
+  return result;
+};
+
+/**
  * Calculate natural chroma distribution for all color types
  * Uses consistent Gaussian curve with peak at level 500, adjusts to pass through reference color
  */
@@ -199,10 +251,12 @@ const calculateNaturalChromaCurve = ({
   targetLevel,
   referenceLevel,
   referenceChroma,
+  originalTargetChroma,
 }: {
   targetLevel: number;
   referenceLevel: number;
   referenceChroma: number;
+  originalTargetChroma?: number;
 }): number => {
   // Unified curve parameters - same for all colors
   const peak = 500;
@@ -225,7 +279,12 @@ const calculateNaturalChromaCurve = ({
   const baseChroma = referenceChroma / referenceAdjusted;
 
   // Apply to target level
-  const result = baseChroma * targetAdjusted;
+  let result = baseChroma * targetAdjusted;
+
+  // Apply chroma upper limit: never exceed original target color's chroma
+  if (originalTargetChroma !== undefined) {
+    result = Math.min(result, originalTargetChroma);
+  }
 
   // デバッグ情報
   if (targetLevel === 200 || targetLevel === 500) {
@@ -236,7 +295,11 @@ const calculateNaturalChromaCurve = ({
         3
       )}, referenceMultiplier=${referenceMultiplier.toFixed(
         3
-      )}, baseChroma=${baseChroma.toFixed(3)}, result=${result.toFixed(3)}`
+      )}, baseChroma=${baseChroma.toFixed(3)}, beforeLimit=${(
+        baseChroma * targetAdjusted
+      ).toFixed(3)}, originalLimit=${
+        originalTargetChroma?.toFixed(3) || "none"
+      }, result=${result.toFixed(3)}`
     );
   }
 
@@ -291,10 +354,21 @@ const generateOriginalPalette = ({
     let targetChroma = inputOKLCH.c || 0;
     if (colorConfig.enableChromaAdjustment) {
       const originalChroma = inputOKLCH.c || 0;
+
+      // Calculate original target chroma for this level (before unified curve)
+      // This represents the maximum chroma this level should naturally have
+      const originalTargetChroma = calculateOriginalChromaForLevel({
+        level,
+        inputChroma: originalChroma,
+        inputHue: inputOKLCH.h || 0,
+        targetLightness,
+      });
+
       targetChroma = calculateNaturalChromaCurve({
         targetLevel: level,
         referenceLevel: closestLevel,
         referenceChroma: originalChroma,
+        originalTargetChroma,
       });
 
       // デバッグログ
