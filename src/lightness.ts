@@ -180,9 +180,10 @@ const getBaseSigmoidLightness = (
 
   // 2) アンカーを (xAnchor, yAnchor) に設定
   const xAnchor = ((anchorLevel - minLevel) / (maxLevel - minLevel)) * xRange;
-  const yAnchor = (anchorLightness - 25) / (97 - 25); // 25..97 を 0..1 に
+  const yAnchor =
+    (anchorLightness - MIN_LIGHTNESS) / (MAX_LIGHTNESS - MIN_LIGHTNESS); // MIN_LIGHTNESS..MAX_LIGHTNESS を 0..1 に
 
-  // 3) シグモイド値（同一k・同一アンカーで端点も算出）
+  // 3) シグモイド値（同一 k / 同一アンカーで端点も計算）
   const sVal = sigmoidRichardsThrough(
     x,
     kSigned,
@@ -211,12 +212,21 @@ const getBaseSigmoidLightness = (
     1
   );
 
-  // 4) 0..1 正規化 → 25..97 へ射影
+  // 4) 区分線形リマップで 0..1 に正規化
+  //    - 下側（s <= yAnchor）： sL950 → 0, yAnchor → yAnchor
+  //    - 上側（s >  yAnchor）： yAnchor → yAnchor, sL50 → 1
   const eps = 1e-12;
-  const normalized = (sVal - sL950) / (sL50 - sL950 + eps);
-  const maxLightness = 97;
-  const minLightness = 25;
-  return minLightness + (maxLightness - minLightness) * normalized;
+  let sNorm: number;
+  if (sVal <= yAnchor) {
+    const denom = Math.max(eps, yAnchor - sL950);
+    sNorm = ((sVal - sL950) / denom) * yAnchor;
+  } else {
+    const denom = Math.max(eps, sL50 - yAnchor);
+    sNorm = yAnchor + ((sVal - yAnchor) / denom) * (1 - yAnchor);
+  }
+
+  // 5) 0..1 → MIN..MAX（= 25..97）へ写像
+  return MIN_LIGHTNESS + (MAX_LIGHTNESS - MIN_LIGHTNESS) * sNorm;
 };
 
 /**

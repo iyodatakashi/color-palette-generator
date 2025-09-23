@@ -17,8 +17,8 @@ export const MAX_LEVEL = 1000;
 // STANDARD_LIGHTNESS_SCALE removed - using dynamic sigmoid calculation
 
 // Lightness scale limits
-export const MAX_LIGHTNESS = 100;
-export const MIN_LIGHTNESS = 20;
+export const MAX_LIGHTNESS = 97;
+export const MIN_LIGHTNESS = 25;
 
 /**
  * Alpha value definitions
