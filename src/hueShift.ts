@@ -117,7 +117,10 @@ export const getHueShiftExplanation = ({
 } => {
   const { hueShiftMode } = colorConfig;
   // Parse color and get hue value
-  const colorObj = culori.parse(colorConfig.color);
+  const colorObj =
+    typeof colorConfig.color === "string"
+      ? culori.parse(colorConfig.color)
+      : colorConfig.color;
   if (!colorObj) {
     throw new Error("Invalid color");
   }

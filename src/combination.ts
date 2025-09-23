@@ -227,18 +227,19 @@ const generateSecondaryPalettesFromPrimary = ({
       const primaryPeak = findPrimaryPeakChromaLevel(primaryPalette);
 
       // 2. Generate secondary provisional base color from primary peak chroma
-      const secondaryProvisionalBaseColor = generateSecondaryBaseColor(
+      const secondaryProvisionalBaseOklch = generateSecondaryBaseOklch(
         primaryPeak.color,
         hueShift
       );
 
-      // 3. Generate complete secondary palette using provisional base color
+      // 3. Generate complete secondary palette using provisional base OKLCH directly
       const secondaryConfig = {
         id: id,
         prefix: prefix,
-        color: secondaryProvisionalBaseColor,
+        color: secondaryProvisionalBaseOklch, // Use OKLCH object directly
         hueShiftMode: "natural" as const,
         enableLightnessAdjustment: false, // セカンダリではK値調整を無効化
+        combinationHueShift: hueShift, // セカンダリの色相を固定
         includeTransparent:
           config.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
         includeTextColors:
@@ -319,30 +320,25 @@ const findPrimaryPeakChromaLevel = (
 
 /**
  * Generate secondary provisional base color from primary peak chroma color
- * Uses fitOklchToRgb for advanced gamut mapping
+ * Returns OKLCH object without gamut mapping to preserve chroma
  */
-const generateSecondaryBaseColor = (
+const generateSecondaryBaseOklch = (
   primaryPeakColor: string,
   targetHue: number
-): string => {
+): Oklch => {
   const primaryOklch = culori.oklch(primaryPeakColor);
   if (!primaryOklch) {
     throw new Error("Failed to convert primary peak color to OKLCH");
   }
 
   // Create secondary color with same lightness and chroma, but different hue
-  const secondaryOklch = {
+  // Return OKLCH without gamut mapping to preserve maximum chroma
+  return {
     mode: "oklch" as const,
     l: primaryOklch.l,
     c: primaryOklch.c,
     h: targetHue,
   };
-
-  // Apply gamut mapping to ensure the color is displayable
-  const rgb8 = fitOklchToRgb(secondaryOklch);
-  return `#${rgb8.r.toString(16).padStart(2, "0")}${rgb8.g
-    .toString(16)
-    .padStart(2, "0")}${rgb8.b.toString(16).padStart(2, "0")}`;
 };
 
 // =============================================================================

@@ -1,16 +1,13 @@
 // palette.ts
 
-import type { ColorConfig, NormalizedColorConfig, Palette } from "./types";
+import type { ColorConfig, Palette } from "./types";
 import type { Oklch } from "culori";
 import * as culori from "culori";
 import {
   getLightness,
-  adjustToLightness,
   findClosestLevel,
   calculateEvenScale,
 } from "./lightness";
-import { MIN_LIGHTNESS, MAX_LIGHTNESS } from "./constants";
-import { fitOklchToRgb } from "./colorUtils";
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
 import { createContextLogger } from "./logger";
@@ -40,37 +37,86 @@ export const generateColorPalette = (
     return allPalette;
   }
 
-  // Handle single configuration
+  // Route to appropriate handler based on purpose
   const colorConfig = input;
-  // Parse input color
-  const inputColorObj = culori.parse(colorConfig.color);
+
+  // Check if this is combination color generation
+  const isCombinationColor =
+    colorConfig.id !== "primary" && colorConfig.id !== "base";
+
+  if (isCombinationColor) {
+    return generateCombinationPalette(colorConfig);
+  } else {
+    return generatePrimaryBasePalette(colorConfig);
+  }
+};
+
+/**
+ * Generate primary/base color palette (from HEX input)
+ */
+const generatePrimaryBasePalette = (colorConfig: ColorConfig): Palette => {
+  // Parse HEX input
+  const inputColorObj = culori.parse(colorConfig.color as string);
   if (!inputColorObj) {
     throw new Error("Invalid input color");
   }
 
-  const inputRGB = culori.converter("rgb")(inputColorObj);
-  if (!inputRGB) {
-    throw new Error("Failed to convert color to RGB");
-  }
-
-  const normalizedColor = culori.formatHex(inputColorObj);
   const inputOKLCH = culori.converter("oklch")(inputColorObj);
   if (!inputOKLCH) {
     throw new Error("Failed to convert color to OKLCH");
   }
 
-  // Log color normalization for debugging
-  if (colorConfig.color !== normalizedColor) {
-    log.info("Color normalized", {
-      originalColor: colorConfig.color,
-      normalizedColor: normalizedColor,
-      prefix: colorConfig.prefix,
+  const normalizedColor = culori.formatHex(inputColorObj) || "#000000";
+
+  // Generate base palette
+  const palette = generatePaletteFromProcessedInput(colorConfig, inputOKLCH);
+
+  // Primary/Base specific override processing
+  if (!colorConfig.enableChromaAdjustment) {
+    const inputLightness = getLightness(normalizedColor);
+    const closestLevel = findClosestLevel({
+      inputLightness,
+      inputChroma: inputOKLCH.c,
+      inputHue: inputOKLCH.h,
     });
+    palette[`--${colorConfig.prefix}-${closestLevel}`] = normalizedColor;
   }
 
-  const normalizedConfig: NormalizedColorConfig = {
+  return palette;
+};
+
+/**
+ * Generate combination (secondary) color palette (from OKLCH input)
+ */
+const generateCombinationPalette = (colorConfig: ColorConfig): Palette => {
+  const inputOKLCH = colorConfig.color as Oklch;
+
+  // Combination colors: no normalization, no override
+  return generatePaletteFromProcessedInput(colorConfig, inputOKLCH);
+};
+
+/**
+ * Common palette generation logic after input processing
+ */
+const generatePaletteFromProcessedInput = (
+  colorConfig: ColorConfig,
+  inputOKLCH: Oklch
+): Palette => {
+  const inputRGB = culori.converter("rgb")(inputOKLCH);
+  if (!inputRGB) {
+    throw new Error("Failed to convert color to RGB");
+  }
+
+  // Helper function to convert OKLCH to HEX with chroma-only gamut mapping
+  const oklchToHex = (oklch: Oklch): string => {
+    const clampedOklch = culori.clampChroma(oklch, "oklch", "rgb");
+    return culori.formatHex(clampedOklch) || "#000000";
+  };
+
+  const normalizedConfig = {
     ...colorConfig,
-    color: normalizedColor,
+    id: colorConfig.id || "unknown", // Provide default value
+    color: oklchToHex(inputOKLCH), // Convert OKLCH to HEX
     hueShiftMode: colorConfig.hueShiftMode || DEFAULT_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
       colorConfig.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
@@ -84,9 +130,11 @@ export const generateColorPalette = (
     enableChromaAdjustment:
       colorConfig.enableChromaAdjustment ??
       DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
+    enableLightnessAdjustment: colorConfig.enableLightnessAdjustment ?? true,
+    combinationHueShift: colorConfig.combinationHueShift,
   };
 
-  const inputLightness = getLightness(normalizedColor);
+  const inputLightness = getLightness(oklchToHex(inputOKLCH));
 
   const closestLevel = findClosestLevel({
     inputLightness,
@@ -126,7 +174,7 @@ export const generateColorPalette = (
   // Generate text colors last to ensure proper order
   setTextColor({
     colorConfig: normalizedConfig,
-    inputColor: normalizedColor,
+    inputColor: oklchToHex(inputOKLCH),
     palette,
   });
 
@@ -177,11 +225,17 @@ const generateOriginalPalette = ({
   inputOKLCH: Oklch;
   closestLevel: number;
   adjustedLightnessScale: Record<number, number>;
-  colorConfig: NormalizedColorConfig;
+  colorConfig: any; // Use any to avoid complex type issues
   inputLightness: number;
 }): Palette => {
   const palette: Palette = {};
   const originalLightness = inputLightness; // Use original input lightness, not adjusted scale value
+
+  // Helper function to convert OKLCH to HEX with chroma-only gamut mapping
+  const oklchToHex = (oklch: Oklch): string => {
+    const clampedOklch = culori.clampChroma(oklch, "oklch", "rgb");
+    return culori.formatHex(clampedOklch) || "#000000";
+  };
 
   Object.entries(adjustedLightnessScale).forEach(([key, targetLightness]) => {
     const level = parseInt(key);
@@ -212,23 +266,16 @@ const generateOriginalPalette = ({
       });
     }
 
-    const generatedColor = adjustToLightness({
-      h: finalHue,
+    // Create OKLCH color and convert to HEX with chroma-only gamut mapping
+    const oklchColor: Oklch = {
+      mode: "oklch" as const,
+      l: targetLightness / 100, // Convert percentage to 0-1 range
       c: targetChroma,
-      targetLightness,
-    });
+      h: finalHue,
+    };
 
-    palette[`--${colorConfig.prefix}-${key}`] = generatedColor;
+    palette[`--${colorConfig.prefix}-${key}`] = oklchToHex(oklchColor);
   });
-
-  // Override the closest level with the original input color for accuracy
-  // (But only for non-combination colors and when chroma adjustment is disabled)
-  if (
-    colorConfig.combinationHueShift === undefined &&
-    !colorConfig.enableChromaAdjustment
-  ) {
-    palette[`--${colorConfig.prefix}-${closestLevel}`] = colorConfig.color;
-  }
 
   return palette;
 };
@@ -241,7 +288,7 @@ const setVariationColors = ({
   closestLevel,
   palette,
 }: {
-  colorConfig: NormalizedColorConfig;
+  colorConfig: any;
   closestLevel: number;
   palette: Palette;
 }): void => {
@@ -280,7 +327,7 @@ const setTextColor = ({
   inputColor,
   palette,
 }: {
-  colorConfig: NormalizedColorConfig;
+  colorConfig: any;
   inputColor: string;
   palette: Palette;
 }): void => {

@@ -9,7 +9,7 @@ import type { Oklch, Rgb } from "culori";
 // Color configuration (input)
 export type ColorConfig = {
   prefix: string;
-  color: string;
+  color: string | import("culori").Oklch;
   id?: string; // Optional for internal unique management
   hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;
@@ -20,19 +20,6 @@ export type ColorConfig = {
   enableChromaAdjustment?: boolean; // Whether to apply chroma adjustment in palette generation
   enableLightnessAdjustment?: boolean; // Whether to apply K-value lightness adjustment in palette generation
   combinationHueShift?: number; // Hue shift for combination colors (degrees)
-};
-
-// Normalized color configuration (internal use)
-export type NormalizedColorConfig = ColorConfig & {
-  color: string;
-  hueShiftMode: HueShiftMode;
-  includeTransparent: boolean;
-  includeTextColors: boolean;
-  bgColorLight: string;
-  bgColorDark: string;
-  transparentOriginLevel: number;
-  enableChromaAdjustment: boolean;
-  combinationHueShift?: number;
 };
 
 // Color palette (output)
