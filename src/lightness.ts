@@ -92,9 +92,8 @@ const calculateOptimalK = (
   let currentK = 0.18; // Start with optimized default for level 500 ≈ 63%
 
   // Determine gamma based on shift direction
-  // If targetLevel < 500 (upward shift), use gamma < 1 for better curve shape
-  // If targetLevel > 500 (downward shift), use gamma > 1
-  const gamma = targetLevel < 500 ? 0.7 : targetLevel > 500 ? 1.5 : 1.0;
+  // Disable gamma correction completely
+  const gamma = 1.0;
 
   for (let i = 0; i < maxIterations; i++) {
     const currentLightness = getBaseSigmoidLightness(
@@ -120,17 +119,23 @@ const calculateOptimalK = (
 
 /**
  * Base sigmoid function for lightness distribution
- * Maps level 0-1000 to lightness 100%-20% with configurable steepness
+ * Maps level 50-950 to lightness 97%-25% with configurable steepness
  */
 const getBaseSigmoidLightness = (
   level: number,
   k: number = 0.18,
   gamma: number = 1.0
 ): number => {
+  // Map level 50-950 to normalized range [0, 10]
+  const minLevel = 50;
+  const maxLevel = 950;
+  const normalizedLevel = (level - minLevel) / (maxLevel - minLevel);
   const xRange = 10;
-  const x = (level / 1000) * xRange;
-  // Fixed center at 10 (use upper curve only)
+  const x = normalizedLevel * xRange;
+
+  // Fixed center at 10 (corresponds to level 950, the darkest level)
   const center = 10;
+
   const rawSigmoid = 1 / (1 + Math.exp(-Math.abs(k) * (x - center)));
 
   const minRaw = 1 / (1 + Math.exp(-Math.abs(k) * (0 - center)));
@@ -140,145 +145,15 @@ const getBaseSigmoidLightness = (
   const normalizedSigmoid = (rawSigmoid - minRaw) / (maxRaw - minRaw);
 
   // Apply gamma correction to change curve shape
-  // gamma < 1: left concave, right convex (good for upward shifts)
-  // gamma > 1: left convex, right concave (good for downward shifts)
   const gammaCorrected = Math.pow(normalizedSigmoid, gamma);
 
-  // Scale to lightness range (inverted: level 0 = bright, level 1000 = dark)
-  const scaledSigmoid =
-    MAX_LIGHTNESS / 100 -
-    (MAX_LIGHTNESS / 100 - MIN_LIGHTNESS / 100) * gammaCorrected;
-
+  // Map to target lightness range: 97% to 25% (inverted: level 50 = bright, level 950 = dark)
+  const maxLightness = 97;
+  const minLightness = 25;
   const lightness =
-    MIN_LIGHTNESS +
-    (MAX_LIGHTNESS - MIN_LIGHTNESS) *
-      ((scaledSigmoid - MIN_LIGHTNESS / 100) /
-        (MAX_LIGHTNESS / 100 - MIN_LIGHTNESS / 100));
+    minLightness + (maxLightness - minLightness) * (1 - gammaCorrected);
 
   return lightness;
-};
-
-/**
- * Mathematical transformation function
- */
-const applyMathematicalTransform = (
-  x: number,
-  newCenter: number,
-  originalCenter: number
-): number => {
-  const xRange = 10;
-
-  // Step 1: Apply scaling around the NEW center (not original center)
-  let transformedX: number;
-  if (x <= newCenter) {
-    // Left side: scale 0~newCenter to 0~originalCenter
-    const leftRatio = originalCenter / newCenter;
-    transformedX = x * leftRatio;
-  } else {
-    // Right side: scale newCenter~10 to originalCenter~10
-    const rightOffset = x - newCenter;
-    const newRightRange = xRange - newCenter;
-    const originalRightRange = xRange - originalCenter;
-    const rightRatio = originalRightRange / newRightRange;
-    transformedX = originalCenter + rightOffset * rightRatio;
-  }
-
-  return transformedX;
-};
-
-/**
- * Calculate asymmetric transformation parameters once
- */
-const calculateAdjustedTransform = (
-  targetLevel: number,
-  targetLightness: number,
-  k: number = 0.4
-): { center: number; targetOriginalLevel: number } => {
-  const xRange = 10;
-  const originalCenter = xRange / 2; // Always 5.0
-
-  // Find the original level that corresponds to target lightness
-  let targetOriginalLevel = 0;
-  let minError = Infinity;
-
-  for (let testLevel = 0; testLevel <= 1000; testLevel += 0.1) {
-    const lightness = getBaseSigmoidLightness(testLevel, k);
-    const error = Math.abs(lightness - targetLightness);
-
-    if (error < minError) {
-      minError = error;
-      targetOriginalLevel = testLevel;
-    }
-  }
-
-  const targetOriginalX = (targetOriginalLevel / 1000) * xRange;
-  const targetFinalX = (targetLevel / 1000) * xRange;
-
-  // Iteratively find the center that maps targetFinalX to targetOriginalX
-  let currentCenter = originalCenter;
-  const maxIterations = 10;
-  const tolerance = 0.01;
-
-  for (let iteration = 0; iteration < maxIterations; iteration++) {
-    const transformedFinalX = applyMathematicalTransform(
-      targetFinalX,
-      currentCenter,
-      originalCenter
-    );
-
-    const error = targetOriginalX - transformedFinalX;
-
-    if (Math.abs(error) < tolerance) {
-      break;
-    }
-
-    currentCenter -= error;
-    currentCenter = Math.max(0.5, Math.min(9.5, currentCenter));
-  }
-
-  console.log(
-    `[DEBUG] 変換パラメータ: center=${currentCenter.toFixed(
-      3
-    )}, targetOriginalLevel=${targetOriginalLevel.toFixed(1)}`
-  );
-
-  return { center: currentCenter, targetOriginalLevel };
-};
-
-/**
- * Apply asymmetric transformation to a single level
- */
-const applyAdjustedTransform = (
-  level: number,
-  transform: { center: number; targetOriginalLevel: number },
-  k: number = 0.4
-): number => {
-  const xRange = 10;
-  const originalCenter = xRange / 2;
-
-  const inputX = (level / 1000) * xRange;
-  const transformedX = applyMathematicalTransform(
-    inputX,
-    transform.center,
-    originalCenter
-  );
-  const transformedLevel = (transformedX / xRange) * 1000;
-
-  // Debug log for edge cases
-  if (level === 0 || level === 1000) {
-    const resultLightness = getBaseSigmoidLightness(transformedLevel, k);
-    console.log(
-      `[DEBUG] レベル${level}: X=${inputX.toFixed(
-        3
-      )} → transformedX=${transformedX.toFixed(
-        3
-      )} → transformedLevel=${transformedLevel.toFixed(
-        1
-      )} → 明度=${resultLightness.toFixed(1)}%`
-    );
-  }
-
-  return getBaseSigmoidLightness(transformedLevel, k);
 };
 
 /**
