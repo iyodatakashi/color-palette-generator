@@ -39,7 +39,7 @@ export const DEFAULT_COLOR_CONFIG = {
   bgColorLight: "#ffffff",
   bgColorDark: "#000000",
   transparentOriginLevel: 500,
-  enableChromaAdjustment: false,
+  enableChromaAdjustment: true,
 };
 
 export const DEFAULT_BASE_COLOR_CONFIG = {

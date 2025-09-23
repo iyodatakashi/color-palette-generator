@@ -72,7 +72,13 @@ const generatePrimaryBasePalette = (colorConfig: ColorConfig): Palette => {
   const palette = generatePaletteFromProcessedInput(colorConfig, inputOKLCH);
 
   // Primary/Base specific override processing
+  console.log(
+    `OVERRIDE CHECK: id=${colorConfig.id}, prefix=${colorConfig.prefix}, enableChromaAdjustment=${colorConfig.enableChromaAdjustment}, color=${colorConfig.color}`
+  );
   if (!colorConfig.enableChromaAdjustment) {
+    console.log(
+      `OVERRIDE APPLIED: placing original color at closest level for ${colorConfig.prefix}`
+    );
     const inputLightness = getLightness(normalizedColor);
     const closestLevel = findClosestLevel({
       inputLightness,
@@ -186,30 +192,55 @@ const generatePaletteFromProcessedInput = (
 // =============================================================================
 
 /**
- * Calculate natural chroma distribution based on lightness
- * Uses smooth Gaussian curve with peak at medium lightness
+ * Calculate natural chroma distribution for all color types
+ * Uses consistent Gaussian curve with peak at level 500, adjusts to pass through reference color
  */
-const calculateNaturalChroma = ({
+const calculateNaturalChromaCurve = ({
   targetLevel,
-  baseChroma,
+  referenceLevel,
+  referenceChroma,
 }: {
   targetLevel: number;
-  baseChroma: number;
+  referenceLevel: number;
+  referenceChroma: number;
 }): number => {
-  // Smooth Gaussian curve - peak at level 500
+  // Unified curve parameters - same for all colors
   const peak = 500;
-  const width = 200; // Level-based width
+  const width = 200;
+  const minChroma = 0.0;
 
-  // Gaussian distribution for natural chroma falloff
-  const chromaMultiplier = Math.exp(
+  // Calculate multipliers for both target and reference levels
+  const targetMultiplier = Math.exp(
     -Math.pow(targetLevel - peak, 2) / (2 * Math.pow(width, 2))
   );
+  const referenceMultiplier = Math.exp(
+    -Math.pow(referenceLevel - peak, 2) / (2 * Math.pow(width, 2))
+  );
 
-  // Minimum chroma at extremes (0%), maximum at peak (100%)
-  const minChroma = 0.0;
-  const adjustedMultiplier = minChroma + (1.0 - minChroma) * chromaMultiplier;
+  // Adjust target multiplier
+  const targetAdjusted = minChroma + (1.0 - minChroma) * targetMultiplier;
+  const referenceAdjusted = minChroma + (1.0 - minChroma) * referenceMultiplier;
 
-  return baseChroma * adjustedMultiplier;
+  // Calculate base chroma needed to pass through reference point
+  const baseChroma = referenceChroma / referenceAdjusted;
+
+  // Apply to target level
+  const result = baseChroma * targetAdjusted;
+
+  // デバッグ情報
+  if (targetLevel === 200 || targetLevel === 500) {
+    console.log(
+      `CHROMA DEBUG: level=${targetLevel}, referenceLevel=${referenceLevel}, referenceChroma=${referenceChroma.toFixed(
+        3
+      )}, targetMultiplier=${targetMultiplier.toFixed(
+        3
+      )}, referenceMultiplier=${referenceMultiplier.toFixed(
+        3
+      )}, baseChroma=${baseChroma.toFixed(3)}, result=${result.toFixed(3)}`
+    );
+  }
+
+  return result;
 };
 
 /**
@@ -256,14 +287,26 @@ const generateOriginalPalette = ({
         ? colorConfig.combinationHueShift
         : adjustedHue;
 
-    // Calculate natural chroma distribution if enabled
+    // Calculate chroma distribution using unified curve
     let targetChroma = inputOKLCH.c || 0;
     if (colorConfig.enableChromaAdjustment) {
       const originalChroma = inputOKLCH.c || 0;
-      targetChroma = calculateNaturalChroma({
+      targetChroma = calculateNaturalChromaCurve({
         targetLevel: level,
-        baseChroma: originalChroma,
+        referenceLevel: closestLevel,
+        referenceChroma: originalChroma,
       });
+
+      // デバッグログ
+      if (level === 50) {
+        console.log(
+          `DEBUG PRIMARY: level=${level}, targetChroma=${targetChroma.toFixed(
+            3
+          )}, referenceLevel=${closestLevel}, referenceChroma=${originalChroma.toFixed(
+            3
+          )}`
+        );
+      }
     }
 
     // Create OKLCH color and convert to HEX with chroma-only gamut mapping
