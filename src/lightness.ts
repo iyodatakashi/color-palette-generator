@@ -80,53 +80,6 @@ export const adjustToLightness = ({
 // =============================================================================
 
 /**
- * Calculate optimal k parameter to achieve target lightness at target level
- */
-const calculateOptimalK = (
-  targetLevel: number,
-  targetLightness: number,
-  kSign: 1 | -1 = 1 // ← 追加: 膨らみ方向を選ぶ（+1 上凸 / -1 下凸）
-): number => {
-  const tolerance = 0.1; // 明度[%]の許容誤差
-  const maxIterations = 60;
-
-  // 初期値（強さの初期大きさ）
-  let kMag = 0.18; // 以前のチューニング値を流用
-  const kMin = 0.0005;
-  const kMax = 20;
-
-  const evalL = (km: number) =>
-    getBaseSigmoidLightness(targetLevel, kSign * km);
-
-  // 数値微分で安全に更新方向を決める
-  for (let i = 0; i < maxIterations; i++) {
-    const L = evalL(kMag);
-    const err = targetLightness - L;
-    if (Math.abs(err) < tolerance) {
-      // console.log(`K調整完了: |k|=${kMag.toFixed(4)}, 符号=${kSign}, 反復=${i+1}`);
-      break;
-    }
-
-    // 局所的な dL/d|k| をサンプル
-    const delta = Math.max(1e-4, kMag * 0.05);
-    const L2 = evalL(Math.min(kMag + delta, kMax));
-    const dLdK = (L2 - L) / (Math.min(kMag + delta, kMax) - kMag); // 変化率
-
-    // 勾配符号に合わせて |k| を更新（クリップ付き）
-    // 係数は安定のため控えめに
-    const step = 0.5;
-    const direction = dLdK === 0 ? 1 : Math.sign(dLdK); // 0回避
-    let kNext = kMag + step * err * direction;
-
-    kNext = Math.min(Math.max(kNext, kMin), kMax);
-    kMag = kNext;
-  }
-
-  // 返すのは符号付き k
-  return kSign * kMag;
-};
-
-/**
  * Base sigmoid function for lightness distribution
  * Maps level 50-950 to lightness 97%-25% with configurable steepness
  */
