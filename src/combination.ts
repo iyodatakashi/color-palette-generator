@@ -4,6 +4,7 @@ import * as culori from "culori";
 import { normalizeHue } from "./hueShift";
 import { oklchToHexAdjustChroma, oklchToHexHybrid } from "./colorUtils";
 import { findClosestLevel, getLightness } from "./lightness";
+import { DEFAULT_LEVEL_500_LIGHTNESS } from "./constants";
 import type {
   ColorConfig,
   CombinationType,
@@ -434,7 +435,7 @@ const getBaseColor = ({
   primaryOKLCH: Oklch;
   strategy?: BaseColorStrategy;
 }): Oklch => {
-  const targetLightness = 0.61; // Level 500 equivalent (middle lightness, 0-1 range)
+  const targetLightness = DEFAULT_LEVEL_500_LIGHTNESS; // Level 500 equivalent (middle lightness, 0-1 range)
 
   // Calculate base chroma (moderate chroma for base colors)
   const baseChroma = Math.max(

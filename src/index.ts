@@ -18,6 +18,7 @@ export {
   getLightness,
   adjustToLightness,
   calculateEvenScale,
+  findClosestLevel,
 } from "./lightness";
 
 // Hue change features
@@ -48,6 +49,7 @@ export {
   MAX_LEVEL,
   MIN_LIGHTNESS,
   MAX_LIGHTNESS,
+  DEFAULT_LEVEL_500_LIGHTNESS,
 } from "./constants";
 
 // Type definitions

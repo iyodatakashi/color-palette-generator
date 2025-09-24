@@ -7,6 +7,7 @@ import {
   MIN_LIGHTNESS,
   MAX_LEVEL,
   MIN_LEVEL,
+  DEFAULT_LEVEL_500_LIGHTNESS,
 } from "./constants";
 import { oklchToHexPerceptual } from "./colorUtils";
 
@@ -108,7 +109,7 @@ const getBaseSigmoidLightness = (
   level: number,
   kSigned: number = 0.18, // +で左上凸寄り / -で左下凸寄り
   anchorLevel: number = 500, // 通したいレベル
-  anchorLightness: number = 0.61, // 通したい明度 (0-1 range)
+  anchorLightness: number = DEFAULT_LEVEL_500_LIGHTNESS, // 通したい明度 (0-1 range)
   vBase: number = 2.0, // 非対称ベース（決め打ち）
   kMin: number = 1e-6 // 極小傾きガード
 ): number => {
@@ -191,10 +192,16 @@ export const generateAdjustedLightnessScale = (
   const maxChroma = getMaxChromaForHue(inputHue);
   const relativeChroma = inputChroma / maxChroma;
 
-  // 基準スケール（K=0.18, アンカー=500/61）で初期レベルを推定
+  // 基準スケール（K=0.18, アンカー=500/DEFAULT_LEVEL_500_LIGHTNESS）で初期レベルを推定
   const baseScale: Record<number, number> = {};
   SCALE_LEVELS.forEach((level) => {
-    baseScale[level] = getBaseSigmoidLightness(level, 0.18, 500, 0.61, vBase);
+    baseScale[level] = getBaseSigmoidLightness(
+      level,
+      0.18,
+      500,
+      DEFAULT_LEVEL_500_LIGHTNESS,
+      vBase
+    );
   });
 
   let initialLevel = 500;
@@ -284,10 +291,15 @@ export const findClosestLevel = ({
   const maxChroma = getMaxChromaForHue(inputHue);
   const relativeChroma = inputChroma / maxChroma;
 
-  // Step 1: Find initial level using new sigmoid (center=10)
+  // Step 1: Find initial level using new sigmoid with DEFAULT_LEVEL_500_LIGHTNESS
   const baseScale: Record<number, number> = {};
   SCALE_LEVELS.forEach((level) => {
-    baseScale[level] = getBaseSigmoidLightness(level, 0.18);
+    baseScale[level] = getBaseSigmoidLightness(
+      level,
+      0.18,
+      500,
+      DEFAULT_LEVEL_500_LIGHTNESS
+    );
   });
 
   let initialLevel = 500;

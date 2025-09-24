@@ -20,6 +20,9 @@ export const MAX_LEVEL = 1000;
 export const MAX_LIGHTNESS = 0.97;
 export const MIN_LIGHTNESS = 0.25;
 
+// Default level 500 lightness (middle of the scale)
+export const DEFAULT_LEVEL_500_LIGHTNESS = 0.68;
+
 /**
  * Alpha value definitions
  */
