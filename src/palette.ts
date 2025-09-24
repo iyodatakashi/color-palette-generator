@@ -83,10 +83,59 @@ const generateSecondaryPalette = ({
 }: {
   colorConfig: ColorConfig;
 }): Palette => {
-  // Combination colors: no normalization, no override
-  return generatePaletteFromProcessedInput({
-    colorConfig,
+  // Validate input OKLCH
+  if (
+    !colorConfig.oklch ||
+    !isFinite(colorConfig.oklch.l) ||
+    !isFinite(colorConfig.oklch.c) ||
+    !isFinite(colorConfig.oklch.h || 0)
+  ) {
+    throw new Error("Invalid OKLCH input");
+  }
+
+  const closestLevel = findClosestLevel({
+    inputLightness: colorConfig.oklch.l, // 0-1 range
+    inputChroma: colorConfig.oklch.c,
+    inputHue: colorConfig.oklch.h,
   });
+
+  // Secondary colors: use default sigmoid without chroma adjustment
+  const adjustedLightnessScale = calculateEvenScale({
+    inputLightness: colorConfig.oklch.l, // 0-1 range
+    inputChroma: colorConfig.oklch.c || 0,
+    inputHue: colorConfig.oklch.h || 0,
+    enableLightnessAdjustment: false, // Use default sigmoid for secondary colors
+  });
+
+  const palette = generateOriginalPalette({
+    colorConfig,
+    inputOKLCH: colorConfig.oklch,
+    closestLevel,
+    adjustedLightnessScale,
+    inputLightness: colorConfig.oklch.l,
+  });
+
+  setVariationColors({
+    colorConfig,
+    closestLevel,
+    palette,
+  });
+
+  if (colorConfig.includeTransparent) {
+    setTransparentPalette({
+      palette,
+      colorConfig,
+    });
+  }
+
+  // Generate text colors last to ensure proper order
+  setTextColor({
+    colorConfig,
+    inputOKLCH: colorConfig.oklch,
+    palette,
+  });
+
+  return palette;
 };
 
 /**
