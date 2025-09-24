@@ -101,7 +101,7 @@ const getBaseColorConfig = ({
     prefix: "base",
     color: culori.formatHex(culori.clampChroma(baseColor, "oklch", "rgb")), // あとで直す
     oklch: baseColor,
-    hueShiftMode: "fixed" as const,
+    hueShiftMode: DEFAULT_BASE_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
       combinationConfig.includeTransparent ??
       DEFAULT_BASE_COLOR_CONFIG.includeTransparent,
@@ -304,7 +304,7 @@ const generateSecondaryPalettes = ({
         color: secondaryFormalBaseColor,
         oklch: secondaryProvisionalOriginalOklch,
         palette: secondaryPalette,
-        hueShiftMode: "natural" as const,
+        hueShiftMode: DEFAULT_COLOR_CONFIG.hueShiftMode,
         includeTransparent:
           combinationConfig.includeTransparent ??
           DEFAULT_COLOR_CONFIG.includeTransparent,

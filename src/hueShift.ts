@@ -117,18 +117,8 @@ export const getHueShiftExplanation = ({
 } => {
   const { hueShiftMode } = colorConfig;
   // Parse color and get hue value
-  const colorObj =
-    typeof colorConfig.color === "string"
-      ? culori.parse(colorConfig.color)
-      : colorConfig.color;
-  if (!colorObj) {
-    throw new Error("Invalid color");
-  }
 
-  const baseOKLCHColor = culori.converter("oklch")(colorObj);
-  if (!baseOKLCHColor) {
-    throw new Error("Failed to convert color to OKLCH");
-  }
+  const baseOKLCHColor = colorConfig.oklch;
 
   const baseHue = baseOKLCHColor.h || 0;
   const hueCategory = getHueCategory(baseHue);

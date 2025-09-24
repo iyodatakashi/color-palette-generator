@@ -33,7 +33,7 @@ export const MAX_ALPHA = 1.0;
 export const DEFAULT_HUE_SHIFT_MODE = "natural" as const;
 
 export const DEFAULT_COLOR_CONFIG = {
-  hueShiftMode: "fixed" as HueShiftMode,
+  hueShiftMode: "natural" as HueShiftMode,
   includeTransparent: false,
   includeTextColors: false,
   bgColorLight: "#ffffff",
