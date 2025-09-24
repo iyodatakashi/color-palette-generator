@@ -2,7 +2,7 @@
 
 import * as culori from "culori";
 import { normalizeHue } from "./hueShift";
-import { fitOklchToRgb } from "./colorUtils";
+import { oklchToHexAdjustChroma, oklchToRgbHybrid } from "./colorUtils";
 import { findClosestLevel, getLightness } from "./lightness";
 import type {
   ColorConfig,
@@ -99,7 +99,7 @@ const getBaseColorConfig = ({
   return {
     id: "base",
     prefix: "base",
-    color: culori.formatHex(culori.clampChroma(baseColor, "oklch", "rgb")), // あとで直す
+    color: oklchToHexAdjustChroma(baseColor), // あとで直す
     oklch: baseColor,
     hueShiftMode: DEFAULT_BASE_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
@@ -132,9 +132,10 @@ const getPrimaryColorConfig = ({
   return {
     id: "primary",
     prefix: "primary",
-    color: culori.formatHex(culori.clampChroma(primaryOKLCH, "oklch", "rgb")), // あとで直す
+    color: oklchToHexAdjustChroma(primaryOKLCH), // あとで直す
     oklch: primaryOKLCH,
-    hueShiftMode: DEFAULT_COLOR_CONFIG.hueShiftMode,
+    hueShiftMode:
+      combinationConfig.hueShiftMode ?? DEFAULT_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
       combinationConfig.includeTransparent ??
       DEFAULT_COLOR_CONFIG.includeTransparent,
@@ -271,7 +272,8 @@ const generateSecondaryPalettes = ({
         prefix: prefix,
         color: "",
         oklch: secondaryProvisionalOriginalOklch, // Use OKLCH object directly
-        hueShiftMode: DEFAULT_COLOR_CONFIG.hueShiftMode,
+        hueShiftMode:
+          combinationConfig.hueShiftMode ?? DEFAULT_COLOR_CONFIG.hueShiftMode,
         enableLightnessAdjustment: false, // セカンダリではK値調整を無効化
         combinationHueShift: hueShift, // セカンダリの色相を固定
         includeTransparent:
@@ -304,7 +306,8 @@ const generateSecondaryPalettes = ({
         color: secondaryFormalBaseColor,
         oklch: secondaryProvisionalOriginalOklch,
         palette: secondaryPalette,
-        hueShiftMode: DEFAULT_COLOR_CONFIG.hueShiftMode,
+        hueShiftMode:
+          combinationConfig.hueShiftMode ?? DEFAULT_COLOR_CONFIG.hueShiftMode,
         includeTransparent:
           combinationConfig.includeTransparent ??
           DEFAULT_COLOR_CONFIG.includeTransparent,
@@ -414,7 +417,7 @@ export const generateSameToneColor = ({
   };
 
   // Use optimized gamut mapping for same-tone generation
-  const rgb8 = fitOklchToRgb(targetColor);
+  const rgb8 = oklchToRgbHybrid(targetColor);
   return `#${rgb8.r.toString(16).padStart(2, "0")}${rgb8.g
     .toString(16)
     .padStart(2, "0")}${rgb8.b.toString(16).padStart(2, "0")}`;
@@ -464,96 +467,5 @@ const getBaseColor = ({
     c: finalChroma,
     h: baseHue,
   };
-
-  /*
-  // Convert OKLCH to HEX color
-  const newRGB = culori.converter("rgb")(newOKLCHObj);
-  if (!newRGB) {
-    return "#000000";
-  }
-  return culori.formatHex(newRGB);
-  */
   return newOKLCHObj;
 };
-
-/**
- * Get secondary colors (final color strings)
- */
-
-/*
-const getSecondaryColorConfigs = ({
-  primaryOKLCH,
-  combinationType,
-}: {
-  primaryOKLCH: Oklch;
-  combinationType: CombinationType;
-}): ColorConfig[] => {
-  const primaryHue = primaryOKLCH.h || 0;
-
-  const combinationMap: Record<
-    CombinationType,
-    {
-      secondary?: number;
-      secondary2?: number;
-      secondary3?: number;
-    }
-  > = {
-    monochromatic: {
-      secondary: primaryHue,
-    },
-    analogous: {
-      secondary: normalizeHue(primaryHue + 30),
-      secondary2: normalizeHue(primaryHue - 30),
-    },
-    complementary: {
-      secondary: normalizeHue(primaryHue + 180),
-    },
-    splitComplementary: {
-      secondary: normalizeHue(primaryHue + 150),
-      secondary2: normalizeHue(primaryHue + 210),
-    },
-    doubleComplementary: {
-      secondary: normalizeHue(primaryHue + 30),
-      secondary2: normalizeHue(primaryHue + 180),
-      secondary3: normalizeHue(primaryHue + 210),
-    },
-    doubleComplementaryReverse: {
-      secondary: normalizeHue(primaryHue - 30),
-      secondary2: normalizeHue(primaryHue + 180),
-      secondary3: normalizeHue(primaryHue + 150),
-    },
-    triadic: {
-      secondary: normalizeHue(primaryHue + 120),
-      secondary2: normalizeHue(primaryHue + 240),
-    },
-    tetradic: {
-      secondary: normalizeHue(primaryHue + 90),
-      secondary2: normalizeHue(primaryHue + 180),
-      secondary3: normalizeHue(primaryHue + 270),
-    },
-  };
-
-  const hueValues =
-    combinationMap[combinationType] || combinationMap.complementary;
-
-  const result: {
-    secondary?: string;
-    secondary2?: string;
-    secondary3?: string;
-  } = {};
-
-  const keys = ["secondary", "secondary2", "secondary3"] as const;
-  for (const key of keys) {
-    const targetHue = hueValues[key];
-    if (targetHue !== undefined && primaryOKLCH) {
-      // Use specialized same-tone color generation
-      result[key] = generateSameToneColor({
-        h: targetHue,
-        c: primaryOKLCH.c || 0,
-        targetLightness: (primaryOKLCH.l || 0.5), // 0-1 range
-      });
-    }
-  }
-
-  return result;
-};*/

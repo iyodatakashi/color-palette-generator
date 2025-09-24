@@ -59,6 +59,7 @@ export type CombinationConfig = {
   bgColorDark?: string;
   transparentOriginLevel?: number;
   baseTransparentOriginLevel?: number;
+  hueShiftMode?: HueShiftMode;
 };
 
 // Color combination result (output) - New implementation with generated palettes

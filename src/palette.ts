@@ -11,8 +11,9 @@ import {
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
 import { createContextLogger } from "./logger";
-import { DEFAULT_COLOR_CONFIG, SCALE_LEVELS } from "./constants";
+import { SCALE_LEVELS } from "./constants";
 import type { ColorConfig } from "./types";
+import { oklchToHexAdjustChroma } from "./colorUtils";
 
 const log = createContextLogger("Palette");
 
@@ -66,9 +67,9 @@ const generatePrimaryBasePalette = (colorConfig: ColorConfig): Palette => {
       inputChroma: colorConfig.oklch.c,
       inputHue: colorConfig.oklch.h,
     });
-    palette[`--${colorConfig.prefix}-${closestLevel}`] = culori.formatHex(
-      culori.clampChroma(colorConfig.oklch, "oklch", "rgb")
-    ); // ガマットマッピング未調整→あとで直す！！！
+    palette[`--${colorConfig.prefix}-${closestLevel}`] = oklchToHexAdjustChroma(
+      colorConfig.oklch
+    );
   }
 
   return palette;
@@ -278,8 +279,7 @@ const generateOriginalPalette = ({
 
   // Helper function to convert OKLCH to HEX with chroma-only gamut mapping
   const oklchToHex = (oklch: Oklch): string => {
-    const clampedOklch = culori.clampChroma(oklch, "oklch", "rgb");
-    return culori.formatHex(clampedOklch) || "#000000";
+    return oklchToHexAdjustChroma(oklch);
   };
 
   Object.entries(adjustedLightnessScale).forEach(([key, targetLightness]) => {

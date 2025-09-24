@@ -8,6 +8,7 @@ import {
   MAX_LEVEL,
   MIN_LEVEL,
 } from "./constants";
+import { oklchToHexAdjustChroma } from "./colorUtils";
 
 // =============================================================================
 // Lightness Calculation Functions
@@ -67,13 +68,10 @@ export const adjustToLightness = ({
 
   // Fallback to clampChroma if toGamut fails
   if (!mappedColor || typeof mappedColor !== "object") {
-    const clampedColor = culori.clampChroma(targetOKLCH, "oklch", "rgb");
-    return culori.formatHex(clampedColor);
+    return oklchToHexAdjustChroma(targetOKLCH);
   }
 
-  const hexResult = culori.formatHex(
-    culori.clampChroma(mappedColor, "oklch", "rgb")
-  );
+  const hexResult = oklchToHexAdjustChroma(mappedColor);
   return hexResult || "#000000"; // Ultimate fallback
 };
 
