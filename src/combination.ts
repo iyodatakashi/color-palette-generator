@@ -133,21 +133,21 @@ const getPrimaryColorConfig = ({
     prefix: "primary",
     color: culori.formatHex(primaryOKLCH), // あとで直す
     oklch: primaryOKLCH,
-    hueShiftMode: "natural" as const,
+    hueShiftMode: "fixed" as const,
     includeTransparent:
       combinationConfig.includeTransparent ??
-      DEFAULT_BASE_COLOR_CONFIG.includeTransparent,
+      DEFAULT_COLOR_CONFIG.includeTransparent,
     includeTextColors:
       combinationConfig.includeTextColors ??
-      DEFAULT_BASE_COLOR_CONFIG.includeTextColors,
+      DEFAULT_COLOR_CONFIG.includeTextColors,
     bgColorLight:
-      combinationConfig.bgColorLight ?? DEFAULT_BASE_COLOR_CONFIG.bgColorLight,
+      combinationConfig.bgColorLight ?? DEFAULT_COLOR_CONFIG.bgColorLight,
     bgColorDark:
-      combinationConfig.bgColorDark ?? DEFAULT_BASE_COLOR_CONFIG.bgColorDark,
+      combinationConfig.bgColorDark ?? DEFAULT_COLOR_CONFIG.bgColorDark,
     transparentOriginLevel:
       combinationConfig.baseTransparentOriginLevel ??
-      DEFAULT_BASE_COLOR_CONFIG.transparentOriginLevel,
-    enableChromaAdjustment: DEFAULT_BASE_COLOR_CONFIG.enableChromaAdjustment,
+      DEFAULT_COLOR_CONFIG.transparentOriginLevel,
+    enableChromaAdjustment: DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
   };
 };
 
