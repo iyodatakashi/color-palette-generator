@@ -83,7 +83,7 @@ export const adjustToLightness = ({
 
 /**
  * Base sigmoid function for lightness distribution
- * Maps level 50-950 to lightness 97%-25% with configurable steepness
+ * Maps level 50-950 to lightness 0.97-0.25 (0-1 range) with configurable steepness
  */
 /**
  * 非対称シグモイド（Richards, 右下がり固定）
@@ -347,7 +347,7 @@ export const calculateEvenScale = ({
   inputHue: number;
   enableLightnessAdjustment?: boolean;
 }): Record<number, number> => {
-  if (!isFinite(inputLightness)) inputLightness = 0.5; // 0-1 range // 0-100 range
+  if (!isFinite(inputLightness)) inputLightness = 0.5; // 0-1 range
   if (!inputChroma || !isFinite(inputChroma)) inputChroma = 0;
   if (!inputHue || !isFinite(inputHue)) inputHue = 0;
 
