@@ -13,9 +13,9 @@ import { DEFAULT_RANDOM_COLOR_CONFIG } from "./constants";
  * @param options Generation options
  * @returns HEX string
  */
-export function generateRandomPrimaryColor(
+export const generateRandomPrimaryColor = (
   config: RandomColorConfig = {}
-): string {
+): string => {
   const perfectConfig = { ...DEFAULT_RANDOM_COLOR_CONFIG, ...config };
 
   // Generate random hue
@@ -38,4 +38,4 @@ export function generateRandomPrimaryColor(
     c: chroma,
     targetLightness: lightness,
   });
-}
+};

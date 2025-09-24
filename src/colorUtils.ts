@@ -9,17 +9,51 @@ export type Rgb = { r: number; g: number; b: number };
 // =============================================================================
 
 /**
+ * OKLCH → HEX変換（知覚的ガマットマッピング）
+ */
+export const oklchToHexPerceptual = (oklch: Oklch): string => {
+  try {
+    const gamutMapper = (culori as any).toGamut(
+      "rgb",
+      "oklch",
+      (culori as any).differenceCiede2000("oklch")
+    );
+    const mappedColor = gamutMapper(oklch);
+
+    if (!mappedColor || typeof mappedColor !== "object") {
+      // フォールバック: 彩度調整でHEX変換
+      return oklchToHexAdjustChroma(oklch);
+    }
+
+    // gamutMapperの結果はRGBモードなので、直接HEX変換
+    const rgb = mappedColor as any;
+    const result = `#${Math.round(rgb.r * 255)
+      .toString(16)
+      .padStart(2, "0")}${Math.round(rgb.g * 255)
+      .toString(16)
+      .padStart(2, "0")}${Math.round(rgb.b * 255)
+      .toString(16)
+      .padStart(2, "0")}`;
+    return result;
+  } catch (error) {
+    console.log("error in oklchToHexPerceptual:", error);
+    // エラー時もフォールバック
+    return oklchToHexAdjustChroma(oklch);
+  }
+};
+
+/**
  * OKLCH → RGB変換（色相・明度保持、彩度を調整）
  */
-export const oklchToRgbAdjustChroma = (src: Oklch): Rgb => {
+export const oklchToRgbAdjustChroma = (oklch: Oklch): Rgb => {
   const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
   // 安全な入力値に正規化
   const normalized: Oklch = {
     mode: "oklch",
-    l: clamp01(src.l || 0),
-    c: Math.max(0, src.c || 0),
-    h: src.h,
+    l: clamp01(oklch.l || 0),
+    c: Math.max(0, oklch.c || 0),
+    h: oklch.h || 0, // undefinedの場合は0をデフォルト値として使用
   };
 
   // 1. 元の色がRGB範囲内かチェック
@@ -83,15 +117,15 @@ export const oklchToRgbAdjustChroma = (src: Oklch): Rgb => {
 /**
  * OKLCH → RGB変換（色相・彩度保持、明度を調整）
  */
-export const oklchToRgbAdjustLightness = (src: Oklch): Rgb => {
+export const oklchToRgbAdjustLightness = (oklch: Oklch): Rgb => {
   const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
   // 安全な入力値に正規化
   const normalized: Oklch = {
     mode: "oklch",
-    l: clamp01(src.l || 0),
-    c: Math.max(0, src.c || 0),
-    h: src.h,
+    l: clamp01(oklch.l || 0),
+    c: Math.max(0, oklch.c || 0),
+    h: oklch.h || 0, // undefinedの場合は0をデフォルト値として使用
   };
 
   // 1. 元の色がRGB範囲内かチェック
@@ -158,15 +192,15 @@ export const oklchToRgbAdjustLightness = (src: Oklch): Rgb => {
  * OKLCH → RGB変換（色相保持、明度・彩度をハイブリッド調整、彩度優先）
  * 旧 fitOklchToRgb の改良版
  */
-export const oklchToRgbHybrid = (src: Oklch): Rgb => {
+export const oklchToRgbHybrid = (oklch: Oklch): Rgb => {
   const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
   // 安全な入力値に正規化
   const normalized: Oklch = {
     mode: "oklch",
-    l: clamp01(src.l || 0),
-    c: Math.max(0, src.c || 0),
-    h: src.h,
+    l: clamp01(oklch.l || 0),
+    c: Math.max(0, oklch.c || 0),
+    h: oklch.h || 0, // undefinedの場合は0をデフォルト値として使用
   };
 
   // 1. 元の色がRGB範囲内かチェック
@@ -274,8 +308,8 @@ export const oklchToRgbHybrid = (src: Oklch): Rgb => {
 /**
  * OKLCH → HEX変換（色相・明度保持、彩度を調整）
  */
-export const oklchToHexAdjustChroma = (src: Oklch): string => {
-  const rgb = oklchToRgbAdjustChroma(src);
+export const oklchToHexAdjustChroma = (oklch: Oklch): string => {
+  const rgb = oklchToRgbAdjustChroma(oklch);
   return `#${rgb.r.toString(16).padStart(2, "0")}${rgb.g
     .toString(16)
     .padStart(2, "0")}${rgb.b.toString(16).padStart(2, "0")}`;
@@ -284,8 +318,8 @@ export const oklchToHexAdjustChroma = (src: Oklch): string => {
 /**
  * OKLCH → HEX変換（色相・彩度保持、明度を調整）
  */
-export const oklchToHexAdjustLightness = (src: Oklch): string => {
-  const rgb = oklchToRgbAdjustLightness(src);
+export const oklchToHexAdjustLightness = (oklch: Oklch): string => {
+  const rgb = oklchToRgbAdjustLightness(oklch);
   return `#${rgb.r.toString(16).padStart(2, "0")}${rgb.g
     .toString(16)
     .padStart(2, "0")}${rgb.b.toString(16).padStart(2, "0")}`;
@@ -294,8 +328,8 @@ export const oklchToHexAdjustLightness = (src: Oklch): string => {
 /**
  * OKLCH → HEX変換（色相保持、明度・彩度をハイブリッド調整、彩度優先）
  */
-export const oklchToHexHybrid = (src: Oklch): string => {
-  const rgb = oklchToRgbHybrid(src);
+export const oklchToHexHybrid = (oklch: Oklch): string => {
+  const rgb = oklchToRgbHybrid(oklch);
   return `#${rgb.r.toString(16).padStart(2, "0")}${rgb.g
     .toString(16)
     .padStart(2, "0")}${rgb.b.toString(16).padStart(2, "0")}`;

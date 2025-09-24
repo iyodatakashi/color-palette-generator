@@ -8,7 +8,7 @@ import {
   MAX_LEVEL,
   MIN_LEVEL,
 } from "./constants";
-import { oklchToHexAdjustChroma } from "./colorUtils";
+import { oklchToHexPerceptual } from "./colorUtils";
 
 // =============================================================================
 // Lightness Calculation Functions
@@ -58,21 +58,8 @@ export const adjustToLightness = ({
     h: h,
   };
 
-  // Use perceptual distance-based gamut mapping (CIE DE2000)
-  const gamutMapper = (culori as any).toGamut(
-    "rgb",
-    "oklch",
-    (culori as any).differenceCiede2000("oklch")
-  );
-  const mappedColor = gamutMapper(targetOKLCH);
-
-  // Fallback to clampChroma if toGamut fails
-  if (!mappedColor || typeof mappedColor !== "object") {
-    return oklchToHexAdjustChroma(targetOKLCH);
-  }
-
-  const hexResult = oklchToHexAdjustChroma(mappedColor);
-  return hexResult || "#000000"; // Ultimate fallback
+  // Use perceptual gamut mapping with HEX conversion
+  return oklchToHexPerceptual(targetOKLCH);
 };
 
 // =============================================================================

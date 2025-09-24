@@ -1,6 +1,5 @@
 // hueShift.ts
 
-import * as culori from "culori";
 import type { ColorConfig, HueShiftMode } from "./types";
 
 // =============================================================================

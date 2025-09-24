@@ -57,6 +57,6 @@ export const DEFAULT_BASE_COLOR_CONFIG = {
  */
 export const DEFAULT_RANDOM_COLOR_CONFIG: Required<RandomColorConfig> = {
   chromaRange: [0.35, 0.75], // Moderate chroma (0-1 range)
-  lightnessRange: [0.75, 0.35], // レベル300-700相当の明度範囲 (0-1 range)
+  lightnessRange: [0.82, 0.42], // レベル300-700相当の明度範囲 (0-1 range)
   hueRange: [0, 360], // All hues
 };
