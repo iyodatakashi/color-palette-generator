@@ -2,7 +2,7 @@
 
 import * as culori from "culori";
 import { normalizeHue } from "./hueShift";
-import { oklchToHexAdjustChroma, oklchToRgbHybrid } from "./colorUtils";
+import { oklchToHexAdjustChroma, oklchToHexHybrid } from "./colorUtils";
 import { findClosestLevel, getLightness } from "./lightness";
 import type {
   ColorConfig,
@@ -417,10 +417,7 @@ export const generateSameToneColor = ({
   };
 
   // Use optimized gamut mapping for same-tone generation
-  const rgb8 = oklchToRgbHybrid(targetColor);
-  return `#${rgb8.r.toString(16).padStart(2, "0")}${rgb8.g
-    .toString(16)
-    .padStart(2, "0")}${rgb8.b.toString(16).padStart(2, "0")}`;
+  return oklchToHexHybrid(targetColor);
 };
 
 // =============================================================================

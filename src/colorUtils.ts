@@ -59,8 +59,8 @@ export const oklchToRgbPerceptual = (oklch: Oklch): Rgb => {
       return oklchToRgbAdjustChroma(normalizedOklch);
     }
 
-    // gamutMapperの結果はRGBモードなので、整数に変換
-    return rgbToInt(mappedColor);
+    // gamutMapperの結果はRGBモードなので、HEX変換
+    return mappedColor;
   } catch (error) {
     // エラー時もフォールバック
     return oklchToRgbAdjustChroma(normalizedOklch);
@@ -75,7 +75,7 @@ export const oklchToRgbAdjustChroma = (oklch: Oklch): Rgb => {
 
   // culoriのclampChromaを使用してガマットマッピング
   const clampedOklch = culori.clampChroma(normalizedOklch, "oklch", "rgb");
-  return rgbToInt(culori.rgb(clampedOklch));
+  return culori.rgb(clampedOklch);
 };
 
 /**
@@ -85,7 +85,7 @@ export const oklchToRgbAdjustLightness = (oklch: Oklch): Rgb => {
   const normalizedOklch = normalizeOklch(oklch);
 
   const fallback = culori.clampChroma(normalizedOklch, "oklch", "rgb");
-  return rgbToInt(culori.rgb(fallback));
+  return culori.rgb(fallback);
 };
 
 /**
@@ -97,7 +97,7 @@ export const oklchToRgbHybrid = (oklch: Oklch): Rgb => {
 
   // culoriのclampChromaを使用して彩度優先のガマットマッピング
   const clampedOklch = culori.clampChroma(normalizedOklch, "oklch", "rgb");
-  return rgbToInt(culori.rgb(clampedOklch));
+  return culori.rgb(clampedOklch);
 };
 
 // =============================================================================
@@ -131,17 +131,6 @@ const isValidRgb = (rgb: any): boolean => {
     rgb.b >= 0 &&
     rgb.b <= 1
   );
-};
-
-/**
- * RGB値を整数に変換
- */
-const rgbToInt = (rgb: any): Rgb => {
-  return {
-    r: Math.round((rgb?.r || 0) * 255),
-    g: Math.round((rgb?.g || 0) * 255),
-    b: Math.round((rgb?.b || 0) * 255),
-  };
 };
 
 /**
