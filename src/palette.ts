@@ -62,11 +62,13 @@ const generatePrimaryBasePalette = (colorConfig: ColorConfig): Palette => {
   // Primary/Base specific override processing
   if (!colorConfig.enableChromaAdjustment) {
     const closestLevel = findClosestLevel({
-      inputLightness: colorConfig.oklch.l,
+      inputLightness: colorConfig.oklch.l * 100, // Convert 0-1 to 0-100
       inputChroma: colorConfig.oklch.c,
       inputHue: colorConfig.oklch.h,
     });
-    palette[`--${colorConfig.prefix}-${closestLevel}`] = "#ff0000"; // ガマットマッピング未調整→あとで直す！！！
+    palette[`--${colorConfig.prefix}-${closestLevel}`] = culori.formatHex(
+      culori.clampChroma(colorConfig.oklch, "oklch", "rgb")
+    ); // ガマットマッピング未調整→あとで直す！！！
   }
 
   return palette;
@@ -147,7 +149,7 @@ const generatePaletteFromProcessedInput = ({
   */
 
   const closestLevel = findClosestLevel({
-    inputLightness: colorConfig.oklch.l,
+    inputLightness: colorConfig.oklch.l * 100, // Convert 0-1 to 0-100
     inputChroma: colorConfig.oklch.c,
     inputHue: colorConfig.oklch.h,
   });
@@ -209,101 +211,90 @@ const calculateOriginalChromaForLevel = ({
   inputHue: number;
   targetLightness: number;
 }): number => {
-  // Calculate the maximum chroma possible at this lightness and hue
-  const maxChromaAtLightness = getMaxChromaAtLightness(
-    targetLightness,
-    inputHue
-  );
+  // Create OKLCH color at target lightness with input chroma
+  const testColor: Oklch = {
+    mode: "oklch" as const,
+    l: targetLightness / 100,
+    c: inputChroma,
+    h: inputHue,
+  };
 
-  // Use a reasonable fraction of max chroma as the natural chroma for this level
-  // This represents what the level should naturally have before any enhancement
-  const naturalChromaRatio = Math.min(inputChroma / maxChromaAtLightness, 0.8); // Cap at 80% of max
-  const naturalChroma = maxChromaAtLightness * naturalChromaRatio;
+  // Apply gamut mapping to get the maximum achievable chroma at this lightness
+  const clampedColor = culori.clampChroma(testColor, "oklch", "rgb");
+  const result = clampedColor.c || inputChroma;
 
   // Debug: ensure valid result
-  if (!isFinite(naturalChroma) || naturalChroma < 0) {
+  if (!isFinite(result) || result < 0) {
+    console.warn(
+      `Invalid chroma calculated for level ${level}:`,
+      result,
+      "using input chroma:",
+      inputChroma
+    );
     return inputChroma;
   }
 
-  return naturalChroma;
-};
-
-/**
- * Get maximum chroma at specific lightness for a hue
- */
-const getMaxChromaAtLightness = (lightness: number, hue: number): number => {
-  let maxChroma = 0;
-
-  // Test different chroma values to find the maximum that stays in gamut
-  for (let c = 0; c <= 0.4; c += 0.01) {
-    const testColor: Oklch = {
-      mode: "oklch" as const,
-      l: lightness / 100,
-      c: c,
-      h: hue,
-    };
-
-    const rgbResult = culori.converter("rgb")(testColor);
-    if (
-      rgbResult &&
-      rgbResult.r >= 0 &&
-      rgbResult.r <= 1 &&
-      rgbResult.g >= 0 &&
-      rgbResult.g <= 1 &&
-      rgbResult.b >= 0 &&
-      rgbResult.b <= 1
-    ) {
-      maxChroma = c;
-    } else {
-      break;
-    }
-  }
-
-  return maxChroma || 0.1; // Fallback value
+  return result;
 };
 
 /**
  * Calculate natural chroma distribution for all color types
  * Uses consistent Gaussian curve with peak at level 500, adjusts to pass through reference color
  */
+/**
+ * Super-Gaussian function for flatter center region
+ */
+const superGaussianGain = (
+  lightness01: number,
+  { center = 0.5, sigma = 0.22, order = 6 } = {}
+): number => {
+  const x = Math.min(1, Math.max(0, lightness01));
+  const z = Math.abs(x - center) / Math.max(1e-6, sigma);
+  return Math.exp(-Math.pow(z, order)); // Higher order = flatter center
+};
+
 const calculateNaturalChromaCurve = ({
   targetLevel,
   referenceLevel,
   referenceChroma,
-  originalTargetChroma,
+  maxChromaForLevel,
 }: {
   targetLevel: number;
   referenceLevel: number;
   referenceChroma: number;
-  originalTargetChroma?: number;
+  maxChromaForLevel?: number;
 }): number => {
-  // Unified curve parameters - same for all colors
-  const peak = 500;
-  const width = 200;
-  const minChroma = 0.0;
+  // Convert levels to 0-1 range for super-Gaussian
+  const minLevel = 50;
+  const maxLevel = 950;
+  const range = maxLevel - minLevel;
 
-  // Calculate multipliers for both target and reference levels
-  const targetMultiplier = Math.exp(
-    -Math.pow(targetLevel - peak, 2) / (2 * Math.pow(width, 2))
-  );
-  const referenceMultiplier = Math.exp(
-    -Math.pow(referenceLevel - peak, 2) / (2 * Math.pow(width, 2))
-  );
+  const targetLightness01 = (targetLevel - minLevel) / range;
+  const referenceLightness01 = (referenceLevel - minLevel) / range;
 
-  // Adjust target multiplier
-  const targetAdjusted = minChroma + (1.0 - minChroma) * targetMultiplier;
-  const referenceAdjusted = minChroma + (1.0 - minChroma) * referenceMultiplier;
+  // Super-Gaussian parameters: flatter center, gentler edges
+  // Center is always at level 500 (middle of scale), regardless of reference level
+  const center = 0.5; // Fixed center at level 500 (middle of 50-950 range)
+  const sigma = 0.45; // Even wider flat region for gentler suppression
+  const order = 3; // Lower order = much gentler suppression
+
+  // Calculate super-Gaussian multipliers
+  const targetMultiplier = superGaussianGain(targetLightness01, {
+    center,
+    sigma,
+    order,
+  });
+  const referenceMultiplier = superGaussianGain(referenceLightness01, {
+    center,
+    sigma,
+    order,
+  });
 
   // Calculate base chroma needed to pass through reference point
-  const baseChroma = referenceChroma / referenceAdjusted;
+  const baseChroma = referenceChroma / referenceMultiplier;
 
   // Apply to target level
-  let result = baseChroma * targetAdjusted;
-
-  // Apply chroma upper limit: never exceed original target color's chroma
-  if (originalTargetChroma !== undefined) {
-    result = Math.min(result, originalTargetChroma);
-  }
+  let result = baseChroma * targetMultiplier;
 
   return result;
 };
@@ -357,21 +348,17 @@ const generateOriginalPalette = ({
     if (colorConfig.enableChromaAdjustment) {
       const originalChroma = inputOKLCH.c || 0;
 
-      // Calculate original target chroma for this level (before unified curve)
-      // This represents the maximum chroma this level should naturally have
-      const originalTargetChroma = calculateOriginalChromaForLevel({
-        level,
-        inputChroma: originalChroma,
-        inputHue: inputOKLCH.h || 0,
-        targetLightness,
-      });
-
-      targetChroma = calculateNaturalChromaCurve({
+      // Calculate chroma using Gaussian curve, limited by original chroma
+      const gaussianResult = calculateNaturalChromaCurve({
         targetLevel: level,
         referenceLevel: closestLevel,
         referenceChroma: originalChroma,
-        originalTargetChroma,
+        maxChromaForLevel: undefined, // No artificial limits in Gaussian curve
       });
+
+      // Apply limits: For base colors, disable chroma suppression temporarily
+      // For other colors, limit by original chroma
+      targetChroma = Math.min(gaussianResult, originalChroma);
     }
 
     // Create OKLCH color and convert to HEX with chroma-only gamut mapping
@@ -446,7 +433,7 @@ const setTextColor = ({
 
   // Find the primary color level (the level closest to input color)
   const primaryLevel = findClosestLevel({
-    inputLightness: inputOKLCH.l,
+    inputLightness: inputOKLCH.l * 100, // Convert 0-1 to 0-100
     inputChroma: inputOKLCH?.c,
     inputHue: inputOKLCH?.h,
   });

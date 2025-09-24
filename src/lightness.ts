@@ -71,7 +71,9 @@ export const adjustToLightness = ({
     return culori.formatHex(clampedColor);
   }
 
-  const hexResult = culori.formatHex(mappedColor as any);
+  const hexResult = culori.formatHex(
+    culori.clampChroma(mappedColor, "oklch", "rgb")
+  );
   return hexResult || "#000000"; // Ultimate fallback
 };
 

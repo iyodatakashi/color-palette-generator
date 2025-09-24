@@ -10,6 +10,7 @@ import type {
   BaseColorStrategy,
   CombinationConfig,
   CombinationResults,
+  CombinationResult,
 } from "./types";
 import { generateColorPalette } from "./palette";
 import type { Oklch } from "culori";
@@ -98,7 +99,7 @@ const getBaseColorConfig = ({
   return {
     id: "base",
     prefix: "base",
-    color: culori.formatHex(baseColor), // あとで直す
+    color: culori.formatHex(culori.clampChroma(baseColor, "oklch", "rgb")), // あとで直す
     oklch: baseColor,
     hueShiftMode: "fixed" as const,
     includeTransparent:
@@ -131,9 +132,9 @@ const getPrimaryColorConfig = ({
   return {
     id: "primary",
     prefix: "primary",
-    color: culori.formatHex(primaryOKLCH), // あとで直す
+    color: culori.formatHex(culori.clampChroma(primaryOKLCH, "oklch", "rgb")), // あとで直す
     oklch: primaryOKLCH,
-    hueShiftMode: "fixed" as const,
+    hueShiftMode: DEFAULT_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
       combinationConfig.includeTransparent ??
       DEFAULT_COLOR_CONFIG.includeTransparent,
@@ -220,7 +221,7 @@ const generateSecondaryPalettes = ({
   primaryBaseLevel: number;
   combinationType: CombinationType;
   combinationConfig: CombinationConfig;
-}): CombinationResults => {
+}): CombinationResult[] => {
   if (combinationType === "monochromatic") {
     return [];
   }
@@ -270,7 +271,7 @@ const generateSecondaryPalettes = ({
         prefix: prefix,
         color: "",
         oklch: secondaryProvisionalOriginalOklch, // Use OKLCH object directly
-        hueShiftMode: "natural" as const,
+        hueShiftMode: DEFAULT_COLOR_CONFIG.hueShiftMode,
         enableLightnessAdjustment: false, // セカンダリではK値調整を無効化
         combinationHueShift: hueShift, // セカンダリの色相を固定
         includeTransparent:
