@@ -153,7 +153,7 @@ const generatePaletteFromProcessedInput = ({
   });
 
   const adjustedLightnessScale = calculateEvenScale({
-    inputLightness: colorConfig.oklch.l,
+    inputLightness: colorConfig.oklch.l * 100, // Convert 0-1 to 0-100
     inputChroma: colorConfig.oklch.c || 0,
     inputHue: colorConfig.oklch.h || 0,
     enableLightnessAdjustment: true,

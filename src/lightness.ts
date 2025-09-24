@@ -340,7 +340,7 @@ export const calculateEvenScale = ({
   inputHue: number;
   enableLightnessAdjustment?: boolean;
 }): Record<number, number> => {
-  if (!isFinite(inputLightness)) inputLightness = 50;
+  if (!isFinite(inputLightness)) inputLightness = 50; // 0-100 range
   if (!inputChroma || !isFinite(inputChroma)) inputChroma = 0;
   if (!inputHue || !isFinite(inputHue)) inputHue = 0;
 
@@ -361,7 +361,3 @@ export const calculateEvenScale = ({
     return scale;
   }
 };
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
