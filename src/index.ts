@@ -23,6 +23,18 @@ export {
 // Hue change features
 // export { generateHuePalette, HUE_NAMES } from "./hue";
 
+// Color utility features
+export {
+  oklchToHexPerceptual,
+  oklchToHexAdjustChroma,
+  oklchToHexAdjustLightness,
+  oklchToHexHybrid,
+  oklchToRgbPerceptual,
+  oklchToRgbAdjustChroma,
+  oklchToRgbAdjustLightness,
+  oklchToRgbHybrid,
+} from "./colorUtils";
+
 // Apply to DOM
 export { applyColorPaletteToDom } from "./applyToDom";
 

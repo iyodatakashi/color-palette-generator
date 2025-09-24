@@ -2,7 +2,7 @@
 import * as culori from "culori";
 import { type Oklch } from "culori";
 
-export type Rgb = { r: number; g: number; b: number };
+export type Rgb = { mode: "rgb"; r: number; g: number; b: number };
 
 // =============================================================================
 // High-Level Color Conversion Functions
@@ -47,20 +47,20 @@ export const oklchToRgbPerceptual = (oklch: Oklch): Rgb => {
   const normalizedOklch = normalizeOklch(oklch);
 
   try {
-    const gamutMapper = (culori as any).toGamut(
+    const gamutMapper = culori.toGamut(
       "rgb",
       "oklch",
       (culori as any).differenceCiede2000("oklch")
     );
-    const mappedColor = gamutMapper(normalizedOklch);
+    const clampedOklch = gamutMapper(normalizedOklch);
 
-    if (!mappedColor || typeof mappedColor !== "object") {
+    if (!clampedOklch || typeof clampedOklch !== "object") {
       // フォールバック: 彩度調整でRGB変換
       return oklchToRgbAdjustChroma(normalizedOklch);
     }
 
-    // gamutMapperの結果はRGBモードなので、HEX変換
-    return mappedColor;
+    // gamutMapperの結果はRGBモードなので、そのまま返す
+    return clampedOklch;
   } catch (error) {
     // エラー時もフォールバック
     return oklchToRgbAdjustChroma(normalizedOklch);
@@ -119,28 +119,8 @@ const normalizeOklch = (oklch: Oklch): Oklch => {
 };
 
 /**
- * RGB値が有効な範囲内かチェック
- */
-const isValidRgb = (rgb: any): boolean => {
-  return (
-    rgb &&
-    rgb.r >= 0 &&
-    rgb.r <= 1 &&
-    rgb.g >= 0 &&
-    rgb.g <= 1 &&
-    rgb.b >= 0 &&
-    rgb.b <= 1
-  );
-};
-
-/**
  * RGB値をHEX文字列に変換
  */
 const rgbToHex = (rgb: Rgb): string => {
-  return culori.formatHex({
-    mode: "rgb",
-    r: rgb.r / 255,
-    g: rgb.g / 255,
-    b: rgb.b / 255,
-  });
+  return culori.formatHex(rgb);
 };
