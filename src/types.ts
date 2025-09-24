@@ -91,9 +91,9 @@ export type BaseColorStrategy = "harmonic" | "contrasting" | "neutral";
 
 // Random color generation configuration (input)
 export type RandomColorConfig = {
-  /** Chroma range [min, max] (0-100) */
+  /** Chroma range [min, max] (0-1) */
   chromaRange?: [number, number];
-  /** Target lightness (0-100) */
+  /** Target lightness (0-1) */
   lightnessRange?: [number, number];
   /** Lightness calculation method */
   /** Hue limitation range [min, max] (0-360) */

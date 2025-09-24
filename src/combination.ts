@@ -404,11 +404,11 @@ export const generateSameToneColor = ({
   // Validate and normalize inputs
   h = isFinite(h) ? ((h % 360) + 360) % 360 : 0;
   c = isFinite(c) ? Math.max(0, c) : 0;
-  targetLightness = isFinite(targetLightness) ? targetLightness : 50;
+  targetLightness = isFinite(targetLightness) ? targetLightness : 0.5; // 50% in 0-1 range
 
   const targetColor = {
     mode: "oklch" as const,
-    l: targetLightness / 100,
+    l: targetLightness, // 0-1 range
     c: c,
     h: h,
   };
@@ -434,7 +434,7 @@ const getBaseColor = ({
   primaryOKLCH: Oklch;
   strategy?: BaseColorStrategy;
 }): Oklch => {
-  const targetLightness = 61; // Level 500 equivalent (middle lightness)
+  const targetLightness = 0.61; // Level 500 equivalent (middle lightness, 0-1 range)
 
   // Calculate base chroma (moderate chroma for base colors)
   const baseChroma = Math.max(
@@ -460,7 +460,7 @@ const getBaseColor = ({
   // Create OKLCH color with target lightness
   const newOKLCHObj = {
     mode: "oklch" as const,
-    l: targetLightness / 100, // Convert to 0-1 range
+    l: targetLightness, // 0-1 range // Convert to 0-1 range
     c: finalChroma,
     h: baseHue,
   };
@@ -550,7 +550,7 @@ const getSecondaryColorConfigs = ({
       result[key] = generateSameToneColor({
         h: targetHue,
         c: primaryOKLCH.c || 0,
-        targetLightness: (primaryOKLCH.l || 0.5) * 100,
+        targetLightness: (primaryOKLCH.l || 0.5), // 0-1 range
       });
     }
   }

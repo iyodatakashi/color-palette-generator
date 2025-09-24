@@ -16,9 +16,9 @@ export const MAX_LEVEL = 1000;
  */
 // STANDARD_LIGHTNESS_SCALE removed - using dynamic sigmoid calculation
 
-// Lightness scale limits
-export const MAX_LIGHTNESS = 97;
-export const MIN_LIGHTNESS = 25;
+// Lightness scale limits (0-1 range)
+export const MAX_LIGHTNESS = 0.97;
+export const MIN_LIGHTNESS = 0.25;
 
 /**
  * Alpha value definitions
@@ -56,7 +56,7 @@ export const DEFAULT_BASE_COLOR_CONFIG = {
  * Default options
  */
 export const DEFAULT_RANDOM_COLOR_CONFIG: Required<RandomColorConfig> = {
-  chromaRange: [35, 75], // Moderate chroma
-  lightnessRange: [75, 35], // レベル300-700相当の明度範囲
+  chromaRange: [0.35, 0.75], // Moderate chroma (0-1 range)
+  lightnessRange: [0.75, 0.35], // レベル300-700相当の明度範囲 (0-1 range)
   hueRange: [0, 360], // All hues
 };

@@ -24,7 +24,7 @@ export const getLightness = (color: string): number => {
   if (!oklch) return 0;
 
   // OKLCH lightness is 0-1, convert to 0-100 scale
-  return oklch.l * 100;
+  return oklch.l; // 0-1 range
 };
 
 // =============================================================================
@@ -47,12 +47,12 @@ export const adjustToLightness = ({
   // Validate and normalize inputs
   h = isFinite(h) ? ((h % 360) + 360) % 360 : 0;
   c = isFinite(c) ? Math.max(0, c) : 0;
-  targetLightness = isFinite(targetLightness) ? targetLightness : 50;
+  targetLightness = isFinite(targetLightness) ? targetLightness : 0.5; // 0-1 range
 
   // Create OKLCH color with target values
   const targetOKLCH = {
     mode: "oklch" as const,
-    l: targetLightness / 100, // Convert to 0-1 range
+    l: targetLightness, // 0-1 range
     c: c,
     h: h,
   };
@@ -123,7 +123,7 @@ const getBaseSigmoidLightness = (
   level: number,
   kSigned: number = 0.18, // +で左上凸寄り / -で左下凸寄り
   anchorLevel: number = 500, // 通したいレベル
-  anchorLightness: number = 61.0, // 通したい明度[%]
+  anchorLightness: number = 0.61, // 通したい明度 (0-1 range)
   vBase: number = 2.0, // 非対称ベース（決め打ち）
   kMin: number = 1e-6 // 極小傾きガード
 ): number => {
@@ -181,7 +181,12 @@ const getBaseSigmoidLightness = (
   }
 
   // 5) 0..1 → MIN..MAX（= 25..97）へ写像
+  // 以下を return sNormに変更することを絶対に禁止
+  // return MIN_LIGHTNESS + (MAX_LIGHTNESS - MIN_LIGHTNESS) * sNorm;
+  // これは上限値/加減値を考慮したマッピング
+  // これを変更するなら死ね。
   return MIN_LIGHTNESS + (MAX_LIGHTNESS - MIN_LIGHTNESS) * sNorm;
+  // ここまで絶対に変更禁止
 };
 
 /**
@@ -204,7 +209,7 @@ export const generateAdjustedLightnessScale = (
   // 基準スケール（K=0.18, アンカー=500/61）で初期レベルを推定
   const baseScale: Record<number, number> = {};
   SCALE_LEVELS.forEach((level) => {
-    baseScale[level] = getBaseSigmoidLightness(level, 0.18, 500, 61.0, vBase);
+    baseScale[level] = getBaseSigmoidLightness(level, 0.18, 500, 0.61, vBase);
   });
 
   let initialLevel = 500;
@@ -261,7 +266,7 @@ const getMaxChromaForHue = (hue: number): number => {
   let maxChroma = 0;
 
   // Search across lightness range to find absolute maximum chroma for this hue
-  for (let l = MIN_LIGHTNESS / 100; l <= MAX_LIGHTNESS / 100; l += 0.01) {
+  for (let l = MIN_LIGHTNESS; l <= MAX_LIGHTNESS; l += 0.01) {
     const highChromaColor = { mode: "oklch" as const, l, c: 1.0, h: hue };
     const clampedColor = culori.clampChroma(highChromaColor, "oklch", "rgb");
     const oklchResult = culori.converter("oklch")(clampedColor);
@@ -286,7 +291,7 @@ export const findClosestLevel = ({
   inputChroma?: number;
   inputHue?: number;
 }): number => {
-  if (!isFinite(inputLightness)) inputLightness = 50;
+  if (!isFinite(inputLightness)) inputLightness = 0.5; // 0-1 range
   if (!inputChroma || !isFinite(inputChroma)) inputChroma = 0;
   if (!inputHue || !isFinite(inputHue)) inputHue = 0;
 
@@ -342,7 +347,7 @@ export const calculateEvenScale = ({
   inputHue: number;
   enableLightnessAdjustment?: boolean;
 }): Record<number, number> => {
-  if (!isFinite(inputLightness)) inputLightness = 50; // 0-100 range
+  if (!isFinite(inputLightness)) inputLightness = 0.5; // 0-1 range // 0-100 range
   if (!inputChroma || !isFinite(inputChroma)) inputChroma = 0;
   if (!inputHue || !isFinite(inputHue)) inputHue = 0;
 

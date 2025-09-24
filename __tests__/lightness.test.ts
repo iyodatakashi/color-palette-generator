@@ -87,7 +87,7 @@ describe("lightness", () => {
         const result = adjustToLightness({
           h: hue,
           c: 0.1,
-          targetLightness: 50,
+          targetLightness: 0.5, // 0-1 range
         });
 
         expect(result).toBeDefined();
@@ -183,7 +183,7 @@ describe("lightness", () => {
   describe("calculateEvenScale", () => {
     it("should calculate even scale for given input", () => {
       const result = calculateEvenScale({
-        inputLightness: 60,
+        inputLightness: 0.6, // 0-1 range
         inputChroma: 0.1,
         inputHue: 180,
         enableLightnessAdjustment: true,
@@ -226,7 +226,7 @@ describe("lightness", () => {
 
       chromas.forEach((chroma) => {
         const result = calculateEvenScale({
-          inputLightness: 60,
+          inputLightness: 0.6, // 0-1 range
           inputChroma: chroma,
           inputHue: 180,
           enableLightnessAdjustment: true,
@@ -243,7 +243,7 @@ describe("lightness", () => {
 
       hues.forEach((hue) => {
         const result = calculateEvenScale({
-          inputLightness: 60,
+          inputLightness: 0.6, // 0-1 range
           inputChroma: 0.1,
           inputHue: hue,
           enableLightnessAdjustment: true,
@@ -257,7 +257,7 @@ describe("lightness", () => {
 
     it("should handle lightness adjustment disabled", () => {
       const result = calculateEvenScale({
-        inputLightness: 60,
+        inputLightness: 0.6, // 0-1 range
         inputChroma: 0.1,
         inputHue: 180,
         enableLightnessAdjustment: false,
@@ -270,7 +270,7 @@ describe("lightness", () => {
 
     it("should return consistent results for the same input", () => {
       const input = {
-        inputLightness: 60,
+        inputLightness: 0.6, // 0-1 range
         inputChroma: 0.1,
         inputHue: 180,
         enableLightnessAdjustment: true,
@@ -284,7 +284,7 @@ describe("lightness", () => {
 
     it("should generate reasonable lightness values", () => {
       const result = calculateEvenScale({
-        inputLightness: 60,
+        inputLightness: 0.6, // 0-1 range (60% lightness)
         inputChroma: 0.1,
         inputHue: 180,
         enableLightnessAdjustment: true,
@@ -292,10 +292,10 @@ describe("lightness", () => {
 
       const levels = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 
-      // Check that all values are within reasonable range
+      // Check that all values are within reasonable range (0-1)
       levels.forEach((level) => {
         expect(result[level]).toBeGreaterThanOrEqual(0);
-        expect(result[level]).toBeLessThanOrEqual(100);
+        expect(result[level]).toBeLessThanOrEqual(1);
       });
 
       // Check lightness ordering (50 > 100 > 200 > ... > 900 > 950)
@@ -310,30 +310,30 @@ describe("lightness", () => {
       expect(result[800]).toBeGreaterThan(result[900]);
       expect(result[900]).toBeGreaterThan(result[950]);
 
-      // Check min/max values are around 25 and 97
-      expect(result[50]).toBeGreaterThanOrEqual(90); // Around 97
-      expect(result[50]).toBeLessThanOrEqual(100);
-      expect(result[950]).toBeGreaterThanOrEqual(20); // Around 25
-      expect(result[950]).toBeLessThanOrEqual(35);
+      // Check min/max values (0-1 range)
+      expect(result[50]).toBeGreaterThanOrEqual(0.95); // Around 0.97
+      expect(result[50]).toBeLessThanOrEqual(1.0);
+      expect(result[950]).toBeGreaterThanOrEqual(0.2); // Around 0.25
+      expect(result[950]).toBeLessThanOrEqual(0.3);
 
-      // Check minimum lightness difference between adjacent levels
-      expect(result[50] - result[100]).toBeGreaterThanOrEqual(1); // Edge case - smaller difference
-      expect(result[100] - result[200]).toBeGreaterThanOrEqual(3);
-      expect(result[200] - result[300]).toBeGreaterThanOrEqual(3);
-      expect(result[300] - result[400]).toBeGreaterThanOrEqual(3);
-      expect(result[400] - result[500]).toBeGreaterThanOrEqual(3);
-      expect(result[500] - result[600]).toBeGreaterThanOrEqual(3);
-      expect(result[600] - result[700]).toBeGreaterThanOrEqual(3);
-      expect(result[700] - result[800]).toBeGreaterThanOrEqual(3);
-      expect(result[800] - result[900]).toBeGreaterThanOrEqual(3);
-      expect(result[900] - result[950]).toBeGreaterThanOrEqual(1); // Edge case - smaller difference
+      // Check minimum lightness difference between adjacent levels (0-1 range)
+      expect(result[50] - result[100]).toBeGreaterThanOrEqual(0.01); // Edge case - smaller difference
+      expect(result[100] - result[200]).toBeGreaterThanOrEqual(0.03);
+      expect(result[200] - result[300]).toBeGreaterThanOrEqual(0.03);
+      expect(result[300] - result[400]).toBeGreaterThanOrEqual(0.03);
+      expect(result[400] - result[500]).toBeGreaterThanOrEqual(0.03);
+      expect(result[500] - result[600]).toBeGreaterThanOrEqual(0.03);
+      expect(result[600] - result[700]).toBeGreaterThanOrEqual(0.03);
+      expect(result[700] - result[800]).toBeGreaterThanOrEqual(0.03);
+      expect(result[800] - result[900]).toBeGreaterThanOrEqual(0.03);
+      expect(result[900] - result[950]).toBeGreaterThanOrEqual(0.01); // Edge case - smaller difference
     });
   });
 
   describe("findClosestLevel", () => {
     it("should find closest level for given input", () => {
       const result = findClosestLevel({
-        inputLightness: 60,
+        inputLightness: 0.6, // 0-1 range
         inputChroma: 0.1,
         inputHue: 180,
       });
@@ -347,7 +347,7 @@ describe("lightness", () => {
 
     it("should return appropriate level for middle lightness", () => {
       const result = findClosestLevel({
-        inputLightness: 50,
+        inputLightness: 0.5, // 0-1 range (50% lightness)
         inputChroma: 0.1,
         inputHue: 180,
       });
@@ -360,7 +360,7 @@ describe("lightness", () => {
 
     it("should return appropriate level for high lightness", () => {
       const result = findClosestLevel({
-        inputLightness: 90,
+        inputLightness: 0.9, // 0-1 range
         inputChroma: 0.1,
         inputHue: 180,
       });
@@ -373,7 +373,7 @@ describe("lightness", () => {
 
     it("should return appropriate level for low lightness", () => {
       const result = findClosestLevel({
-        inputLightness: 10,
+        inputLightness: 0.1, // 0-1 range
         inputChroma: 0.1,
         inputHue: 180,
       });
@@ -389,7 +389,7 @@ describe("lightness", () => {
 
       chromas.forEach((chroma) => {
         const result = findClosestLevel({
-          inputLightness: 60,
+          inputLightness: 0.6, // 0-1 range
           inputChroma: chroma,
           inputHue: 180,
         });
@@ -406,7 +406,7 @@ describe("lightness", () => {
 
       hues.forEach((hue) => {
         const result = findClosestLevel({
-          inputLightness: 60,
+          inputLightness: 0.6, // 0-1 range
           inputChroma: 0.1,
           inputHue: hue,
         });
@@ -420,7 +420,7 @@ describe("lightness", () => {
 
     it("should return consistent results for the same input", () => {
       const input = {
-        inputLightness: 60,
+        inputLightness: 0.6, // 0-1 range
         inputChroma: 0.1,
         inputHue: 180,
       };
@@ -434,8 +434,8 @@ describe("lightness", () => {
     it("should handle edge cases with extreme values", () => {
       const extremeInputs = [
         { inputLightness: 0, inputChroma: 0, inputHue: 0 },
-        { inputLightness: 100, inputChroma: 0.5, inputHue: 360 },
-        { inputLightness: 50, inputChroma: 0.01, inputHue: 180 },
+        { inputLightness: 1.0, inputChroma: 0.5, inputHue: 360 }, // 0-1 range
+        { inputLightness: 0.5, inputChroma: 0.01, inputHue: 180 }, // 0-1 range
       ];
 
       extremeInputs.forEach((input) => {

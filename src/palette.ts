@@ -62,7 +62,7 @@ const generatePrimaryBasePalette = (colorConfig: ColorConfig): Palette => {
   // Primary/Base specific override processing
   if (!colorConfig.enableChromaAdjustment) {
     const closestLevel = findClosestLevel({
-      inputLightness: colorConfig.oklch.l * 100, // Convert 0-1 to 0-100
+      inputLightness: colorConfig.oklch.l, // 0-1 range
       inputChroma: colorConfig.oklch.c,
       inputHue: colorConfig.oklch.h,
     });
@@ -106,56 +106,14 @@ const generatePaletteFromProcessedInput = ({
     throw new Error("Invalid OKLCH input");
   }
 
-  /*
-  const inputRGB = culori.converter("rgb")(inputOKLCH);
-  if (!inputRGB) {
-    throw new Error("Failed to convert color to RGB");
-  }
-  */
-
-  /*
-  // Helper function to convert OKLCH to HEX with chroma-only gamut mapping
-  const oklchToHex = (oklch: Oklch): string => {
-    const clampedOklch = culori.clampChroma(oklch, "oklch", "rgb");
-    return culori.formatHex(clampedOklch) || "#000000";
-  };
-  */
-
-  /*
-  const normalizedConfig = {
-    ...combinationConfig,
-    id,
-    color: oklchToHex(inputOKLCH), // Convert OKLCH to HEX
-    hueShiftMode: colorConfig.hueShiftMode || DEFAULT_COLOR_CONFIG.hueShiftMode,
-    includeTransparent:
-      colorConfig.includeTransparent ?? DEFAULT_COLOR_CONFIG.includeTransparent,
-    includeTextColors:
-      colorConfig.includeTextColors ?? DEFAULT_COLOR_CONFIG.includeTextColors,
-    bgColorLight: colorConfig.bgColorLight || DEFAULT_COLOR_CONFIG.bgColorLight,
-    bgColorDark: colorConfig.bgColorDark || DEFAULT_COLOR_CONFIG.bgColorDark,
-    transparentOriginLevel:
-      colorConfig.transparentOriginLevel ||
-      DEFAULT_COLOR_CONFIG.transparentOriginLevel,
-    enableChromaAdjustment:
-      colorConfig.enableChromaAdjustment ??
-      DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
-    enableLightnessAdjustment: colorConfig.enableLightnessAdjustment ?? true,
-    combinationHueShift: colorConfig.combinationHueShift,
-  };
-  */
-
-  /*
-  const inputLightness = getLightness(oklchToHex(inputOKLCH));
-  */
-
   const closestLevel = findClosestLevel({
-    inputLightness: colorConfig.oklch.l * 100, // Convert 0-1 to 0-100
+    inputLightness: colorConfig.oklch.l, // 0-1 range
     inputChroma: colorConfig.oklch.c,
     inputHue: colorConfig.oklch.h,
   });
 
   const adjustedLightnessScale = calculateEvenScale({
-    inputLightness: colorConfig.oklch.l * 100, // Convert 0-1 to 0-100
+    inputLightness: colorConfig.oklch.l, // 0-1 range
     inputChroma: colorConfig.oklch.c || 0,
     inputHue: colorConfig.oklch.h || 0,
     enableLightnessAdjustment: true,
@@ -214,7 +172,7 @@ const calculateOriginalChromaForLevel = ({
   // Create OKLCH color at target lightness with input chroma
   const testColor: Oklch = {
     mode: "oklch" as const,
-    l: targetLightness / 100,
+    l: targetLightness, // 0-1 range
     c: inputChroma,
     h: inputHue,
   };
@@ -364,7 +322,7 @@ const generateOriginalPalette = ({
     // Create OKLCH color and convert to HEX with chroma-only gamut mapping
     const oklchColor: Oklch = {
       mode: "oklch" as const,
-      l: targetLightness / 100, // Convert percentage to 0-1 range
+      l: targetLightness, // 0-1 range // Convert percentage to 0-1 range
       c: targetChroma,
       h: finalHue,
     };
@@ -433,7 +391,7 @@ const setTextColor = ({
 
   // Find the primary color level (the level closest to input color)
   const primaryLevel = findClosestLevel({
-    inputLightness: inputOKLCH.l * 100, // Convert 0-1 to 0-100
+    inputLightness: inputOKLCH.l, // 0-1 range
     inputChroma: inputOKLCH?.c,
     inputHue: inputOKLCH?.h,
   });
@@ -452,7 +410,7 @@ const setTextColor = ({
     primaryLightness,
     palette,
     prefix: colorConfig.prefix,
-    targetLightness: 60,
+    targetLightness: 0.6, // 0-1 range
     isLighter: false, // Find darker color
   });
 
@@ -462,7 +420,7 @@ const setTextColor = ({
     primaryLightness,
     palette,
     prefix: colorConfig.prefix,
-    targetLightness: 50,
+    targetLightness: 0.5, // 0-1 range
     isLighter: true, // Find lighter color
   });
 

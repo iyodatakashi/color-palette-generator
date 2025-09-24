@@ -30,7 +30,7 @@ export function generateRandomPrimaryColor(
   // Generate random chroma
   const [minChroma, maxChroma] = perfectConfig.chromaRange;
   const chromaValue = Math.random() * (maxChroma - minChroma) + minChroma;
-  const chroma = chromaValue / 100; // Convert chroma percentage to 0-1 range
+  const chroma = chromaValue; // chromaValue is already in 0-1 range
 
   // Adjust to specified lightness and return HEX string
   return adjustToLightness({
