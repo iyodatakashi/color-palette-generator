@@ -92,12 +92,12 @@ const generateSecondaryPalette = ({
     inputHue: colorConfig.oklch.h,
   });
 
-  // Secondary colors: use default sigmoid without chroma adjustment
+  // Secondary colors: use default sigmoid (same as primary colors)
   const adjustedLightnessScale = calculateEvenScale({
     inputLightness: colorConfig.oklch.l, // 0-1 range
     inputChroma: colorConfig.oklch.c || 0,
     inputHue: colorConfig.oklch.h || 0,
-    enableLightnessAdjustment: false, // Use default sigmoid for secondary colors
+    enableLightnessAdjustment: true, // Use same logic as primary colors
   });
 
   const palette = generateOriginalPalette({

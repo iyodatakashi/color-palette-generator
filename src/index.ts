@@ -29,11 +29,12 @@ export {
   oklchToHexPerceptual,
   oklchToHexAdjustChroma,
   oklchToHexAdjustLightness,
-  oklchToHexHybrid,
   oklchToRgbPerceptual,
   oklchToRgbAdjustChroma,
   oklchToRgbAdjustLightness,
-  oklchToRgbHybrid,
+  oklchGamutMappingPerceptual,
+  oklchGamutMappingAdjustChroma,
+  oklchGamutMappingAdjustLightness,
   calculateRelativeChroma,
 } from "./colorUtils";
 
