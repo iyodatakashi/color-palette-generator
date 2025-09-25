@@ -34,6 +34,7 @@ export {
   oklchToRgbAdjustChroma,
   oklchToRgbAdjustLightness,
   oklchToRgbHybrid,
+  calculateRelativeChroma,
 } from "./colorUtils";
 
 // Apply to DOM

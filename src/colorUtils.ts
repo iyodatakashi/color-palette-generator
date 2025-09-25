@@ -5,39 +5,39 @@ import { type Oklch } from "culori";
 export type Rgb = { mode: "rgb"; r: number; g: number; b: number };
 
 // =============================================================================
-// High-Level Color Conversion Functions
+// OKLCH to HEX Conversion
 // =============================================================================
 
 /**
  * OKLCH → HEX変換（知覚的ガマットマッピング）
  */
 export const oklchToHexPerceptual = (oklch: Oklch): string => {
-  return rgbToHex(oklchToRgbPerceptual(oklch));
+  return culori.formatHex(oklchToRgbPerceptual(oklch));
 };
 
 /**
  * OKLCH → HEX変換（色相・明度保持、彩度を調整）
  */
 export const oklchToHexAdjustChroma = (oklch: Oklch): string => {
-  return rgbToHex(oklchToRgbAdjustChroma(oklch));
+  return culori.formatHex(oklchToRgbAdjustChroma(oklch));
 };
 
 /**
  * OKLCH → HEX変換（色相・彩度保持、明度を調整）
  */
 export const oklchToHexAdjustLightness = (oklch: Oklch): string => {
-  return rgbToHex(oklchToRgbAdjustLightness(oklch));
+  return culori.formatHex(oklchToRgbAdjustLightness(oklch));
 };
 
 /**
  * OKLCH → HEX変換（色相保持、明度・彩度をハイブリッド調整、彩度優先）
  */
 export const oklchToHexHybrid = (oklch: Oklch): string => {
-  return rgbToHex(oklchToRgbHybrid(oklch));
+  return culori.formatHex(oklchToRgbHybrid(oklch));
 };
 
 // =============================================================================
-// RGB Conversion Functions
+// OKLCH to RGB Conversion
 // =============================================================================
 
 /**
@@ -90,7 +90,6 @@ export const oklchToRgbAdjustLightness = (oklch: Oklch): Rgb => {
 
 /**
  * OKLCH → RGB変換（色相保持、明度・彩度をハイブリッド調整、彩度優先）
- * 旧 fitOklchToRgb の改良版
  */
 export const oklchToRgbHybrid = (oklch: Oklch): Rgb => {
   const normalizedOklch = normalizeOklch(oklch);
@@ -101,7 +100,36 @@ export const oklchToRgbHybrid = (oklch: Oklch): Rgb => {
 };
 
 // =============================================================================
-// Low-Level Utility Functions
+// Chroma Analysis Functions
+// =============================================================================
+
+/**
+ * 相対Chroma計算（最大可能Chromaに対する割合）
+ */
+export const calculateRelativeChroma = (oklch: Oklch): number => {
+  const maxChroma = getMaxChromaForHue(oklch.h || 0, oklch.l);
+  return Math.min(oklch.c / maxChroma, 1.0);
+};
+
+/**
+ * 指定された色相で取りうる最大の彩度を取得
+ */
+const getMaxChromaForHue = (hue: number, lightness: number = 0.5): number => {
+  // 色相固定で明度・彩度を調整して最大彩度を求める
+  const targetOklch: Oklch = {
+    mode: "oklch",
+    l: lightness,
+    c: 0.4, // 高いChroma値で開始
+    h: hue,
+  };
+
+  const adjustedRgb = oklchToRgbAdjustLightness(targetOklch);
+  const adjustedOklch = culori.converter("oklch")(adjustedRgb);
+  return adjustedOklch.c || 0.1; // フォールバック値
+};
+
+// =============================================================================
+// Utility Functions
 // =============================================================================
 
 /**
@@ -116,11 +144,4 @@ const normalizeOklch = (oklch: Oklch): Oklch => {
     c: Math.max(0, oklch.c || 0),
     h: oklch.h || 0, // undefinedの場合は0をデフォルト値として使用
   };
-};
-
-/**
- * RGB値をHEX文字列に変換
- */
-const rgbToHex = (rgb: Rgb): string => {
-  return culori.formatHex(rgb);
 };

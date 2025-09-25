@@ -2,7 +2,7 @@
 
 import * as culori from "culori";
 import { normalizeHue } from "./hueShift";
-import { oklchToHexAdjustChroma, oklchToHexHybrid } from "./colorUtils";
+import { oklchToHexAdjustChroma } from "./colorUtils";
 import { findClosestLevel, getLightness } from "./lightness";
 import { DEFAULT_LEVEL_500_LIGHTNESS } from "./constants";
 import type {
