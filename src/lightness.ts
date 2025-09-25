@@ -348,20 +348,10 @@ export const calculateEvenScale = ({
   if (!inputChroma || !isFinite(inputChroma)) inputChroma = 0;
   if (!inputHue || !isFinite(inputHue)) inputHue = 0;
 
-  if (enableLightnessAdjustment) {
-    // Generate asymmetric lightness scale with chroma correction and K-value adjustment
-    const adjustedScale = generateAdjustedLightnessScale(
-      inputLightness,
-      inputChroma,
-      inputHue
-    );
-    return adjustedScale;
-  } else {
-    // Generate default sigmoid scale without K-value adjustment
-    const scale: Record<number, number> = {};
-    SCALE_LEVELS.forEach((level) => {
-      scale[level] = getBaseSigmoidLightness(level, 0.18); // Use default K
-    });
-    return scale;
-  }
+  // Always use default sigmoid scale without adjustment
+  const scale: Record<number, number> = {};
+  SCALE_LEVELS.forEach((level) => {
+    scale[level] = getBaseSigmoidLightness(level, 0.18); // Use default K
+  });
+  return scale;
 };

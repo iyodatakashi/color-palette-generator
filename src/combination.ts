@@ -159,7 +159,7 @@ const getPrimaryColorConfig = ({
  * Get hue shift values for secondary colors without generating actual colors
  */
 
-const getSecondaryHueShifts = ({
+const getSecondaryHues = ({
   primaryOKLCH,
   combinationType,
 }: {
@@ -230,7 +230,7 @@ const generateSecondaryPalettes = ({
   }
 
   // Get hue shift values for each secondary color
-  const secondaryHueShifts = getSecondaryHueShifts({
+  const secondaryHues = getSecondaryHues({
     primaryOKLCH,
     combinationType,
   });
@@ -241,17 +241,17 @@ const generateSecondaryPalettes = ({
     {
       id: "secondary",
       prefix: "secondary",
-      hueShift: secondaryHueShifts.secondary,
+      hueShift: secondaryHues.secondary,
     },
     {
       id: "secondary2",
       prefix: "secondary2",
-      hueShift: secondaryHueShifts.secondary2,
+      hueShift: secondaryHues.secondary2,
     },
     {
       id: "secondary3",
       prefix: "secondary3",
-      hueShift: secondaryHueShifts.secondary3,
+      hueShift: secondaryHues.secondary3,
     },
   ];
 

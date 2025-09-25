@@ -18,7 +18,7 @@ import {
   MAX_LIGHTNESS,
 } from "./constants";
 import type { ColorConfig } from "./types";
-import { oklchToHexAdjustChroma } from "./colorUtils";
+import { oklchToHexAdjustChroma, oklchToHexPerceptual } from "./colorUtils";
 
 const log = createContextLogger("Palette");
 
@@ -64,18 +64,6 @@ export const generateColorPalette = (
 const generatePrimaryBasePalette = (colorConfig: ColorConfig): Palette => {
   // Generate base palette
   const palette = generatePaletteFromProcessedInput({ colorConfig });
-
-  // Primary/Base specific override processing
-  if (!colorConfig.enableChromaAdjustment) {
-    const closestLevel = findClosestLevel({
-      inputLightness: colorConfig.oklch.l, // 0-1 range
-      inputChroma: colorConfig.oklch.c,
-      inputHue: colorConfig.oklch.h,
-    });
-    palette[`--${colorConfig.prefix}-${closestLevel}`] = oklchToHexAdjustChroma(
-      colorConfig.oklch
-    );
-  }
 
   return palette;
 };
@@ -267,22 +255,23 @@ const generateOriginalPalette = ({
   const palette: Palette = {};
   const inputOKLCH = colorConfig.oklch;
 
-  // Helper function to convert OKLCH to HEX with chroma-only gamut mapping
+  // Helper function to convert OKLCH to HEX with perceptual gamut mapping
   const oklchToHex = (oklch: Oklch): string => {
-    return oklchToHexAdjustChroma(oklch);
+    return oklchToHexPerceptual(oklch);
   };
 
   Object.entries(adjustedLightnessScale).forEach(([key, targetLightness]) => {
     const level = parseInt(key);
 
-    // Calculate base hue with hue shift mode
+    // Use base hue and chroma from reference color
+    const baseHue = inputOKLCH.h || 0;
+    const baseChroma = inputOKLCH.c || 0;
+
+    // Apply hue shift mode
     const adjustedHue = calculateHueShift({
       colorConfig,
-      // originalHue,
-      // originalLightness: originalLightness,
       targetLightness,
       adjustedLightnessScale,
-      // hueShiftMode: colorConfig.hueShiftMode ?? "natural",
     });
 
     // Apply combination hue shift if present (for secondary colors)
@@ -291,28 +280,23 @@ const generateOriginalPalette = ({
         ? colorConfig.combinationHueShift
         : adjustedHue;
 
-    // Calculate chroma distribution using unified curve
-    let targetChroma = inputOKLCH.c || 0;
+    // Apply NaturalChromaCurve for chroma suppression
+    let targetChroma = baseChroma;
     if (colorConfig.enableChromaAdjustment) {
-      const originalChroma = inputOKLCH.c || 0;
-
-      // Calculate chroma using Gaussian curve, limited by original chroma
-      const gaussianResult = calculateNaturalChromaCurve({
+      targetChroma = calculateNaturalChromaCurve({
         targetLevel: level,
         referenceLevel: closestLevel,
-        referenceChroma: originalChroma,
-        maxChromaForLevel: undefined, // No artificial limits in Gaussian curve
+        referenceChroma: baseChroma,
       });
-
-      // Apply limits: For base colors, disable chroma suppression temporarily
-      // For other colors, limit by original chroma
-      targetChroma = Math.min(gaussianResult, originalChroma);
     }
 
-    // Create OKLCH color and convert to HEX with chroma-only gamut mapping
+    // Use scale lightness for all levels (default sigmoid curve)
+    const finalLightness = targetLightness;
+
+    // Create OKLCH color and convert to HEX with perceptual gamut mapping
     const oklchColor: Oklch = {
       mode: "oklch" as const,
-      l: targetLightness, // 0-1 range // Convert percentage to 0-1 range
+      l: finalLightness, // 0-1 range
       c: targetChroma,
       h: finalHue,
     };
