@@ -214,8 +214,8 @@ export const generateAdjustedLightnessScale = (
     }
   });
 
-  // 中心寄せ補正（既存ロジック）
-  const pullStrength = relativeChroma * 0.3;
+  // 中心寄せ補正（相対Chromaシフトを抑制）
+  const pullStrength = relativeChroma * 0.2; // 0.3から0.15に減少して抑制を強化
   const targetDeepLevel = 500;
   const correctedLevel = Math.round(
     initialLevel * (1 - pullStrength) + targetDeepLevel * pullStrength

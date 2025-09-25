@@ -11,7 +11,12 @@ import {
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
 import { createContextLogger } from "./logger";
-import { SCALE_LEVELS } from "./constants";
+import {
+  SCALE_LEVELS,
+  DEFAULT_LEVEL_500_LIGHTNESS,
+  MIN_LIGHTNESS,
+  MAX_LIGHTNESS,
+} from "./constants";
 import type { ColorConfig } from "./types";
 import { oklchToHexAdjustChroma } from "./colorUtils";
 
@@ -253,10 +258,10 @@ const calculateOriginalChromaForLevel = ({
  * Super-Gaussian function for flatter center region
  */
 const superGaussianGain = (
-  lightness01: number,
+  lightness: number,
   { center = 0.5, sigma = 0.22, order = 6 } = {}
 ): number => {
-  const x = Math.min(1, Math.max(0, lightness01));
+  const x = Math.min(1, Math.max(0, lightness));
   const z = Math.abs(x - center) / Math.max(1e-6, sigma);
   return Math.exp(-Math.pow(z, order)); // Higher order = flatter center
 };
@@ -277,26 +282,28 @@ const calculateNaturalChromaCurve = ({
   const maxLevel = 950;
   const range = maxLevel - minLevel;
 
-  const targetLightness01 = (targetLevel - minLevel) / range;
-  const referenceLightness01 = (referenceLevel - minLevel) / range;
+  const targetLightness = (targetLevel - minLevel) / range;
+  const referenceLightness = (referenceLevel - minLevel) / range;
 
   // Super-Gaussian parameters: flatter center, moderate suppression at level 200
   // Center is always at level 500 (middle of scale), regardless of reference level
-  const center = 0.5; // Fixed center at level 500 (middle of 50-950 range)
 
   // 彩度抑制カーブパラメーター
   // sigma大→フラット領域の幅大
   // order大→落ち込みの急激さ大
-  const sigma = 0.3; // Moderate flat region - suppression starts at moderate distance from center
+  const center =
+    (DEFAULT_LEVEL_500_LIGHTNESS - MIN_LIGHTNESS) /
+    (MAX_LIGHTNESS - MIN_LIGHTNESS); // レベル500の実際の明度位置
+  const sigma = 0.35; // Moderate flat region - suppression starts at moderate distance from center
   const order = 1.5; // Moderate order = balanced suppression at level 200
 
   // Calculate super-Gaussian multipliers
-  const targetMultiplier = superGaussianGain(targetLightness01, {
+  const targetMultiplier = superGaussianGain(targetLightness, {
     center,
     sigma,
     order,
   });
-  const referenceMultiplier = superGaussianGain(referenceLightness01, {
+  const referenceMultiplier = superGaussianGain(referenceLightness, {
     center,
     sigma,
     order,
