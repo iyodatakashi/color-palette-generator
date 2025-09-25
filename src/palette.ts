@@ -280,11 +280,15 @@ const calculateNaturalChromaCurve = ({
   const targetLightness01 = (targetLevel - minLevel) / range;
   const referenceLightness01 = (referenceLevel - minLevel) / range;
 
-  // Super-Gaussian parameters: flatter center, gentler edges
+  // Super-Gaussian parameters: flatter center, moderate suppression at level 200
   // Center is always at level 500 (middle of scale), regardless of reference level
   const center = 0.5; // Fixed center at level 500 (middle of 50-950 range)
-  const sigma = 0.45; // Even wider flat region for gentler suppression
-  const order = 3; // Lower order = much gentler suppression
+
+  // 彩度抑制カーブパラメーター
+  // sigma大→フラット領域の幅大
+  // order大→落ち込みの急激さ大
+  const sigma = 0.3; // Moderate flat region - suppression starts at moderate distance from center
+  const order = 1.5; // Moderate order = balanced suppression at level 200
 
   // Calculate super-Gaussian multipliers
   const targetMultiplier = superGaussianGain(targetLightness01, {
