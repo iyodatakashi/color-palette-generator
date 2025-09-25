@@ -8,7 +8,7 @@ export default defineConfig([
     output: {
       file: "dist/index.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     plugins: [
       typescript({
@@ -17,7 +17,7 @@ export default defineConfig([
         declarationDir: "./dist",
       }),
     ],
-    external: ["culori"]
+    external: ["culori"],
   },
   // CommonJS build
   {
@@ -25,7 +25,7 @@ export default defineConfig([
     output: {
       file: "dist/index.js",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     plugins: [
       typescript({
@@ -33,6 +33,6 @@ export default defineConfig([
         declaration: false,
       }),
     ],
-    external: ["culori"]
+    external: ["culori"],
   },
 ]);
