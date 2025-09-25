@@ -34,7 +34,7 @@ export type Palette = {
 
 // Hue palette configuration (input)
 export type HuePaletteConfig = {
-  color: string;
+  oklch: Oklch;
   divisions?: number;
   hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;

@@ -405,7 +405,7 @@ export const generateSameToneColor = ({
   h: number;
   c: number;
   targetLightness: number;
-}): string => {
+}): Oklch => {
   // Validate and normalize inputs
   h = isFinite(h) ? ((h % 360) + 360) % 360 : 0;
   c = isFinite(c) ? Math.max(0, c) : 0;
@@ -419,7 +419,7 @@ export const generateSameToneColor = ({
   };
 
   // Use optimized gamut mapping for same-tone generation
-  return oklchToHexHybrid(targetColor);
+  return targetColor;
 };
 
 // =============================================================================

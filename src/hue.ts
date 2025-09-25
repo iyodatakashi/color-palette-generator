@@ -5,6 +5,8 @@ import { getLightness } from "./lightness";
 import { generateSameToneColor } from "./combination";
 import type { HuePaletteConfig, ColorConfig, Palette } from "./types";
 import { generateColorPalette } from "./palette";
+import type { Oklch } from "culori";
+import { oklchToHexAdjustChroma } from "./colorUtils";
 
 // =============================================================================
 // Hue Change Functions
@@ -48,7 +50,7 @@ export const HUE_NAMES = {
  * Generate complete color palettes for each hue division
  */
 export const generateHuePalette = ({
-  color,
+  oklch,
   divisions = 24,
   hueShiftMode = "natural",
   includeTransparent = false,
@@ -58,13 +60,14 @@ export const generateHuePalette = ({
   includeTextColors = false,
 }: HuePaletteConfig): Palette => {
   // Get base colors for each hue
-  const baseColors = generateHueColors({ color, divisions });
+  const baseColors = generateHueColors({ oklch, divisions });
 
   // Create ColorConfig array for all base colors
-  const colorConfigs: ColorConfig[] = baseColors.map(({ name, color }) => ({
+  const colorConfigs: ColorConfig[] = baseColors.map(({ name, oklch }) => ({
     id: name.toLowerCase(),
     prefix: name.toLowerCase(),
-    color,
+    color: oklchToHexAdjustChroma(oklch),
+    oklch,
     hueShiftMode,
     includeTransparent,
     bgColorLight,
@@ -81,38 +84,30 @@ export const generateHuePalette = ({
  * Generate evenly spaced base colors for each hue division
  */
 export const generateHueColors = ({
-  color,
+  oklch,
   divisions = 24,
-}: Pick<HuePaletteConfig, "color" | "divisions">): Array<{
+}: {
+  oklch: Oklch;
+  divisions: number;
+}): Array<{
   name: string;
-  hue: number;
-  color: string;
+  oklch: Oklch;
 }> => {
-  const parsedColor = culori.parse(color);
-  if (!parsedColor) {
-    return [];
-  }
-
   const hueStep = 360 / divisions;
   const colors: Array<{
     name: string;
     hue: number;
-    color: string;
+    oklch: Oklch;
   }> = [];
 
   for (let i = 0; i < divisions; i++) {
     const hue = i * hueStep;
     const normalizedHue = Math.round(hue);
 
-    // Get OKLCH values from original color for generateSameToneColor
-    const colorObj = culori.parse(color);
-    const originalOKLCH = colorObj ? culori.converter("oklch")(colorObj) : null;
-    const originalPerceivedLightness = getLightness(color);
-
     const adjustedColor = generateSameToneColor({
       h: hue,
-      c: originalOKLCH?.c || 0,
-      targetLightness: originalPerceivedLightness,
+      c: oklch.c || 0,
+      targetLightness: oklch.l,
     });
 
     // Get name from predefined names or generate generic name
@@ -123,7 +118,7 @@ export const generateHueColors = ({
     colors.push({
       name,
       hue: normalizedHue,
-      color: adjustedColor,
+      oklch: adjustedColor,
     });
   }
 
