@@ -10,29 +10,29 @@ import type { ColorConfig, HueShiftMode } from "./types";
  * Calculate hue shift
  */
 export const calculateHueShift = ({
-  baseHue,
-  baseLightness,
+  colorConfig,
   targetLightness,
   adjustedLightnessScale,
-  hueShiftMode,
 }: {
-  baseHue: number;
-  baseLightness: number;
+  colorConfig: ColorConfig;
   targetLightness: number;
   adjustedLightnessScale: Record<number, number>;
-  hueShiftMode: HueShiftMode;
 }): number => {
   const MAX_HUE_SHIFT = 30;
 
+  const originalOKLCH = colorConfig.oklch;
+  const originalHue = originalOKLCH.h ?? 0;
+  const originalLightness = originalOKLCH.l;
+
   // No change in fixed mode
-  if (hueShiftMode === "fixed") {
-    return baseHue;
+  if (colorConfig.hueShiftMode === "fixed") {
+    return originalHue;
   }
 
-  const lightnessDiff = targetLightness - baseLightness;
+  const lightnessDiff = targetLightness - originalLightness;
 
   // Use perception-based dynamic calculation
-  const hueBasedIntensity = calculateHueIntensityByHue(baseHue);
+  const hueBasedIntensity = calculateHueIntensityByHue(originalHue);
   const lightnessBasedIntensity = calculateHueIntensityByLightness(
     lightnessDiff,
     adjustedLightnessScale
@@ -42,11 +42,11 @@ export const calculateHueShift = ({
   let hueShift = hueBasedIntensity * lightnessBasedIntensity * MAX_HUE_SHIFT;
 
   // Reverse direction in unnatural mode
-  if (hueShiftMode === "unnatural") {
+  if (colorConfig.hueShiftMode === "unnatural") {
     hueShift = -hueShift;
   }
 
-  const newHue = baseHue + hueShift;
+  const newHue = originalHue + hueShift;
   return normalizeHue(newHue);
 };
 

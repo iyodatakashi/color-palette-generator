@@ -1,8 +1,7 @@
 // palette.ts
 
-import type { CombinationConfig, Palette } from "./types";
+import type { Palette } from "./types";
 import type { Oklch } from "culori";
-import * as culori from "culori";
 import {
   getLightness,
   findClosestLevel,
@@ -13,6 +12,7 @@ import { setTransparentPalette } from "./transparentColor";
 import { createContextLogger } from "./logger";
 import {
   SCALE_LEVELS,
+  NATURAL_CHROMA_CURVE_PARAMS,
   DEFAULT_LEVEL_500_LIGHTNESS,
   MIN_LIGHTNESS,
   MAX_LIGHTNESS,
@@ -114,10 +114,8 @@ const generateSecondaryPalette = ({
 
   const palette = generateOriginalPalette({
     colorConfig,
-    inputOKLCH: colorConfig.oklch,
     closestLevel,
     adjustedLightnessScale,
-    inputLightness: colorConfig.oklch.l,
   });
 
   setVariationColors({
@@ -136,7 +134,6 @@ const generateSecondaryPalette = ({
   // Generate text colors last to ensure proper order
   setTextColor({
     colorConfig,
-    inputOKLCH: colorConfig.oklch,
     palette,
   });
 
@@ -176,10 +173,8 @@ const generatePaletteFromProcessedInput = ({
 
   const palette = generateOriginalPalette({
     colorConfig,
-    inputOKLCH: colorConfig.oklch,
     closestLevel,
     adjustedLightnessScale,
-    inputLightness: colorConfig.oklch.l,
   });
 
   setVariationColors({
@@ -198,56 +193,10 @@ const generatePaletteFromProcessedInput = ({
   // Generate text colors last to ensure proper order
   setTextColor({
     colorConfig,
-    inputOKLCH: colorConfig.oklch,
     palette,
   });
 
   return palette;
-};
-
-// =============================================================================
-// Palette Generation Logic
-// =============================================================================
-
-/**
- * Calculate the original chroma a level should have (before unified curve)
- * This represents the natural maximum chroma for gamut mapping
- */
-const calculateOriginalChromaForLevel = ({
-  level,
-  inputChroma,
-  inputHue,
-  targetLightness,
-}: {
-  level: number;
-  inputChroma: number;
-  inputHue: number;
-  targetLightness: number;
-}): number => {
-  // Create OKLCH color at target lightness with input chroma
-  const testColor: Oklch = {
-    mode: "oklch" as const,
-    l: targetLightness, // 0-1 range
-    c: inputChroma,
-    h: inputHue,
-  };
-
-  // Apply gamut mapping to get the maximum achievable chroma at this lightness
-  const clampedColor = culori.clampChroma(testColor, "oklch", "rgb");
-  const result = clampedColor.c || inputChroma;
-
-  // Debug: ensure valid result
-  if (!isFinite(result) || result < 0) {
-    console.warn(
-      `Invalid chroma calculated for level ${level}:`,
-      result,
-      "using input chroma:",
-      inputChroma
-    );
-    return inputChroma;
-  }
-
-  return result;
 };
 
 /**
@@ -259,8 +208,8 @@ const calculateOriginalChromaForLevel = ({
  */
 const superGaussianGain = (
   lightness: number,
-  { center = 0.5, sigma = 0.22, order = 6 } = {}
-): number => {
+  { center, sigma, order }: { center: number; sigma: number; order: number }
+) => {
   const x = Math.min(1, Math.max(0, lightness));
   const z = Math.abs(x - center) / Math.max(1e-6, sigma);
   return Math.exp(-Math.pow(z, order)); // Higher order = flatter center
@@ -270,7 +219,6 @@ const calculateNaturalChromaCurve = ({
   targetLevel,
   referenceLevel,
   referenceChroma,
-  maxChromaForLevel,
 }: {
   targetLevel: number;
   referenceLevel: number;
@@ -285,29 +233,15 @@ const calculateNaturalChromaCurve = ({
   const targetLightness = (targetLevel - minLevel) / range;
   const referenceLightness = (referenceLevel - minLevel) / range;
 
-  // Super-Gaussian parameters: flatter center, moderate suppression at level 200
-  // Center is always at level 500 (middle of scale), regardless of reference level
-
-  // 彩度抑制カーブパラメーター
-  // sigma大→フラット領域の幅大
-  // order大→落ち込みの急激さ大
-  const center =
-    (DEFAULT_LEVEL_500_LIGHTNESS - MIN_LIGHTNESS) /
-    (MAX_LIGHTNESS - MIN_LIGHTNESS); // レベル500の実際の明度位置
-  const sigma = 0.35; // Moderate flat region - suppression starts at moderate distance from center
-  const order = 1.5; // Moderate order = balanced suppression at level 200
-
   // Calculate super-Gaussian multipliers
-  const targetMultiplier = superGaussianGain(targetLightness, {
-    center,
-    sigma,
-    order,
-  });
-  const referenceMultiplier = superGaussianGain(referenceLightness, {
-    center,
-    sigma,
-    order,
-  });
+  const targetMultiplier = superGaussianGain(
+    targetLightness,
+    NATURAL_CHROMA_CURVE_PARAMS
+  );
+  const referenceMultiplier = superGaussianGain(
+    referenceLightness,
+    NATURAL_CHROMA_CURVE_PARAMS
+  );
 
   // Calculate base chroma needed to pass through reference point
   const baseChroma = referenceChroma / referenceMultiplier;
@@ -323,19 +257,15 @@ const calculateNaturalChromaCurve = ({
  */
 const generateOriginalPalette = ({
   colorConfig,
-  inputOKLCH,
   closestLevel,
   adjustedLightnessScale,
-  inputLightness,
 }: {
-  inputOKLCH: Oklch;
+  colorConfig: ColorConfig;
   closestLevel: number;
   adjustedLightnessScale: Record<number, number>;
-  colorConfig: any; // Use any to avoid complex type issues
-  inputLightness: number;
 }): Palette => {
   const palette: Palette = {};
-  const originalLightness = inputLightness; // Use original input lightness, not adjusted scale value
+  const inputOKLCH = colorConfig.oklch;
 
   // Helper function to convert OKLCH to HEX with chroma-only gamut mapping
   const oklchToHex = (oklch: Oklch): string => {
@@ -346,13 +276,13 @@ const generateOriginalPalette = ({
     const level = parseInt(key);
 
     // Calculate base hue with hue shift mode
-    const baseHue = inputOKLCH.h || 0;
     const adjustedHue = calculateHueShift({
-      baseHue,
-      baseLightness: originalLightness,
+      colorConfig,
+      // originalHue,
+      // originalLightness: originalLightness,
       targetLightness,
       adjustedLightnessScale,
-      hueShiftMode: colorConfig.hueShiftMode,
+      // hueShiftMode: colorConfig.hueShiftMode ?? "natural",
     });
 
     // Apply combination hue shift if present (for secondary colors)
@@ -401,7 +331,7 @@ const setVariationColors = ({
   closestLevel,
   palette,
 }: {
-  colorConfig: any;
+  colorConfig: ColorConfig;
   closestLevel: number;
   palette: Palette;
 }): void => {
@@ -437,17 +367,17 @@ const setVariationColors = ({
  */
 const setTextColor = ({
   colorConfig,
-  inputOKLCH,
   palette,
 }: {
-  colorConfig: any;
-  inputOKLCH: Oklch;
+  colorConfig: ColorConfig;
   palette: Palette;
 }): void => {
   // Only generate text colors if includeTextColors is enabled
   if (!colorConfig.includeTextColors) {
     return;
   }
+
+  const inputOKLCH = colorConfig.oklch;
 
   // Find the primary color level (the level closest to input color)
   const primaryLevel = findClosestLevel({

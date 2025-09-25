@@ -14,7 +14,6 @@ export const MAX_LEVEL = 1000;
 /**
  * Lightness scale definitions - DEPRECATED: Now using sigmoid function
  */
-// STANDARD_LIGHTNESS_SCALE removed - using dynamic sigmoid calculation
 
 // Lightness scale limits (0-1 range)
 export const MAX_LIGHTNESS = 0.97;
@@ -22,6 +21,20 @@ export const MIN_LIGHTNESS = 0.25;
 
 // Default level 500 lightness (middle of the scale)
 export const DEFAULT_LEVEL_500_LIGHTNESS = 0.68;
+
+/**
+ * Natural Chroma Curve
+ */
+// 彩度抑制カーブパラメーター
+// sigma大→フラット領域の幅大
+// order大→落ち込みの急激さ大
+export const NATURAL_CHROMA_CURVE_PARAMS = {
+  center:
+    (DEFAULT_LEVEL_500_LIGHTNESS - MIN_LIGHTNESS) /
+    (MAX_LIGHTNESS - MIN_LIGHTNESS),
+  sigma: 0.4,
+  order: 1.5,
+};
 
 /**
  * Alpha value definitions

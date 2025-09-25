@@ -12,6 +12,7 @@ import type {
   CombinationConfig,
   CombinationResults,
   CombinationResult,
+  Palette,
 } from "./types";
 import { generateColorPalette } from "./palette";
 import type { Oklch } from "culori";
@@ -298,7 +299,7 @@ const generateSecondaryPalettes = ({
 
       // 5. Set formal base color from the generated scale (same level as primary)
       const secondaryFormalBaseColor =
-        (secondaryPalette as any)[`--${prefix}-${primaryBaseLevel}`] ||
+        (secondaryPalette as Palette)[`--${prefix}-${primaryBaseLevel}`] ||
         "#000000";
 
       results.push({
