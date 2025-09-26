@@ -14,77 +14,6 @@ import { oklchToHexPerceptual } from "./colorUtils";
 // =============================================================================
 
 /**
- * 明度
- * Calculate level from lightness using numerical inverse of sigmoid function
- * This finds the level that corresponds to a given lightness value using binary search
- */
-export const getLevelFromLightness = (
-  targetLightness: number,
-  kSigned: number = 0.18,
-  anchorLevel: number = 500,
-  anchorLightness: number = DEFAULT_LEVEL_500_LIGHTNESS,
-  vBase: number = 2.0,
-  kMin: number = 1e-6
-): number => {
-  // Clamp target lightness to valid range
-  const clampedTarget = Math.max(
-    MIN_LIGHTNESS,
-    Math.min(MAX_LIGHTNESS, targetLightness)
-  );
-
-  const minLevel = 50;
-  const maxLevel = 950;
-
-  // シグモイド関数の逆計算（明度とレベルは逆相関）
-  // 高い明度 → 低いレベル
-  // 低い明度 → 高いレベル
-
-  // 線形近似で初期値を推定
-  const normalizedTarget =
-    (clampedTarget - MIN_LIGHTNESS) / (MAX_LIGHTNESS - MIN_LIGHTNESS);
-  const estimatedLevel =
-    minLevel + (1 - normalizedTarget) * (maxLevel - minLevel);
-
-  // 二分探索で精密化
-  let low = minLevel;
-  let high = maxLevel;
-  let bestLevel = estimatedLevel;
-  let bestDiff = Infinity;
-
-  // Search with high precision
-  for (let i = 0; i < 50; i++) {
-    const mid = (low + high) / 2;
-    const lightness = getLightnessCurve(
-      mid,
-      kSigned,
-      anchorLevel,
-      anchorLightness,
-      vBase,
-      kMin
-    );
-    const diff = Math.abs(lightness - clampedTarget);
-
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      bestLevel = mid;
-    }
-
-    if (lightness > clampedTarget) {
-      low = mid; // 明度が高すぎる → レベルを下げる
-    } else {
-      high = mid; // 明度が低すぎる → レベルを上げる
-    }
-
-    // Early termination if we're close enough
-    if (diff < 1e-6) {
-      break;
-    }
-  }
-
-  return bestLevel;
-};
-
-/**
  * Get lightness value from color using OKLCH
  */
 export const getLightness = (color: string): number => {
@@ -141,7 +70,7 @@ export const adjustToLightness = ({
  */
 
 // level, kSigned（符号で膨らみ反転）, アンカー(level, lightness)を渡す版
-const getLightnessCurve = (
+const getLightnessFromLevel = (
   level: number,
   kSigned: number = 0.18, // +で左上凸寄り / -で左下凸寄り
   anchorLevel: number = 500, // 通したいレベル
@@ -209,6 +138,73 @@ const getLightnessCurve = (
   // これを変更するなら死ね。
   return MIN_LIGHTNESS + (MAX_LIGHTNESS - MIN_LIGHTNESS) * sNorm;
   // ここまで絶対に変更禁止
+};
+
+/**
+ * 標準明度カーブ（シグモイド）を使って、メイドからレベル値を取得（近似しない）
+ * Calculate level from lightness using numerical inverse of sigmoid function
+ * This finds the level that corresponds to a given lightness value using binary search
+ */
+export const getLevelFromLightness = (
+  targetLightness: number,
+  kSigned: number = 0.18,
+  anchorLevel: number = 500,
+  anchorLightness: number = DEFAULT_LEVEL_500_LIGHTNESS,
+  vBase: number = 2.0,
+  kMin: number = 1e-6
+): number => {
+  // Clamp target lightness to valid range
+  const clampedTarget = Math.max(
+    MIN_LIGHTNESS,
+    Math.min(MAX_LIGHTNESS, targetLightness)
+  );
+
+  const minLevel = 50;
+  const maxLevel = 950;
+
+  // 線形近似で初期値を推定
+  const normalizedTarget =
+    (clampedTarget - MIN_LIGHTNESS) / (MAX_LIGHTNESS - MIN_LIGHTNESS);
+  const estimatedLevel =
+    minLevel + (1 - normalizedTarget) * (maxLevel - minLevel);
+
+  // 二分探索で精密化
+  let low = minLevel;
+  let high = maxLevel;
+  let bestLevel = estimatedLevel;
+  let bestDiff = Infinity;
+
+  // Search with high precision
+  for (let i = 0; i < 50; i++) {
+    const mid = (low + high) / 2;
+    const lightness = getLightnessFromLevel(
+      mid,
+      kSigned,
+      anchorLevel,
+      anchorLightness,
+      vBase,
+      kMin
+    );
+    const diff = Math.abs(lightness - clampedTarget);
+
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestLevel = mid;
+    }
+
+    if (lightness > clampedTarget) {
+      low = mid; // 明度が高すぎる → レベルを下げる
+    } else {
+      high = mid; // 明度が低すぎる → レベルを上げる
+    }
+
+    // Early termination if we're close enough
+    if (diff < 1e-6) {
+      break;
+    }
+  }
+
+  return bestLevel;
 };
 
 /**
@@ -313,7 +309,7 @@ export const findClosestLevel = ({
   // Step 1: Find initial level using new sigmoid with DEFAULT_LEVEL_500_LIGHTNESS
   const baseScale: Record<number, number> = {};
   SCALE_LEVELS.forEach((level) => {
-    baseScale[level] = getLightnessCurve(
+    baseScale[level] = getLightnessFromLevel(
       level,
       0.18,
       500,
@@ -370,7 +366,7 @@ export const calculateEvenScale = ({
   // Always use default sigmoid scale without adjustment
   const scale: Record<number, number> = {};
   SCALE_LEVELS.forEach((level) => {
-    scale[level] = getLightnessCurve(level, 0.18); // Use default K
+    scale[level] = getLightnessFromLevel(level, 0.18); // Use default K
   });
 
   // Apply hue-specific maximum chroma lightness correction by adjusting anchor lightness level
@@ -392,7 +388,7 @@ export const calculateEvenScale = ({
 
     // Regenerate the scale with adjusted anchor level and original max chroma lightness
     SCALE_LEVELS.forEach((level) => {
-      scale[level] = getLightnessCurve(
+      scale[level] = getLightnessFromLevel(
         level,
         0.18, // Keep same steepness
         adjustedAnchorLevel, // Use adjusted anchor level (toward 500)
