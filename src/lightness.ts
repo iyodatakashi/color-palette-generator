@@ -457,7 +457,7 @@ export const calculateEvenScale = ({
     const levelOffset = 500 - maxChromaLightnessLevel;
 
     // Apply correction with moderate weight (0.3) to avoid over-correction
-    const correctionWeight = 0.3;
+    const correctionWeight = 0.2;
     const adjustedLevelOffset = levelOffset * correctionWeight;
 
     // Adjust anchor level: move from max chroma lightness level toward 500

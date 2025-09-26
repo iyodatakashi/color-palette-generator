@@ -294,9 +294,17 @@ const generateOriginalPalette = ({
     // Apply NaturalChromaCurve for chroma suppression
     let targetChroma = baseChroma;
     if (colorConfig.enableChromaAdjustment) {
+      // Use the adjusted lightness scale to find the reference level
+      // This ensures we use the hue-specific maximum chroma lightness corrected scale
+      const referenceLevel = findClosestLevel({
+        inputLightness: inputOKLCH.l,
+        inputChroma: inputOKLCH.c,
+        inputHue: inputOKLCH.h,
+      });
+
       targetChroma = calculateNaturalChromaCurve({
         targetLevel: level,
-        referenceLevel: getLevelFromLightness(inputOKLCH.l), // 基準色の明度から実際のレベルを計算
+        referenceLevel: referenceLevel, // Use adjusted scale to find reference level
         referenceChroma: baseChroma,
       });
     }
