@@ -9,7 +9,12 @@ import {
 } from "./lightness";
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
-import { SCALE_LEVELS, NATURAL_CHROMA_CURVE_PARAMS } from "./constants";
+import {
+  SCALE_LEVELS,
+  NATURAL_CHROMA_CURVE_PARAMS,
+  TEXT_LIGHTNESS_ON_LIGHT,
+  TEXT_LIGHTNESS_ON_DARK,
+} from "./constants";
 import type { ColorConfig } from "./types";
 import { oklchToHexPerceptual, isValidOklch, hexToOklch } from "./colorUtils";
 
@@ -92,6 +97,7 @@ const generateEachPalette = ({
   setTextColor({
     colorConfig,
     palette,
+    closestLevel, // Pass closestLevel to avoid duplicate calculation
   });
 
   return palette;
@@ -172,6 +178,7 @@ const generateSolidPalette = ({
   adjustedLightnessScale: Record<number, number>;
 }): Palette => {
   const palette: Palette = {};
+
   // Validate input OKLCH
   let oklch = colorConfig.oklch;
   if (!oklch || !isValidOklch(oklch)) {
@@ -205,13 +212,8 @@ const generateSolidPalette = ({
     // Apply NaturalChromaCurve for chroma suppression
     let targetChroma = baseChroma;
     if (colorConfig.enableChromaAdjustment) {
-      // Use the adjusted lightness scale to find the reference level
-      // This ensures we use the hue-specific maximum chroma lightness corrected scale
-      const referenceLevel = findClosestLevel({
-        inputLightness: oklch.l,
-        inputChroma: oklch.c,
-        inputHue: oklch.h,
-      });
+      // Use the closestLevel passed from generateEachPalette to avoid duplicate calculation
+      const referenceLevel = closestLevel;
 
       targetChroma = calculateNaturalChromaCurve({
         targetLevel: level,
@@ -226,7 +228,7 @@ const generateSolidPalette = ({
     // Create OKLCH color and convert to HEX with perceptual gamut mapping
     const oklchColor: Oklch = {
       mode: "oklch" as const,
-      l: finalLightness, // 0-1 range
+      l: finalLightness,
       c: targetChroma,
       h: finalHue,
     };
@@ -282,27 +284,19 @@ const setVariationColors = ({
 const setTextColor = ({
   colorConfig,
   palette,
+  closestLevel,
 }: {
   colorConfig: ColorConfig;
   palette: Palette;
+  closestLevel: number;
 }): void => {
   // Only generate text colors if includeTextColors is enabled
   if (!colorConfig.includeTextColors) {
     return;
   }
 
-  // Validate input OKLCH
-  let oklch = colorConfig.oklch;
-  if (!oklch || !isValidOklch(oklch)) {
-    oklch = hexToOklch(colorConfig.color) as Oklch;
-  }
-
-  // Find the primary color level (the level closest to input color)
-  const primaryLevel = findClosestLevel({
-    inputLightness: oklch.l, // 0-1 range
-    inputChroma: oklch?.c,
-    inputHue: oklch?.h,
-  });
+  // Use the closestLevel passed from generateEachPalette to avoid duplicate calculation
+  const primaryLevel = closestLevel;
 
   // Get primary color and its lightness
   const primaryColor = palette[`--${colorConfig.prefix}-${primaryLevel}`];
@@ -318,8 +312,8 @@ const setTextColor = ({
     primaryLightness,
     palette,
     prefix: colorConfig.prefix,
-    targetLightness: 0.6, // 0-1 range
-    isLighter: false, // Find darker color
+    targetLightness: TEXT_LIGHTNESS_ON_LIGHT,
+    isLighter: false,
   });
 
   // Find text color for dark background (light text on dark background)
@@ -328,7 +322,7 @@ const setTextColor = ({
     primaryLightness,
     palette,
     prefix: colorConfig.prefix,
-    targetLightness: 0.5, // 0-1 range
+    targetLightness: TEXT_LIGHTNESS_ON_DARK, // 0-1 range
     isLighter: true, // Find lighter color
   });
 

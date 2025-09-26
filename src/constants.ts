@@ -68,6 +68,9 @@ export const DEFAULT_BASE_COLOR_CONFIG = {
   enableChromaAdjustment: true, // Enable natural chroma distribution for base colors
 };
 
+export const TEXT_LIGHTNESS_ON_LIGHT = 0.6;
+export const TEXT_LIGHTNESS_ON_DARK = 0.4;
+
 /**
  * Default options
  */
