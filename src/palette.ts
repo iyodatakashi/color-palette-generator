@@ -6,22 +6,12 @@ import {
   getLightness,
   findClosestLevel,
   calculateEvenScale,
-  getLevelFromLightness,
 } from "./lightness";
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
-import { createContextLogger } from "./logger";
-import {
-  SCALE_LEVELS,
-  NATURAL_CHROMA_CURVE_PARAMS,
-  DEFAULT_LEVEL_500_LIGHTNESS,
-  MIN_LIGHTNESS,
-  MAX_LIGHTNESS,
-} from "./constants";
+import { SCALE_LEVELS, NATURAL_CHROMA_CURVE_PARAMS } from "./constants";
 import type { ColorConfig } from "./types";
-import { oklchToHexAdjustChroma, oklchToHexPerceptual } from "./colorUtils";
-
-const log = createContextLogger("Palette");
+import { oklchToHexPerceptual } from "./colorUtils";
 
 // =============================================================================
 // Main Functions
@@ -49,30 +39,13 @@ export const generateColorPalette = (
   const colorConfig = input;
 
   // Check if this is combination color generation
-  const isCombinationColor =
-    colorConfig.id !== "primary" && colorConfig.id !== "base";
-
-  if (isCombinationColor) {
-    return generateSecondaryPalette({ colorConfig });
-  } else {
-    return generatePrimaryBasePalette(colorConfig);
-  }
+  return generateEachPalette({ colorConfig });
 };
 
 /**
- * Generate primary/base color palette (from HEX input)
+ * Generate color palette (from OKLCH input)
  */
-const generatePrimaryBasePalette = (colorConfig: ColorConfig): Palette => {
-  // Generate base palette
-  const palette = generatePaletteFromProcessedInput({ colorConfig });
-
-  return palette;
-};
-
-/**
- * Generate combination (secondary) color palette (from OKLCH input)
- */
-const generateSecondaryPalette = ({
+const generateEachPalette = ({
   colorConfig,
 }: {
   colorConfig: ColorConfig;
@@ -88,79 +61,19 @@ const generateSecondaryPalette = ({
   }
 
   const closestLevel = findClosestLevel({
-    inputLightness: colorConfig.oklch.l, // 0-1 range
-    inputChroma: colorConfig.oklch.c,
-    inputHue: colorConfig.oklch.h,
-  });
-
-  // Secondary colors: use default sigmoid (same as primary colors)
-  const adjustedLightnessScale = calculateEvenScale({
-    inputLightness: colorConfig.oklch.l, // 0-1 range
-    inputChroma: colorConfig.oklch.c || 0,
-    inputHue: colorConfig.oklch.h || 0,
-    enableLightnessAdjustment: true, // Use same logic as primary colors
-  });
-
-  const palette = generateOriginalPalette({
-    colorConfig,
-    closestLevel,
-    adjustedLightnessScale,
-  });
-
-  setVariationColors({
-    colorConfig,
-    closestLevel,
-    palette,
-  });
-
-  if (colorConfig.includeTransparent) {
-    setTransparentPalette({
-      palette,
-      colorConfig,
-    });
-  }
-
-  // Generate text colors last to ensure proper order
-  setTextColor({
-    colorConfig,
-    palette,
-  });
-
-  return palette;
-};
-
-/**
- * Common palette generation logic after input processing
- */
-const generatePaletteFromProcessedInput = ({
-  colorConfig,
-}: {
-  colorConfig: ColorConfig;
-}): Palette => {
-  // Validate input OKLCH
-  if (
-    !colorConfig.oklch ||
-    !isFinite(colorConfig.oklch.l) ||
-    !isFinite(colorConfig.oklch.c) ||
-    !isFinite(colorConfig.oklch.h || 0)
-  ) {
-    throw new Error("Invalid OKLCH input");
-  }
-
-  const closestLevel = findClosestLevel({
-    inputLightness: colorConfig.oklch.l, // 0-1 range
+    inputLightness: colorConfig.oklch.l,
     inputChroma: colorConfig.oklch.c,
     inputHue: colorConfig.oklch.h,
   });
 
   const adjustedLightnessScale = calculateEvenScale({
-    inputLightness: colorConfig.oklch.l, // 0-1 range
-    inputChroma: colorConfig.oklch.c || 0,
-    inputHue: colorConfig.oklch.h || 0,
+    inputLightness: colorConfig.oklch.l,
+    inputChroma: colorConfig.oklch.c ?? 0,
+    inputHue: colorConfig.oklch.h ?? 0,
     enableLightnessAdjustment: true,
   });
 
-  const palette = generateOriginalPalette({
+  const palette = generateSolidPalette({
     colorConfig,
     closestLevel,
     adjustedLightnessScale,
@@ -220,7 +133,6 @@ const calculateNaturalChromaCurve = ({
   const range = maxLevel - minLevel;
 
   const targetLightness = (targetLevel - minLevel) / range;
-  const referenceLightness = (referenceLevel - minLevel) / range;
 
   // ガウシアンカーブを基準色を通るカーブに調整（中心は固定）
   const targetMultiplier = superGaussianGain(
@@ -252,9 +164,9 @@ const calculateNaturalChromaCurve = ({
 };
 
 /**
- * Generate basic color palette
+ * Generate solid color palette
  */
-const generateOriginalPalette = ({
+const generateSolidPalette = ({
   colorConfig,
   closestLevel,
   adjustedLightnessScale,
