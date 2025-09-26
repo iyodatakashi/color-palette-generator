@@ -7,7 +7,6 @@ import {
   MIN_LIGHTNESS,
   DEFAULT_LEVEL_500_LIGHTNESS,
 } from "./constants";
-import { oklchToHexPerceptual } from "./colorUtils";
 
 // =============================================================================
 // Lightness Calculation Functions
@@ -24,40 +23,6 @@ export const getLightness = (color: string): number => {
   if (!oklch) return 0;
 
   return oklch.l;
-};
-
-// =============================================================================
-// Lightness Adjustment Functions
-// =============================================================================
-
-/**
- * Generate color with specified lightness, hue, and chroma
- * Keeps lightness and hue fixed, adjusts chroma only to fit RGB gamut
- */
-export const adjustToLightness = ({
-  h,
-  c,
-  targetLightness,
-}: {
-  h: number;
-  c: number;
-  targetLightness: number;
-}): string => {
-  // Validate and normalize inputs
-  h = isFinite(h) ? ((h % 360) + 360) % 360 : 0;
-  c = isFinite(c) ? Math.max(0, c) : 0;
-  targetLightness = isFinite(targetLightness) ? targetLightness : 0.5; // 0-1 range
-
-  // Create OKLCH color with target values
-  const targetOKLCH = {
-    mode: "oklch" as const,
-    l: targetLightness, // 0-1 range
-    c: c,
-    h: h,
-  };
-
-  // Use perceptual gamut mapping with HEX conversion
-  return oklchToHexPerceptual(targetOKLCH);
 };
 
 // =============================================================================
@@ -265,28 +230,6 @@ const getMaxChromaForHue = (hue: number): number => {
 };
 
 /**
- * Find the lightness at which maximum chroma occurs for a given hue
- */
-const getMaxChromaLightnessForHue = (hue: number): number => {
-  let maxChroma = 0;
-  let maxChromaLightness = DEFAULT_LEVEL_500_LIGHTNESS; // Default to level 500 lightness
-
-  // Search across lightness range to find the lightness where maximum chroma occurs
-  for (let l = MIN_LIGHTNESS; l <= MAX_LIGHTNESS; l += 0.01) {
-    const highChromaColor = { mode: "oklch" as const, l, c: 1.0, h: hue };
-    const clampedColor = culori.clampChroma(highChromaColor, "oklch", "rgb");
-    const oklchResult = culori.converter("oklch")(clampedColor);
-
-    if (oklchResult && oklchResult.c > maxChroma) {
-      maxChroma = oklchResult.c;
-      maxChromaLightness = l;
-    }
-  }
-
-  return maxChromaLightness;
-};
-
-/**
  * Find the target level using the same logic as generateAdjustedLightnessScale
  */
 export const findClosestLevel = ({
@@ -306,26 +249,13 @@ export const findClosestLevel = ({
   const maxChroma = getMaxChromaForHue(inputHue);
   const relativeChroma = inputChroma / maxChroma;
 
-  // Step 1: Find initial level using new sigmoid with DEFAULT_LEVEL_500_LIGHTNESS
-  const baseScale: Record<number, number> = {};
-  SCALE_LEVELS.forEach((level) => {
-    baseScale[level] = getLightnessFromLevel(
-      level,
-      0.18,
-      500,
-      DEFAULT_LEVEL_500_LIGHTNESS
-    );
-  });
-
-  let initialLevel = 500;
-  let bestDiff = Infinity;
-  SCALE_LEVELS.forEach((level) => {
-    const diff = Math.abs(inputLightness - baseScale[level]);
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      initialLevel = level;
-    }
-  });
+  // Step 1: Find initial level using getLevelFromLightness (efficient)
+  const initialLevel = getLevelFromLightness(
+    inputLightness,
+    0.18,
+    500,
+    DEFAULT_LEVEL_500_LIGHTNESS
+  );
 
   // Step 2: Apply chroma-based level correction
   const pullStrength = relativeChroma * 0.3;
@@ -348,7 +278,7 @@ export const findClosestLevel = ({
 /**
  * Calculate even scale based on the specified color
  */
-export const calculateEvenScale = ({
+export const generateLightnessScale = ({
   inputLightness,
   inputChroma,
   inputHue,
@@ -398,4 +328,26 @@ export const calculateEvenScale = ({
   }
 
   return scale;
+};
+
+/**
+ * Find the lightness at which maximum chroma occurs for a given hue
+ */
+const getMaxChromaLightnessForHue = (hue: number): number => {
+  let maxChroma = 0;
+  let maxChromaLightness = DEFAULT_LEVEL_500_LIGHTNESS; // Default to level 500 lightness
+
+  // Search across lightness range to find the lightness where maximum chroma occurs
+  for (let l = MIN_LIGHTNESS; l <= MAX_LIGHTNESS; l += 0.01) {
+    const highChromaColor = { mode: "oklch" as const, l, c: 1.0, h: hue };
+    const clampedColor = culori.clampChroma(highChromaColor, "oklch", "rgb");
+    const oklchResult = culori.converter("oklch")(clampedColor);
+
+    if (oklchResult && oklchResult.c > maxChroma) {
+      maxChroma = oklchResult.c;
+      maxChromaLightness = l;
+    }
+  }
+
+  return maxChromaLightness;
 };

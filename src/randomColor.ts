@@ -1,6 +1,6 @@
 // randomColor.ts
 
-import { adjustToLightness } from "./lightness";
+import { oklchToHexPerceptual } from "./colorUtils";
 import type { RandomColorConfig } from "./types";
 import { DEFAULT_RANDOM_COLOR_CONFIG } from "./constants";
 
@@ -32,10 +32,14 @@ export const generateRandomPrimaryColor = (
   const chromaValue = Math.random() * (maxChroma - minChroma) + minChroma;
   const chroma = chromaValue; // chromaValue is already in 0-1 range
 
-  // Adjust to specified lightness and return HEX string
-  return adjustToLightness({
-    h: hue,
+  // Create OKLCH color with target values
+  const targetOKLCH = {
+    mode: "oklch" as const,
+    l: lightness,
     c: chroma,
-    targetLightness: lightness,
-  });
+    h: hue,
+  };
+
+  // Use perceptual gamut mapping with HEX conversion
+  return oklchToHexPerceptual(targetOKLCH);
 };

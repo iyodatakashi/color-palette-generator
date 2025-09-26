@@ -5,7 +5,7 @@ import type { Oklch } from "culori";
 import {
   getLightness,
   findClosestLevel,
-  calculateEvenScale,
+  generateLightnessScale,
 } from "./lightness";
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
@@ -66,7 +66,7 @@ const generateEachPalette = ({
     inputHue: colorConfig.oklch.h,
   });
 
-  const adjustedLightnessScale = calculateEvenScale({
+  const adjustedLightnessScale = generateLightnessScale({
     inputLightness: colorConfig.oklch.l,
     inputChroma: colorConfig.oklch.c ?? 0,
     inputHue: colorConfig.oklch.h ?? 0,

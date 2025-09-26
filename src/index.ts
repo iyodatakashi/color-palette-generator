@@ -16,8 +16,7 @@ export { generateRandomPrimaryColor } from "./randomColor";
 // Lightness calculation features
 export {
   getLightness,
-  adjustToLightness,
-  calculateEvenScale,
+  generateLightnessScale,
   getLevelFromLightness,
   findClosestLevel,
 } from "./lightness";
