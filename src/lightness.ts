@@ -210,23 +210,55 @@ const sigmoidRichardsThrough = (
 // =============================================================================
 
 /**
- * Get maximum chroma for a given hue using color-space aware gamut mapping
+ * Find maximum chroma and its corresponding lightness for a given hue
+ * Uses optimized 2-stage search for better performance
+ * @returns Object containing both maxChroma and maxChromaLightness
  */
-const getMaxChromaForHue = (hue: number): number => {
+const findMaxChromaAndLightness = (
+  hue: number
+): { maxChroma: number; maxChromaLightness: number } => {
   let maxChroma = 0;
+  let maxChromaLightness = DEFAULT_LEVEL_500_LIGHTNESS;
 
-  // Search across lightness range to find absolute maximum chroma for this hue
-  for (let l = MIN_LIGHTNESS; l <= MAX_LIGHTNESS; l += 0.01) {
+  // Stage 1: Coarse search with 0.1 step to find approximate peak
+  for (let l = MIN_LIGHTNESS; l <= MAX_LIGHTNESS; l += 0.1) {
     const highChromaColor = { mode: "oklch" as const, l, c: 1.0, h: hue };
     const clampedColor = culori.clampChroma(highChromaColor, "oklch", "rgb");
     const oklchResult = culori.converter("oklch")(clampedColor);
 
     if (oklchResult && oklchResult.c > maxChroma) {
       maxChroma = oklchResult.c;
+      maxChromaLightness = l;
     }
   }
 
-  return maxChroma || 0.2; // Fallback value
+  // Stage 2: Fine search around the peak with 0.01 step
+  const searchRange = 0.1; // Search ±0.1 around the peak (matching coarse step)
+  const fineStart = Math.max(MIN_LIGHTNESS, maxChromaLightness - searchRange);
+  const fineEnd = Math.min(MAX_LIGHTNESS, maxChromaLightness + searchRange);
+
+  for (let l = fineStart; l <= fineEnd; l += 0.01) {
+    const highChromaColor = { mode: "oklch" as const, l, c: 1.0, h: hue };
+    const clampedColor = culori.clampChroma(highChromaColor, "oklch", "rgb");
+    const oklchResult = culori.converter("oklch")(clampedColor);
+
+    if (oklchResult && oklchResult.c > maxChroma) {
+      maxChroma = oklchResult.c;
+      maxChromaLightness = l;
+    }
+  }
+
+  return {
+    maxChroma: maxChroma || 0.2, // Fallback value
+    maxChromaLightness,
+  };
+};
+
+/**
+ * Get maximum chroma for a given hue using optimized 2-stage search
+ */
+const getMaxChromaForHue = (hue: number): number => {
+  return findMaxChromaAndLightness(hue).maxChroma;
 };
 
 /**
@@ -332,22 +364,8 @@ export const generateLightnessScale = ({
 
 /**
  * Find the lightness at which maximum chroma occurs for a given hue
+ * Uses optimized 2-stage search for better performance
  */
 const getMaxChromaLightnessForHue = (hue: number): number => {
-  let maxChroma = 0;
-  let maxChromaLightness = DEFAULT_LEVEL_500_LIGHTNESS; // Default to level 500 lightness
-
-  // Search across lightness range to find the lightness where maximum chroma occurs
-  for (let l = MIN_LIGHTNESS; l <= MAX_LIGHTNESS; l += 0.01) {
-    const highChromaColor = { mode: "oklch" as const, l, c: 1.0, h: hue };
-    const clampedColor = culori.clampChroma(highChromaColor, "oklch", "rgb");
-    const oklchResult = culori.converter("oklch")(clampedColor);
-
-    if (oklchResult && oklchResult.c > maxChroma) {
-      maxChroma = oklchResult.c;
-      maxChromaLightness = l;
-    }
-  }
-
-  return maxChromaLightness;
+  return findMaxChromaAndLightness(hue).maxChromaLightness;
 };
