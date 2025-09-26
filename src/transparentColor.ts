@@ -93,32 +93,31 @@ const getAlphaForLevel = ({
   }
 
   const alphaDifference = MAX_ALPHA - MIN_ALPHA; // 0.9
-  const STEP_SIZE = 50;
 
   if (level < transparentOriginLevel) {
     // Bright direction (from 50 to transparentOriginLevel)
-    const totalSteps = (transparentOriginLevel - MIN_LEVEL) / STEP_SIZE;
+    // Calculate the ratio of how far we are from the origin
+    const levelDifference = transparentOriginLevel - level;
+    const maxLevelDifference = transparentOriginLevel - 50; // From 50 to origin
 
-    if (totalSteps === 0) {
-      return MIN_ALPHA;
+    if (maxLevelDifference === 0) {
+      return MAX_ALPHA;
     }
 
-    const currentStep = (level - MIN_LEVEL) / STEP_SIZE;
-    const stepAlpha = alphaDifference / totalSteps;
-
-    return MIN_ALPHA + stepAlpha * currentStep;
+    const ratio = levelDifference / maxLevelDifference;
+    return MAX_ALPHA - alphaDifference * ratio;
   } else {
     // Dark direction (from transparentOriginLevel to 950)
-    const totalSteps = (MAX_LEVEL - transparentOriginLevel) / STEP_SIZE;
+    // Calculate the ratio of how far we are from the origin
+    const levelDifference = level - transparentOriginLevel;
+    const maxLevelDifference = 950 - transparentOriginLevel; // From origin to 950
 
-    if (totalSteps === 0) {
-      return MIN_ALPHA;
+    if (maxLevelDifference === 0) {
+      return MAX_ALPHA;
     }
 
-    const currentStep = (level - transparentOriginLevel) / STEP_SIZE;
-    const stepAlpha = alphaDifference / totalSteps;
-
-    return MAX_ALPHA - stepAlpha * currentStep;
+    const ratio = levelDifference / maxLevelDifference;
+    return MAX_ALPHA - alphaDifference * ratio;
   }
 };
 
