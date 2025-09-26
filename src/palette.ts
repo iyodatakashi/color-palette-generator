@@ -239,7 +239,14 @@ const calculateNaturalChromaCurve = ({
   const scaledMultiplier = targetMultiplier / actualReferenceMultiplier;
 
   // 基準色を通るガウシアンカーブを適用
-  const result = referenceChroma * scaledMultiplier;
+  let result = referenceChroma * scaledMultiplier;
+
+  // 基準色の彩度に基づいて彩度カーブの上限を抑制
+  // 基準色の彩度が高い場合、ガウシアンカーブのピークを抑制
+  const maxAllowedChroma = referenceChroma * 1.5; // 基準色の1.5倍を上限とする
+  if (result > maxAllowedChroma) {
+    result = maxAllowedChroma;
+  }
 
   return result;
 };
