@@ -8,6 +8,12 @@ import {
   DEFAULT_LEVEL_500_LIGHTNESS,
 } from "./constants";
 
+// Cache for max chroma calculations to avoid duplicate expensive searches
+const maxChromaCache = new Map<
+  number,
+  { maxChroma: number; maxChromaLightness: number }
+>();
+
 // =============================================================================
 // Lightness Calculation Functions
 // =============================================================================
@@ -211,12 +217,17 @@ const sigmoidRichardsThrough = (
 
 /**
  * Find maximum chroma and its corresponding lightness for a given hue
- * Uses optimized 2-stage search for better performance
+ * Uses optimized 2-stage search for better performance with caching
  * @returns Object containing both maxChroma and maxChromaLightness
  */
 const findMaxChromaAndLightness = (
   hue: number
 ): { maxChroma: number; maxChromaLightness: number } => {
+  // Check cache first
+  if (maxChromaCache.has(hue)) {
+    return maxChromaCache.get(hue)!;
+  }
+
   let maxChroma = 0;
   let maxChromaLightness = DEFAULT_LEVEL_500_LIGHTNESS;
 
@@ -248,10 +259,14 @@ const findMaxChromaAndLightness = (
     }
   }
 
-  return {
+  const result = {
     maxChroma: maxChroma || 0.2, // Fallback value
     maxChromaLightness,
   };
+
+  // Cache the result
+  maxChromaCache.set(hue, result);
+  return result;
 };
 
 /**
