@@ -67,6 +67,7 @@ export type {
   CombinationConfig,
   RandomColorConfig,
   GeneratedColor,
-  CombinationResults,
-  CombinationResult,
 } from "./types";
+
+// Culori types
+export type { Oklch, Rgb } from "culori";

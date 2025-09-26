@@ -62,14 +62,7 @@ export type CombinationConfig = {
   hueShiftMode?: HueShiftMode;
 };
 
-// Color combination result (output) - New implementation with generated palettes
-export type CombinationResults = CombinationResult[];
-
-export type CombinationResult = ColorConfig & {
-  palette: Palette;
-};
-
-// Legacy type (deprecated)
+// Color combination result (output) - ColorConfig only
 export type Combination = ColorConfig[];
 
 // Color combination types
