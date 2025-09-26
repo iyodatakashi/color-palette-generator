@@ -11,7 +11,7 @@ import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
 import { SCALE_LEVELS, NATURAL_CHROMA_CURVE_PARAMS } from "./constants";
 import type { ColorConfig } from "./types";
-import { oklchToHexPerceptual } from "./colorUtils";
+import { oklchToHexPerceptual, isValidOklch } from "./colorUtils";
 
 // =============================================================================
 // Main Functions
@@ -51,12 +51,7 @@ const generateEachPalette = ({
   colorConfig: ColorConfig;
 }): Palette => {
   // Validate input OKLCH
-  if (
-    !colorConfig.oklch ||
-    !isFinite(colorConfig.oklch.l) ||
-    !isFinite(colorConfig.oklch.c) ||
-    !isFinite(colorConfig.oklch.h || 0)
-  ) {
+  if (!isValidOklch(colorConfig.oklch)) {
     throw new Error("Invalid OKLCH input");
   }
 

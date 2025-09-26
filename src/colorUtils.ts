@@ -260,7 +260,7 @@ export const getMaxChromaForHue = (hue: number): number => {
 /**
  * 入力値を安全な範囲に正規化
  */
-const normalizeOklch = (oklch: Oklch): Oklch => {
+export const normalizeOklch = (oklch: Oklch): Oklch => {
   const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
   return {
@@ -269,4 +269,18 @@ const normalizeOklch = (oklch: Oklch): Oklch => {
     c: Math.max(0, oklch.c || 0),
     h: oklch.h || 0, // undefinedの場合は0をデフォルト値として使用
   };
+};
+
+/**
+ * Validate OKLCH object structure
+ */
+export const isValidOklch = (oklch: any): oklch is Oklch => {
+  return (
+    oklch &&
+    typeof oklch === "object" &&
+    oklch.mode === "oklch" &&
+    isFinite(oklch.l) &&
+    isFinite(oklch.c) &&
+    isFinite(oklch.h || 0)
+  );
 };

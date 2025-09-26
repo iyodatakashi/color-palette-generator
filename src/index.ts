@@ -36,6 +36,8 @@ export {
   oklchGamutMappingAdjustChroma,
   oklchGamutMappingAdjustLightness,
   calculateRelativeChroma,
+  normalizeOklch,
+  isValidOklch,
 } from "./colorUtils";
 
 // Apply to DOM

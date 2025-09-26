@@ -9,6 +9,7 @@ import {
   getMaxChromaForHue,
   oklchGamutMappingPerceptual,
   oklchGamutMappingAdjustChroma,
+  normalizeOklch,
 } from "./colorUtils";
 import { findClosestLevel, getLightness } from "./lightness";
 import { DEFAULT_LEVEL_500_LIGHTNESS } from "./constants";
@@ -413,17 +414,13 @@ export const generateSameToneColor = ({
   c: number;
   targetLightness: number;
 }): Oklch => {
-  // Validate and normalize inputs
-  h = isFinite(h) ? ((h % 360) + 360) % 360 : 0;
-  c = isFinite(c) ? Math.max(0, c) : 0;
-  targetLightness = isFinite(targetLightness) ? targetLightness : 0.5; // 50% in 0-1 range
-
-  const targetColor = {
+  // Create target color and normalize
+  const targetColor = normalizeOklch({
     mode: "oklch" as const,
-    l: targetLightness, // 0-1 range
+    l: targetLightness,
     c: c,
     h: h,
-  };
+  });
 
   // Use optimized gamut mapping for same-tone generation
   return targetColor;
