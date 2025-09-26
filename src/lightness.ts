@@ -342,6 +342,28 @@ const getMaxChromaForHue = (hue: number): number => {
 };
 
 /**
+ * Find the lightness at which maximum chroma occurs for a given hue
+ */
+const getMaxChromaLightnessForHue = (hue: number): number => {
+  let maxChroma = 0;
+  let maxChromaLightness = DEFAULT_LEVEL_500_LIGHTNESS; // Default to level 500 lightness
+
+  // Search across lightness range to find the lightness where maximum chroma occurs
+  for (let l = MIN_LIGHTNESS; l <= MAX_LIGHTNESS; l += 0.01) {
+    const highChromaColor = { mode: "oklch" as const, l, c: 1.0, h: hue };
+    const clampedColor = culori.clampChroma(highChromaColor, "oklch", "rgb");
+    const oklchResult = culori.converter("oklch")(clampedColor);
+
+    if (oklchResult && oklchResult.c > maxChroma) {
+      maxChroma = oklchResult.c;
+      maxChromaLightness = l;
+    }
+  }
+
+  return maxChromaLightness;
+};
+
+/**
  * Find the target level using the same logic as generateAdjustedLightnessScale
  */
 export const findClosestLevel = ({
@@ -423,5 +445,34 @@ export const calculateEvenScale = ({
   SCALE_LEVELS.forEach((level) => {
     scale[level] = getBaseSigmoidLightness(level, 0.18); // Use default K
   });
+
+  // Apply hue-specific maximum chroma lightness correction by adjusting anchor lightness level
+  if (enableLightnessAdjustment) {
+    const maxChromaLightness = getMaxChromaLightnessForHue(inputHue);
+
+    // Find which level corresponds to the max chroma lightness
+    const maxChromaLightnessLevel = getLevelFromLightness(maxChromaLightness);
+
+    // Calculate offset from target level (500)
+    const levelOffset = 500 - maxChromaLightnessLevel;
+
+    // Apply correction with moderate weight (0.3) to avoid over-correction
+    const correctionWeight = 0.3;
+    const adjustedLevelOffset = levelOffset * correctionWeight;
+
+    // Adjust anchor level: move from max chroma lightness level toward 500
+    const adjustedAnchorLevel = maxChromaLightnessLevel + adjustedLevelOffset;
+
+    // Regenerate the scale with adjusted anchor level and original max chroma lightness
+    SCALE_LEVELS.forEach((level) => {
+      scale[level] = getBaseSigmoidLightness(
+        level,
+        0.18, // Keep same steepness
+        adjustedAnchorLevel, // Use adjusted anchor level (toward 500)
+        maxChromaLightness // Keep original max chroma lightness as anchor
+      );
+    });
+  }
+
   return scale;
 };
