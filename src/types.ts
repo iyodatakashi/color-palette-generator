@@ -9,9 +9,9 @@ import type { Oklch, Rgb } from "culori";
 // Color configuration (input)
 export type ColorConfig = {
   prefix: string;
-  oklch: Oklch;
+  oklch?: Oklch | null;
   color: string;
-  id?: string; // Optional for internal unique management
+  id?: string;
   hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;
   bgColorLight?: string;

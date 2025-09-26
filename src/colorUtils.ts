@@ -5,6 +5,30 @@ import { type Oklch } from "culori";
 export type Rgb = { mode: "rgb"; r: number; g: number; b: number };
 
 // =============================================================================
+// RGB to OKLCH Conversion
+// =============================================================================
+
+/**
+ * RGB → OKLCH変換
+ */
+export const rgbToOklch = (rgb: Rgb): Oklch => {
+  return culori.converter("oklch")(rgb);
+};
+
+/**
+ * HEX → OKLCH変換
+ */
+export const hexToOklch = (hex: string): Oklch | undefined => {
+  const parsed = culori.parse(hex);
+  if (!parsed) return;
+
+  const rgb = culori.converter("rgb")(parsed);
+  if (!rgb) return;
+
+  return culori.converter("oklch")(rgb);
+};
+
+// =============================================================================
 // OKLCH to HEX Conversion
 // =============================================================================
 

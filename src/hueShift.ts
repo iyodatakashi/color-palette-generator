@@ -1,6 +1,8 @@
 // hueShift.ts
 
 import type { ColorConfig, HueShiftMode } from "./types";
+import { isValidOklch, hexToOklch } from "./colorUtils";
+import type { Oklch } from "culori";
 
 // =============================================================================
 // Hue Shift Calculation Functions
@@ -20,7 +22,11 @@ export const calculateHueShift = ({
 }): number => {
   const MAX_HUE_SHIFT = 30;
 
-  const originalOklch = colorConfig.oklch;
+  // Validate input OKLCH
+  let originalOklch = colorConfig.oklch;
+  if (!originalOklch || !isValidOklch(originalOklch)) {
+    originalOklch = hexToOklch(colorConfig.color) as Oklch;
+  }
   const originalHue = originalOklch.h ?? 0;
   const originalLightness = originalOklch.l;
 
@@ -117,11 +123,14 @@ export const getHueShiftExplanation = ({
   const { hueShiftMode } = colorConfig;
   // Parse color and get hue value
 
-  const baseOklch = colorConfig.oklch;
-
-  const baseHue = baseOklch.h || 0;
-  const hueCategory = getHueCategory(baseHue);
-  const category = getHueCategoryJapanese(baseHue);
+  // Validate input OKLCH
+  let originalOklch = colorConfig.oklch;
+  if (!originalOklch || !isValidOklch(originalOklch)) {
+    originalOklch = hexToOklch(colorConfig.color) as Oklch;
+  }
+  const originalHue = originalOklch.h || 0;
+  const hueCategory = getHueCategory(originalHue);
+  const category = getHueCategoryJapanese(originalHue);
 
   // Fixed mode has no change
   if (hueShiftMode === "fixed") {
@@ -135,7 +144,7 @@ export const getHueShiftExplanation = ({
   }
 
   // Get intensity value from dynamic calculation
-  const intensity = calculateHueIntensityByHue(baseHue);
+  const intensity = calculateHueIntensityByHue(originalHue);
   const directions =
     HUE_DIRECTION_EXPLANATION_MAP[
       hueCategory as keyof typeof HUE_DIRECTION_EXPLANATION_MAP

@@ -26,6 +26,8 @@ export {
 
 // Color utility features
 export {
+  rgbToOklch,
+  hexToOklch,
   oklchToHexPerceptual,
   oklchToHexAdjustChroma,
   oklchToHexAdjustLightness,
@@ -36,6 +38,7 @@ export {
   oklchGamutMappingAdjustChroma,
   oklchGamutMappingAdjustLightness,
   calculateRelativeChroma,
+  getMaxChromaForHue,
   normalizeOklch,
   isValidOklch,
 } from "./colorUtils";

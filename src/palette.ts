@@ -11,7 +11,7 @@ import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
 import { SCALE_LEVELS, NATURAL_CHROMA_CURVE_PARAMS } from "./constants";
 import type { ColorConfig } from "./types";
-import { oklchToHexPerceptual, isValidOklch } from "./colorUtils";
+import { oklchToHexPerceptual, isValidOklch, hexToOklch } from "./colorUtils";
 
 // =============================================================================
 // Main Functions
@@ -51,20 +51,21 @@ const generateEachPalette = ({
   colorConfig: ColorConfig;
 }): Palette => {
   // Validate input OKLCH
-  if (!isValidOklch(colorConfig.oklch)) {
-    throw new Error("Invalid OKLCH input");
+  let oklch = colorConfig.oklch;
+  if (!oklch || !isValidOklch(oklch)) {
+    oklch = hexToOklch(colorConfig.color) as Oklch;
   }
 
   const closestLevel = findClosestLevel({
-    inputLightness: colorConfig.oklch.l,
-    inputChroma: colorConfig.oklch.c,
-    inputHue: colorConfig.oklch.h,
+    inputLightness: oklch.l,
+    inputChroma: oklch.c,
+    inputHue: oklch.h,
   });
 
   const adjustedLightnessScale = generateLightnessScale({
-    inputLightness: colorConfig.oklch.l,
-    inputChroma: colorConfig.oklch.c ?? 0,
-    inputHue: colorConfig.oklch.h ?? 0,
+    inputLightness: oklch.l,
+    inputChroma: oklch.c ?? 0,
+    inputHue: oklch.h ?? 0,
     enableLightnessAdjustment: true,
   });
 
@@ -171,7 +172,11 @@ const generateSolidPalette = ({
   adjustedLightnessScale: Record<number, number>;
 }): Palette => {
   const palette: Palette = {};
-  const inputOklch = colorConfig.oklch;
+  // Validate input OKLCH
+  let oklch = colorConfig.oklch;
+  if (!oklch || !isValidOklch(oklch)) {
+    oklch = hexToOklch(colorConfig.color) as Oklch;
+  }
 
   // Helper function to convert OKLCH to HEX with perceptual gamut mapping
   const oklchToHex = (oklch: Oklch): string => {
@@ -182,7 +187,7 @@ const generateSolidPalette = ({
     const level = parseInt(key);
 
     // Use base hue and chroma from reference color
-    const baseChroma = inputOklch.c || 0;
+    const baseChroma = oklch.c || 0;
 
     // Apply hue shift mode
     const adjustedHue = calculateHueShift({
@@ -203,9 +208,9 @@ const generateSolidPalette = ({
       // Use the adjusted lightness scale to find the reference level
       // This ensures we use the hue-specific maximum chroma lightness corrected scale
       const referenceLevel = findClosestLevel({
-        inputLightness: inputOklch.l,
-        inputChroma: inputOklch.c,
-        inputHue: inputOklch.h,
+        inputLightness: oklch.l,
+        inputChroma: oklch.c,
+        inputHue: oklch.h,
       });
 
       targetChroma = calculateNaturalChromaCurve({
@@ -286,13 +291,17 @@ const setTextColor = ({
     return;
   }
 
-  const inputOklch = colorConfig.oklch;
+  // Validate input OKLCH
+  let oklch = colorConfig.oklch;
+  if (!oklch || !isValidOklch(oklch)) {
+    oklch = hexToOklch(colorConfig.color) as Oklch;
+  }
 
   // Find the primary color level (the level closest to input color)
   const primaryLevel = findClosestLevel({
-    inputLightness: inputOklch.l, // 0-1 range
-    inputChroma: inputOklch?.c,
-    inputHue: inputOklch?.h,
+    inputLightness: oklch.l, // 0-1 range
+    inputChroma: oklch?.c,
+    inputHue: oklch?.h,
   });
 
   // Get primary color and its lightness
