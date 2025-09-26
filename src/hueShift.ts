@@ -20,9 +20,9 @@ export const calculateHueShift = ({
 }): number => {
   const MAX_HUE_SHIFT = 30;
 
-  const originalOKLCH = colorConfig.oklch;
-  const originalHue = originalOKLCH.h ?? 0;
-  const originalLightness = originalOKLCH.l;
+  const originalOklch = colorConfig.oklch;
+  const originalHue = originalOklch.h ?? 0;
+  const originalLightness = originalOklch.l;
 
   // No change in fixed mode
   if (colorConfig.hueShiftMode === "fixed") {
@@ -117,9 +117,9 @@ export const getHueShiftExplanation = ({
   const { hueShiftMode } = colorConfig;
   // Parse color and get hue value
 
-  const baseOKLCHColor = colorConfig.oklch;
+  const baseOklch = colorConfig.oklch;
 
-  const baseHue = baseOKLCHColor.h || 0;
+  const baseHue = baseOklch.h || 0;
   const hueCategory = getHueCategory(baseHue);
   const category = getHueCategoryJapanese(baseHue);
 

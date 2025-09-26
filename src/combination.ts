@@ -464,11 +464,11 @@ const getBaseColor = ({
     strategyMap[strategy] || strategyMap.harmonic;
 
   // Create OKLCH color with target lightness
-  const newOKLCHObj = {
+  const newOklchObj = {
     mode: "oklch" as const,
     l: targetLightness, // 0-1 range // Convert to 0-1 range
     c: finalChroma,
     h: baseHue,
   };
-  return newOKLCHObj;
+  return newOklchObj;
 };
