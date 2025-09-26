@@ -18,6 +18,7 @@ export {
   getLightness,
   adjustToLightness,
   calculateEvenScale,
+  getLevelFromLightness,
   findClosestLevel,
 } from "./lightness";
 

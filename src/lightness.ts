@@ -16,6 +16,76 @@ import { oklchToHexPerceptual } from "./colorUtils";
 // =============================================================================
 
 /**
+ * Calculate level from lightness using numerical inverse of sigmoid function
+ * This finds the level that corresponds to a given lightness value using binary search
+ */
+export const getLevelFromLightness = (
+  targetLightness: number,
+  kSigned: number = 0.18,
+  anchorLevel: number = 500,
+  anchorLightness: number = DEFAULT_LEVEL_500_LIGHTNESS,
+  vBase: number = 2.0,
+  kMin: number = 1e-6
+): number => {
+  // Clamp target lightness to valid range
+  const clampedTarget = Math.max(
+    MIN_LIGHTNESS,
+    Math.min(MAX_LIGHTNESS, targetLightness)
+  );
+
+  const minLevel = 50;
+  const maxLevel = 950;
+
+  // シグモイド関数の逆計算（明度とレベルは逆相関）
+  // 高い明度 → 低いレベル
+  // 低い明度 → 高いレベル
+
+  // 線形近似で初期値を推定
+  const normalizedTarget =
+    (clampedTarget - MIN_LIGHTNESS) / (MAX_LIGHTNESS - MIN_LIGHTNESS);
+  const estimatedLevel =
+    minLevel + (1 - normalizedTarget) * (maxLevel - minLevel);
+
+  // 二分探索で精密化
+  let low = minLevel;
+  let high = maxLevel;
+  let bestLevel = estimatedLevel;
+  let bestDiff = Infinity;
+
+  // Search with high precision
+  for (let i = 0; i < 50; i++) {
+    const mid = (low + high) / 2;
+    const lightness = getBaseSigmoidLightness(
+      mid,
+      kSigned,
+      anchorLevel,
+      anchorLightness,
+      vBase,
+      kMin
+    );
+    const diff = Math.abs(lightness - clampedTarget);
+
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestLevel = mid;
+    }
+
+    if (lightness > clampedTarget) {
+      low = mid; // 明度が高すぎる → レベルを下げる
+    } else {
+      high = mid; // 明度が低すぎる → レベルを上げる
+    }
+
+    // Early termination if we're close enough
+    if (diff < 1e-6) {
+      break;
+    }
+  }
+
+  return bestLevel;
+};
+
+/**
  * Get lightness value from color using OKLCH
  */
 export const getLightness = (color: string): number => {

@@ -6,6 +6,7 @@ import {
   getLightness,
   findClosestLevel,
   calculateEvenScale,
+  getLevelFromLightness,
 } from "./lightness";
 import { calculateHueShift } from "./hueShift";
 import { setTransparentPalette } from "./transparentColor";
@@ -221,21 +222,24 @@ const calculateNaturalChromaCurve = ({
   const targetLightness = (targetLevel - minLevel) / range;
   const referenceLightness = (referenceLevel - minLevel) / range;
 
-  // Calculate super-Gaussian multipliers
+  // ガウシアンカーブを基準色を通るカーブに調整（中心は固定）
   const targetMultiplier = superGaussianGain(
     targetLightness,
     NATURAL_CHROMA_CURVE_PARAMS
   );
-  const referenceMultiplier = superGaussianGain(
-    referenceLightness,
+
+  // 基準色の実際のレベルでのガウシアン乗数を計算
+  const actualReferencePosition = (referenceLevel - minLevel) / range;
+  const actualReferenceMultiplier = superGaussianGain(
+    actualReferencePosition,
     NATURAL_CHROMA_CURVE_PARAMS
   );
 
-  // Calculate base chroma needed to pass through reference point
-  const baseChroma = referenceChroma / referenceMultiplier;
+  // 基準色の彩度が実際のレベルで現れるようにスケール調整
+  const scaledMultiplier = targetMultiplier / actualReferenceMultiplier;
 
-  // Apply to target level
-  let result = baseChroma * targetMultiplier;
+  // 基準色を通るガウシアンカーブを適用
+  const result = referenceChroma * scaledMultiplier;
 
   return result;
 };
@@ -285,7 +289,7 @@ const generateOriginalPalette = ({
     if (colorConfig.enableChromaAdjustment) {
       targetChroma = calculateNaturalChromaCurve({
         targetLevel: level,
-        referenceLevel: closestLevel,
+        referenceLevel: getLevelFromLightness(inputOKLCH.l), // 基準色の明度から実際のレベルを計算
         referenceChroma: baseChroma,
       });
     }

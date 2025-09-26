@@ -8,6 +8,7 @@ import {
   calculateRelativeChroma,
   getMaxChromaForHue,
   oklchGamutMappingPerceptual,
+  oklchGamutMappingAdjustChroma,
 } from "./colorUtils";
 import { findClosestLevel, getLightness } from "./lightness";
 import { DEFAULT_LEVEL_500_LIGHTNESS } from "./constants";
@@ -260,6 +261,7 @@ const generateSecondaryPalettes = ({
 
   for (const { id, prefix, hue } of secondaryColorMap) {
     if (hue !== undefined) {
+      /*
       const primaryRelativeChroma = calculateRelativeChroma(primaryOklch);
       const primaryMaxChroma = getMaxChromaForHue(primaryOklch.h ?? 0);
 
@@ -283,15 +285,17 @@ const generateSecondaryPalettes = ({
         c: secondaryOriginChroma,
         h: hue,
       };
+      */
 
-      /*
-      const secondaryOklch = oklchGamutMappingPerceptual({
+      const gamutMappedPrimaryOklch =
+        oklchGamutMappingAdjustChroma(primaryOklch);
+
+      const secondaryOklch = {
         mode: "oklch" as const,
         l: primaryOklch.l,
         c: primaryOklch.c,
         h: hue,
-      });
-      */
+      };
 
       // 3. Generate complete secondary palette using provisional base OKLCH directly
       const secondaryConfig = {

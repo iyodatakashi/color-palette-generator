@@ -20,7 +20,7 @@ export const MAX_LIGHTNESS = 0.97;
 export const MIN_LIGHTNESS = 0.25;
 
 // Default level 500 lightness (middle of the scale)
-export const DEFAULT_LEVEL_500_LIGHTNESS = 0.68;
+export const DEFAULT_LEVEL_500_LIGHTNESS = 0.64;
 
 /**
  * Natural Chroma Curve
