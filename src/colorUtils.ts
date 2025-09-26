@@ -1,6 +1,7 @@
 // colorUtils.ts
 import * as culori from "culori";
 import { type Oklch } from "culori";
+import { MIN_LIGHTNESS, MAX_LIGHTNESS } from "./constants";
 
 export type Rgb = { mode: "rgb"; r: number; g: number; b: number };
 
@@ -211,8 +212,42 @@ export const oklchGamutMappingAdjustLightness = (oklch: Oklch): Oklch => {
   let bestLightness = normalizedOklch.l;
   let bestChromaRatio = 0;
 
-  // 明度を0.01刻みで探索（0.1から0.9まで）
-  for (let lightness = 0.1; lightness <= 0.9; lightness += 0.01) {
+  // Stage 1: Coarse search with 0.1 step to find approximate peak
+  for (
+    let lightness = MIN_LIGHTNESS;
+    lightness <= MAX_LIGHTNESS;
+    lightness += 0.1
+  ) {
+    const testOklch: Oklch = {
+      mode: "oklch",
+      l: lightness,
+      c: targetChroma,
+      h: hue,
+    };
+
+    try {
+      // 高chromaのOKLCHをoklchGamutMappingAdjustChromaで変換
+      const testGamutMapped = oklchGamutMappingAdjustChroma(testOklch);
+      const actualChroma = testGamutMapped.c || 0;
+      const chromaRatio = actualChroma / targetChroma;
+
+      // 目標chromaにより近い明度を選択
+      if (chromaRatio > bestChromaRatio) {
+        bestChromaRatio = chromaRatio;
+        bestLightness = lightness;
+      }
+    } catch (error) {
+      // エラー時はスキップ
+      continue;
+    }
+  }
+
+  // Stage 2: Fine search around the peak with 0.01 step
+  const searchRange = 0.1; // Search ±0.1 around the peak
+  const fineStart = Math.max(MIN_LIGHTNESS, bestLightness - searchRange);
+  const fineEnd = Math.min(MAX_LIGHTNESS, bestLightness + searchRange);
+
+  for (let lightness = fineStart; lightness <= fineEnd; lightness += 0.01) {
     const testOklch: Oklch = {
       mode: "oklch",
       l: lightness,
