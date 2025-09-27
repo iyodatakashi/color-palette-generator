@@ -37,7 +37,8 @@ export const getLightness = (color: string): number => {
 
 /**
  * Base sigmoid function for lightness distribution
- * Maps level 50-950 to lightness 0.97-0.25 (0-1 range) with configurable steepness
+ * Maps level 0-1000 to lightness 1.0-0.2 (0-1 range) with configurable steepness
+ * Final output uses level 50-950 range
  */
 
 // level, kSigned（符号で膨らみ反転）, アンカー(level, lightness)を渡す版
@@ -49,9 +50,9 @@ const getLightnessFromLevel = (
   vBase: number = 2.0, // 非対称ベース（決め打ち）
   kMin: number = 1e-6 // 極小傾きガード
 ): number => {
-  // 1) level→x 正規化（50..950 → 0..10）
-  const minLevel = 50;
-  const maxLevel = 950;
+  // 1) level→x 正規化（0..1000 → 0..10）
+  const minLevel = 0;
+  const maxLevel = 1000;
   const xRange = 10;
   const x = ((level - minLevel) / (maxLevel - minLevel)) * xRange;
 
@@ -130,8 +131,8 @@ export const getLevelFromLightness = (
     Math.min(MAX_LIGHTNESS, targetLightness)
   );
 
-  const minLevel = 50;
-  const maxLevel = 950;
+  const minLevel = 0;
+  const maxLevel = 1000;
 
   // 線形近似で初期値を推定
   const normalizedTarget =
@@ -312,7 +313,7 @@ export const findClosestLevel = ({
   );
 
   // Clamp to valid levels
-  const validLevels = SCALE_LEVELS.filter((level) => level <= 950);
+  const validLevels = SCALE_LEVELS.filter((level) => level <= 1000);
   const targetLevel = validLevels.reduce((prev, curr) =>
     Math.abs(curr - correctedLevel) < Math.abs(prev - correctedLevel)
       ? curr
