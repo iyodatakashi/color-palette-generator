@@ -65,7 +65,7 @@ export const MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR = 1.4;
 export const BASE_COLOR_CHROMA_MIN = 0.02;
 export const BASE_COLOR_CHROMA_MAX = 0.06;
 export const BASE_COLOR_CHROMA_MULTIPLIER = 0.08;
-export const BASE_COLOR_NEUTRAL_CHROMA = 0.01;
+export const BASE_COLOR_NEUTRAL_CHROMA = 0.0;
 
 export const FALLBACK_MAX_CHROMA = 0.2;
 

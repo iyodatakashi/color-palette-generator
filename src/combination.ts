@@ -356,7 +356,7 @@ const getBaseColor = ({
       baseHue: normalizeHue((primaryOklch.h || 0) + 180),
       finalChroma: baseChroma,
     },
-    neutral: { baseHue: 0, finalChroma: BASE_COLOR_NEUTRAL_CHROMA },
+    neutral: { baseHue: undefined, finalChroma: BASE_COLOR_NEUTRAL_CHROMA },
   };
 
   const { baseHue, finalChroma } =
