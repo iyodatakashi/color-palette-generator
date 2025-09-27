@@ -76,7 +76,7 @@ export const FALLBACK_MAX_CHROMA = 0.2;
 /**
  * Hue shift parameters
  */
-export const MAX_HUE_SHIFT = 30;
+export const MAX_HUE_SHIFT = 50;
 
 /**
  * Temperature direction calculation offset angle (in degrees)
