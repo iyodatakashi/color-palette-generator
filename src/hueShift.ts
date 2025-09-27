@@ -52,6 +52,8 @@ export const calculateHueShift = ({
     hueShift = -hueShift;
   }
 
+  console.log(hueShift);
+
   const newHue = originalHue + hueShift;
   return normalizeHue(newHue);
 };
@@ -71,7 +73,7 @@ export const calculateHueIntensityByHue = (hue: number): number => {
   // Direction of hue shift due to temperature change
   // Warm colors (0-180°): bright→yellow (+), dark→magenta (-)
   // Cool colors (180-360°): bright→green (-), dark→blue/purple (+)
-  const temperatureDirection = Math.cos(radians);
+  const temperatureDirection = Math.cos(radians - Math.PI / 6); // 30度ずらし
 
   // Combine perceptual sensitivity and temperature direction
   return perceptualSensitivity * temperatureDirection;
