@@ -16,7 +16,7 @@ export const MAX_LEVEL = 1000;
  */
 
 // Lightness scale limits (0-1 range)
-export const MAX_LIGHTNESS = 0.96;
+export const MAX_LIGHTNESS = 0.97;
 export const MIN_LIGHTNESS = 0.25;
 
 // Default level 500 lightness (middle of the scale)
