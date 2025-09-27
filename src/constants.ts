@@ -34,7 +34,7 @@ export const DEFAULT_COMBINATION_CONFIG = {
   baseTransparentOriginLevel: 950,
   hueShiftMode: "natural" as HueShiftMode,
   enableChromaLimit: true,
-  maxSeedChroma: 0.2,
+  maxChroma: 0.2,
 };
 
 // =============================================================================

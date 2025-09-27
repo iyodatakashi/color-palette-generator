@@ -48,12 +48,12 @@ export const generateCombination = (
   const enableChromaLimit =
     combinationConfig.enableChromaLimit ??
     DEFAULT_COMBINATION_CONFIG.enableChromaLimit;
-  const maxSeedChroma =
-    combinationConfig.maxSeedChroma ?? DEFAULT_COMBINATION_CONFIG.maxSeedChroma;
-  if (enableChromaLimit && seedOklch.c > maxSeedChroma) {
+  const maxChroma =
+    combinationConfig.maxChroma ?? DEFAULT_COMBINATION_CONFIG.maxChroma;
+  if (enableChromaLimit && seedOklch.c > maxChroma) {
     adjustedSeedOklch = {
       ...seedOklch,
-      c: maxSeedChroma,
+      c: maxChroma,
     };
   }
 

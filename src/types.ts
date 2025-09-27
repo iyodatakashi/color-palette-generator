@@ -61,7 +61,7 @@ export type CombinationConfig = {
   baseTransparentOriginLevel?: number;
   hueShiftMode?: HueShiftMode;
   enableChromaLimit?: boolean; // Whether to limit high chroma in seed color
-  maxSeedChroma?: number; // Maximum chroma value for seed color (0-1)
+  maxChroma?: number; // Maximum chroma value for seed color when enableChromaLimit is true (0-1)
 };
 
 // Color combination result (output) - ColorConfig only
