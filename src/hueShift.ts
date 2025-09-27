@@ -2,7 +2,10 @@
 
 import type { ColorConfig, HueShiftMode } from "./types";
 import { isValidOklch, hexToOklch } from "./colorUtils";
-import { MAX_HUE_SHIFT } from "./constants";
+import {
+  MAX_HUE_SHIFT,
+  TEMPERATURE_DIRECTION_OFFSET_DEGREES,
+} from "./constants";
 import type { Oklch } from "culori";
 
 // =============================================================================
@@ -70,7 +73,9 @@ export const calculateHueIntensityByHue = (hue: number): number => {
   // Direction of hue shift due to temperature change
   // Warm colors (0-180°): bright→yellow (+), dark→magenta (-)
   // Cool colors (180-360°): bright→green (-), dark→blue/purple (+)
-  const temperatureDirection = Math.cos(radians - Math.PI / 6); // 30度ずらし
+  const temperatureDirection = Math.cos(
+    radians - (TEMPERATURE_DIRECTION_OFFSET_DEGREES * Math.PI) / 180
+  );
 
   // Combine perceptual sensitivity and temperature direction
   return perceptualSensitivity * temperatureDirection;

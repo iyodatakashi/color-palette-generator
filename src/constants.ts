@@ -85,11 +85,10 @@ export const SIGMOID_EPSILON = 1e-12; // Small value for division safety
 /**
  * Base color generation parameters
  */
-export const BASE_CHROMA_MIN = 0.02;
-export const BASE_CHROMA_MAX = 0.06;
-export const BASE_CHROMA_MULTIPLIER = 0.08;
-export const NEUTRAL_CHROMA = 0.01;
-export const CONTRASTING_HUE_SHIFT = 180;
+export const BASE_COLOR_CHROMA_MIN = 0.02;
+export const BASE_COLOR_CHROMA_MAX = 0.06;
+export const BASE_COLOR_CHROMA_MULTIPLIER = 0.08;
+export const BASE_COLOR_NEUTRAL_CHROMA = 0.01;
 
 /**
  * Hue shift parameters
@@ -97,9 +96,14 @@ export const CONTRASTING_HUE_SHIFT = 180;
 export const MAX_HUE_SHIFT = 30;
 
 /**
+ * Temperature direction calculation offset angle (in degrees)
+ */
+export const TEMPERATURE_DIRECTION_OFFSET_DEGREES = 45;
+
+/**
  * Variation level offsets
  */
-export const VARIATION_OFFSETS = {
+export const VARIATION_COLOR_OFFSETS = {
   lighter: -2,
   light: -1,
   dark: 1,

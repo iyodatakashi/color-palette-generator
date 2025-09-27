@@ -15,7 +15,7 @@ import {
   TEXT_LIGHTNESS_ON_LIGHT,
   TEXT_LIGHTNESS_ON_DARK,
   MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR,
-  VARIATION_OFFSETS,
+  VARIATION_COLOR_OFFSETS,
   FALLBACK_HEX_COLOR,
   FALLBACK_TEXT_LEVEL_LIGHT,
   FALLBACK_TEXT_LEVEL_DARK,
@@ -263,10 +263,10 @@ const setVariationColors = ({
   const currentIndex = SCALE_LEVELS.indexOf(closestLevel);
 
   const variations = [
-    { name: "lighter", offset: VARIATION_OFFSETS.lighter },
-    { name: "light", offset: VARIATION_OFFSETS.light },
-    { name: "dark", offset: VARIATION_OFFSETS.dark },
-    { name: "darker", offset: VARIATION_OFFSETS.darker },
+    { name: "lighter", offset: VARIATION_COLOR_OFFSETS.lighter },
+    { name: "light", offset: VARIATION_COLOR_OFFSETS.light },
+    { name: "dark", offset: VARIATION_COLOR_OFFSETS.dark },
+    { name: "darker", offset: VARIATION_COLOR_OFFSETS.darker },
   ];
 
   variations.forEach(({ name, offset }) => {
