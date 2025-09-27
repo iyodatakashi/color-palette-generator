@@ -11,7 +11,7 @@ import {
   DEFAULT_K_MIN,
   SIGMOID_X_RANGE,
   SIGMOID_EPSILON,
-  FALLBACK_MAX_CHROMA,
+  FALLBACK_MAX_CHROMA_FOR_HUE_SEARCH,
 } from "./constants";
 
 // Cache for max chroma calculations to avoid duplicate expensive searches
@@ -267,7 +267,7 @@ const findMaxChromaAndLightness = (
   }
 
   const result = {
-    maxChroma: maxChroma || FALLBACK_MAX_CHROMA, // Fallback value
+    maxChroma: maxChroma || FALLBACK_MAX_CHROMA_FOR_HUE_SEARCH, // Fallback value
     maxChromaLightness,
   };
 

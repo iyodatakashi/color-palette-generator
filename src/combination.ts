@@ -15,6 +15,7 @@ import {
   BASE_COLOR_CHROMA_MAX,
   BASE_COLOR_CHROMA_MULTIPLIER,
   BASE_COLOR_NEUTRAL_CHROMA,
+  DEFAULT_COMBINATION_CONFIG,
 } from "./constants";
 import type {
   ColorConfig,
@@ -37,17 +38,31 @@ export const generateCombination = (
   combinationConfig: CombinationConfig
 ): Combination => {
   const combinationType = combinationConfig.combinationType || "complementary";
-  const primaryOklch = hexToOklch(combinationConfig.seedColor);
-  if (!primaryOklch) {
+  let seedOklch = hexToOklch(combinationConfig.seedColor);
+  if (!seedOklch) {
     throw new Error("Failed to convert color to OKLCH");
   }
 
+  // Create adjusted seed OKLCH with optional chroma limit
+  let adjustedSeedOklch = seedOklch;
+  const enableChromaLimit =
+    combinationConfig.enableChromaLimit ??
+    DEFAULT_COMBINATION_CONFIG.enableChromaLimit;
+  const maxSeedChroma =
+    combinationConfig.maxSeedChroma ?? DEFAULT_COMBINATION_CONFIG.maxSeedChroma;
+  if (enableChromaLimit && seedOklch.c > maxSeedChroma) {
+    adjustedSeedOklch = {
+      ...seedOklch,
+      c: maxSeedChroma,
+    };
+  }
+
   const baseColorConfig = getBaseColorConfig({
-    primaryOklch,
+    primaryOklch: adjustedSeedOklch,
     combinationConfig,
   });
   const primaryColorConfig = getPrimaryColorConfig({
-    primaryOklch,
+    primaryOklch: adjustedSeedOklch,
     combinationConfig,
   });
 
@@ -56,13 +71,13 @@ export const generateCombination = (
   // Find primary base level using findClosestLevel
   const primaryOriginLevel = findClosestLevel({
     seedLightness: getLightness(combinationConfig.seedColor),
-    seedChroma: primaryOklch.c,
-    seedHue: primaryOklch.h,
+    seedChroma: adjustedSeedOklch.c,
+    seedHue: adjustedSeedOklch.h,
   });
 
   // Generate secondary palettes
   const secondaryConfigs = generateSecondaryConfigss({
-    primaryOklch,
+    primaryOklch: adjustedSeedOklch,
     primaryOriginLevel,
     combinationType,
     combinationConfig,

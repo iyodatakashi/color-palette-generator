@@ -14,7 +14,7 @@ import {
   NATURAL_CHROMA_CURVE_PARAMS,
   TEXT_LIGHTNESS_ON_LIGHT,
   TEXT_LIGHTNESS_ON_DARK,
-  MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR,
+  MAX_CHROMA_RATIO_FROM_SEED_COLOR,
   VARIATION_COLOR_OFFSETS,
   FALLBACK_HEX_COLOR,
   FALLBACK_TEXT_LEVEL_LIGHT,
@@ -162,7 +162,7 @@ const calculateNaturalChromaCurve = ({
 
   // 基準色の彩度に基づいて彩度カーブの上限を抑制
   // 基準色の彩度が高い場合、ガウシアンカーブのピークを抑制
-  const maxAllowedChroma = seedChroma * MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR;
+  const maxAllowedChroma = seedChroma * MAX_CHROMA_RATIO_FROM_SEED_COLOR;
   if (result > maxAllowedChroma) {
     result = maxAllowedChroma;
   }
