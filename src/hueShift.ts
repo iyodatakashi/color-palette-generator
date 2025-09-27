@@ -52,8 +52,6 @@ export const calculateHueShift = ({
     hueShift = -hueShift;
   }
 
-  console.log(hueShift);
-
   const newHue = originalHue + hueShift;
   return normalizeHue(newHue);
 };
