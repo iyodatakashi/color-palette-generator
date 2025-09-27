@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { generateCombination, generateSameToneColor } from "../src/combination";
+import { generateCombination } from "../src/combination";
+import { normalizeOklch, oklchToHexPerceptual } from "../src/colorUtils";
 import type {
   CombinationConfig,
   CombinationType,
@@ -312,13 +313,16 @@ describe("combination", () => {
     });
   });
 
-  describe("generateSameToneColor", () => {
+  describe("generateSameToneColor equivalent", () => {
     it("should generate a color with the same tone", () => {
-      const result = generateSameToneColor({
-        h: 180,
-        c: 0.15,
-        targetLightness: 60,
-      });
+      const result = oklchToHexPerceptual(
+        normalizeOklch({
+          mode: "oklch" as const,
+          l: 60,
+          c: 0.15,
+          h: 180,
+        })
+      );
 
       expect(result).toBeDefined();
       expect(typeof result).toBe("string");
@@ -329,11 +333,14 @@ describe("combination", () => {
       const hues = [0, 60, 120, 180, 240, 300];
 
       hues.forEach((hue) => {
-        const result = generateSameToneColor({
-          h: hue,
-          c: 0.1,
-          targetLightness: 50,
-        });
+        const result = oklchToHexPerceptual(
+          normalizeOklch({
+            mode: "oklch" as const,
+            l: 50,
+            c: 0.1,
+            h: hue,
+          })
+        );
 
         expect(result).toBeDefined();
         expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -344,11 +351,14 @@ describe("combination", () => {
       const chromas = [0.05, 0.1, 0.15, 0.2, 0.25];
 
       chromas.forEach((chroma) => {
-        const result = generateSameToneColor({
-          h: 180,
-          c: chroma,
-          targetLightness: 60,
-        });
+        const result = oklchToHexPerceptual(
+          normalizeOklch({
+            mode: "oklch" as const,
+            l: 60,
+            c: chroma,
+            h: 180,
+          })
+        );
 
         expect(result).toBeDefined();
         expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -359,11 +369,14 @@ describe("combination", () => {
       const lightnesses = [20, 40, 60, 80];
 
       lightnesses.forEach((lightness) => {
-        const result = generateSameToneColor({
-          h: 180,
-          c: 0.1,
-          targetLightness: lightness,
-        });
+        const result = oklchToHexPerceptual(
+          normalizeOklch({
+            mode: "oklch" as const,
+            l: lightness,
+            c: 0.1,
+            h: 180,
+          })
+        );
 
         expect(result).toBeDefined();
         expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -371,28 +384,37 @@ describe("combination", () => {
     });
 
     it("should handle edge cases with invalid values", () => {
-      const result = generateSameToneColor({
-        h: NaN,
-        c: -0.1,
-        targetLightness: NaN,
-      });
+      const result = oklchToHexPerceptual(
+        normalizeOklch({
+          mode: "oklch" as const,
+          l: NaN,
+          c: -0.1,
+          h: NaN,
+        })
+      );
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
     });
 
     it("should normalize hue values correctly", () => {
-      const result1 = generateSameToneColor({
-        h: 450, // > 360
-        c: 0.1,
-        targetLightness: 60,
-      });
+      const result1 = oklchToHexPerceptual(
+        normalizeOklch({
+          mode: "oklch" as const,
+          l: 60,
+          c: 0.1,
+          h: 450, // > 360
+        })
+      );
 
-      const result2 = generateSameToneColor({
-        h: 90, // 450 - 360
-        c: 0.1,
-        targetLightness: 60,
-      });
+      const result2 = oklchToHexPerceptual(
+        normalizeOklch({
+          mode: "oklch" as const,
+          l: 60,
+          c: 0.1,
+          h: 90, // 450 - 360
+        })
+      );
 
       expect(result1).toBeDefined();
       expect(result2).toBeDefined();
@@ -401,11 +423,14 @@ describe("combination", () => {
     });
 
     it("should handle negative hue values", () => {
-      const result = generateSameToneColor({
-        h: -30, // Negative hue
-        c: 0.1,
-        targetLightness: 60,
-      });
+      const result = oklchToHexPerceptual(
+        normalizeOklch({
+          mode: "oklch" as const,
+          l: 60,
+          c: 0.1,
+          h: -30, // Negative hue
+        })
+      );
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -413,34 +438,41 @@ describe("combination", () => {
 
     it("should return consistent results for the same input", () => {
       const input = {
-        h: 180,
+        mode: "oklch" as const,
+        l: 60,
         c: 0.15,
-        targetLightness: 60,
+        h: 180,
       };
 
-      const result1 = generateSameToneColor(input);
-      const result2 = generateSameToneColor(input);
+      const result1 = oklchToHexPerceptual(normalizeOklch(input));
+      const result2 = oklchToHexPerceptual(normalizeOklch(input));
 
       expect(result1).toBe(result2);
     });
 
     it("should handle very high chroma values", () => {
-      const result = generateSameToneColor({
-        h: 180,
-        c: 0.5, // Very high chroma
-        targetLightness: 60,
-      });
+      const result = oklchToHexPerceptual(
+        normalizeOklch({
+          mode: "oklch" as const,
+          l: 60,
+          c: 0.5, // Very high chroma
+          h: 180,
+        })
+      );
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
     });
 
     it("should handle very low chroma values", () => {
-      const result = generateSameToneColor({
-        h: 180,
-        c: 0.01, // Very low chroma
-        targetLightness: 60,
-      });
+      const result = oklchToHexPerceptual(
+        normalizeOklch({
+          mode: "oklch" as const,
+          l: 60,
+          c: 0.01, // Very low chroma
+          h: 180,
+        })
+      );
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);

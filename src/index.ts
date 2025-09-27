@@ -8,7 +8,7 @@
 export { generateColorPalette, resolveVariable } from "./palette";
 
 // Color combination features
-export { generateCombination, generateSameToneColor } from "./combination";
+export { generateCombination } from "./combination";
 
 // Random color generation features
 export { generateRandomSeedColor } from "./randomColor";

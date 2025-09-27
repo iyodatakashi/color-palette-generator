@@ -2,11 +2,15 @@
 
 import * as culori from "culori";
 import { getLightness } from "./lightness";
-import { generateSameToneColor } from "./combination";
 import type { HuePaletteConfig, ColorConfig, Palette } from "./types";
 import { generateColorPalette } from "./palette";
 import type { Oklch } from "culori";
-import { oklchToHexAdjustChroma } from "./colorUtils";
+import {
+  oklchToHexAdjustChroma,
+  hexToOklch,
+  normalizeOklch,
+  oklchToHexPerceptual,
+} from "./colorUtils";
 
 // =============================================================================
 // Hue Change Functions
@@ -104,11 +108,22 @@ export const generateHueColors = ({
     const hue = i * hueStep;
     const normalizedHue = Math.round(hue);
 
-    const adjustedColor = generateSameToneColor({
-      h: hue,
+    // Create target color and normalize using colorUtils functions
+    const targetColor = normalizeOklch({
+      mode: "oklch" as const,
+      l: oklch.l,
       c: oklch.c || 0,
-      targetLightness: oklch.l,
+      h: hue,
     });
+
+    // Convert to hex string and back to Oklch for internal usage
+    const adjustedColorHex = oklchToHexPerceptual(targetColor);
+    const adjustedColor = hexToOklch(adjustedColorHex);
+    if (!adjustedColor) {
+      throw new Error(
+        `Failed to convert hex color ${adjustedColorHex} to OKLCH`
+      );
+    }
 
     // Get name from predefined names or generate generic name
     const name =

@@ -149,60 +149,6 @@ const getPrimaryColorConfig = ({
 };
 
 /**
- * Get hue shift values for secondary colors without generating actual colors
- */
-
-const getSecondaryHues = ({
-  primaryOklch,
-  combinationType,
-}: {
-  primaryOklch: Oklch;
-  combinationType: CombinationType;
-}): {
-  secondary?: number;
-  secondary2?: number;
-  secondary3?: number;
-} => {
-  const primaryHue = primaryOklch.h || 0;
-
-  const combinationMap: Record<CombinationType, any> = {
-    complementary: {
-      secondary: (primaryHue + 180) % 360,
-    },
-    triadic: {
-      secondary: (primaryHue + 120) % 360,
-      secondary2: (primaryHue + 240) % 360,
-    },
-    tetradic: {
-      secondary: (primaryHue + 90) % 360,
-      secondary2: (primaryHue + 180) % 360,
-      secondary3: (primaryHue + 270) % 360,
-    },
-    analogous: {
-      secondary: (primaryHue + 30) % 360,
-      secondary2: (primaryHue - 30 + 360) % 360,
-    },
-    splitComplementary: {
-      secondary: (primaryHue + 150) % 360,
-      secondary2: (primaryHue + 210) % 360,
-    },
-    doubleComplementary: {
-      secondary: (primaryHue + 180) % 360,
-      secondary2: (primaryHue + 30) % 360,
-      secondary3: (primaryHue + 210) % 360,
-    },
-    doubleComplementaryReverse: {
-      secondary: (primaryHue + 180) % 360,
-      secondary2: (primaryHue - 30 + 360) % 360,
-      secondary3: (primaryHue + 150) % 360,
-    },
-    monochromatic: {},
-  };
-
-  return combinationMap[combinationType] || {};
-};
-
-/**
  * Generate secondary palettes
  */
 const generateSecondaryConfigss = ({
@@ -289,34 +235,63 @@ const generateSecondaryConfigss = ({
   return results;
 };
 
+/**
+ * Get hue shift values for secondary colors without generating actual colors
+ */
+
+const getSecondaryHues = ({
+  primaryOklch,
+  combinationType,
+}: {
+  primaryOklch: Oklch;
+  combinationType: CombinationType;
+}): {
+  secondary?: number;
+  secondary2?: number;
+  secondary3?: number;
+} => {
+  const primaryHue = primaryOklch.h || 0;
+
+  const combinationMap: Record<CombinationType, any> = {
+    complementary: {
+      secondary: (primaryHue + 180) % 360,
+    },
+    triadic: {
+      secondary: (primaryHue + 120) % 360,
+      secondary2: (primaryHue + 240) % 360,
+    },
+    tetradic: {
+      secondary: (primaryHue + 90) % 360,
+      secondary2: (primaryHue + 180) % 360,
+      secondary3: (primaryHue + 270) % 360,
+    },
+    analogous: {
+      secondary: (primaryHue + 30) % 360,
+      secondary2: (primaryHue - 30 + 360) % 360,
+    },
+    splitComplementary: {
+      secondary: (primaryHue + 150) % 360,
+      secondary2: (primaryHue + 210) % 360,
+    },
+    doubleComplementary: {
+      secondary: (primaryHue + 180) % 360,
+      secondary2: (primaryHue + 30) % 360,
+      secondary3: (primaryHue + 210) % 360,
+    },
+    doubleComplementaryReverse: {
+      secondary: (primaryHue + 180) % 360,
+      secondary2: (primaryHue - 30 + 360) % 360,
+      secondary3: (primaryHue + 150) % 360,
+    },
+    monochromatic: {},
+  };
+
+  return combinationMap[combinationType] || {};
+};
+
 // =============================================================================
 // Gamut Mapping for Combination Colors
 // =============================================================================
-
-/**
- * Generate color with same tone (impression) for combination and hue palette generation
- * Specialized for maintaining visual consistency across color variations
- */
-export const generateSameToneColor = ({
-  h,
-  c,
-  targetLightness,
-}: {
-  h: number;
-  c: number;
-  targetLightness: number;
-}): Oklch => {
-  // Create target color and normalize
-  const targetColor = normalizeOklch({
-    mode: "oklch" as const,
-    l: targetLightness,
-    c: c,
-    h: h,
-  });
-
-  // Use optimized gamut mapping for same-tone generation
-  return targetColor;
-};
 
 // =============================================================================
 // Color Generation
