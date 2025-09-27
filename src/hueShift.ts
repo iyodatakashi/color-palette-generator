@@ -2,6 +2,7 @@
 
 import type { ColorConfig, HueShiftMode } from "./types";
 import { isValidOklch, hexToOklch } from "./colorUtils";
+import { MAX_HUE_SHIFT } from "./constants";
 import type { Oklch } from "culori";
 
 // =============================================================================
@@ -20,8 +21,6 @@ export const calculateHueShift = ({
   targetLightness: number;
   adjustedLightnessScale: Record<number, number>;
 }): number => {
-  const MAX_HUE_SHIFT = 30;
-
   // Validate input OKLCH
   let originalOklch = colorConfig.oklch;
   if (!originalOklch || !isValidOklch(originalOklch)) {

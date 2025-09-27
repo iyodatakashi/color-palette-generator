@@ -8,7 +8,14 @@ import {
   normalizeOklch,
 } from "./colorUtils";
 import { findClosestLevel, getLightness } from "./lightness";
-import { DEFAULT_LEVEL_500_LIGHTNESS } from "./constants";
+import {
+  DEFAULT_LEVEL_500_LIGHTNESS,
+  BASE_CHROMA_MIN,
+  BASE_CHROMA_MAX,
+  BASE_CHROMA_MULTIPLIER,
+  NEUTRAL_CHROMA,
+  CONTRASTING_HUE_SHIFT,
+} from "./constants";
 import type {
   ColorConfig,
   CombinationType,
@@ -334,8 +341,8 @@ const getBaseColor = ({
 
   // Calculate base chroma (moderate chroma for base colors)
   const baseChroma = Math.max(
-    0.02,
-    Math.min(0.06, (primaryOklch.c || 0) * 0.08)
+    BASE_CHROMA_MIN,
+    Math.min(BASE_CHROMA_MAX, (primaryOklch.c || 0) * BASE_CHROMA_MULTIPLIER)
   );
 
   const strategyMap: Record<
@@ -344,10 +351,10 @@ const getBaseColor = ({
   > = {
     harmonic: { baseHue: primaryOklch.h || 0, finalChroma: baseChroma },
     contrasting: {
-      baseHue: normalizeHue((primaryOklch.h || 0) + 180),
+      baseHue: normalizeHue((primaryOklch.h || 0) + CONTRASTING_HUE_SHIFT),
       finalChroma: baseChroma,
     },
-    neutral: { baseHue: 0, finalChroma: 0.01 },
+    neutral: { baseHue: 0, finalChroma: NEUTRAL_CHROMA },
   };
 
   const { baseHue, finalChroma } =

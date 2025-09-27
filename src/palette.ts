@@ -14,6 +14,11 @@ import {
   NATURAL_CHROMA_CURVE_PARAMS,
   TEXT_LIGHTNESS_ON_LIGHT,
   TEXT_LIGHTNESS_ON_DARK,
+  MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR,
+  VARIATION_OFFSETS,
+  FALLBACK_HEX_COLOR,
+  FALLBACK_TEXT_LEVEL_LIGHT,
+  FALLBACK_TEXT_LEVEL_DARK,
 } from "./constants";
 import type { ColorConfig } from "./types";
 import { oklchToHexPerceptual, isValidOklch, hexToOklch } from "./colorUtils";
@@ -157,7 +162,7 @@ const calculateNaturalChromaCurve = ({
 
   // 基準色の彩度に基づいて彩度カーブの上限を抑制
   // 基準色の彩度が高い場合、ガウシアンカーブのピークを抑制
-  const maxAllowedChroma = referenceChroma * 1.5; // 基準色の1.5倍を上限とする
+  const maxAllowedChroma = referenceChroma * MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR; // 基準色の1.5倍を上限とする
   if (result > maxAllowedChroma) {
     result = maxAllowedChroma;
   }
@@ -258,10 +263,10 @@ const setVariationColors = ({
   const currentIndex = SCALE_LEVELS.indexOf(closestLevel);
 
   const variations = [
-    { name: "lighter", offset: -2 },
-    { name: "light", offset: -1 },
-    { name: "dark", offset: 1 },
-    { name: "darker", offset: 2 },
+    { name: "lighter", offset: VARIATION_OFFSETS.lighter },
+    { name: "light", offset: VARIATION_OFFSETS.light },
+    { name: "dark", offset: VARIATION_OFFSETS.dark },
+    { name: "darker", offset: VARIATION_OFFSETS.darker },
   ];
 
   variations.forEach(({ name, offset }) => {
@@ -390,7 +395,7 @@ const findTextColorLevel = ({
   }
 
   // Fallback to extreme level
-  return isLighter ? 50 : 950;
+  return isLighter ? FALLBACK_TEXT_LEVEL_DARK : FALLBACK_TEXT_LEVEL_LIGHT;
 };
 
 // =============================================================================
@@ -403,7 +408,7 @@ const findTextColorLevel = ({
 export const resolveVariable = ({
   variableName,
   palette,
-  fallback = "#000000",
+  fallback = FALLBACK_HEX_COLOR,
 }: {
   variableName: string;
   palette: Palette;

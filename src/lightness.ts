@@ -6,6 +6,12 @@ import {
   MAX_LIGHTNESS,
   MIN_LIGHTNESS,
   DEFAULT_LEVEL_500_LIGHTNESS,
+  DEFAULT_K_SIGNED,
+  DEFAULT_V_BASE,
+  DEFAULT_K_MIN,
+  SIGMOID_X_RANGE,
+  SIGMOID_EPSILON,
+  FALLBACK_MAX_CHROMA,
 } from "./constants";
 
 // Cache for max chroma calculations to avoid duplicate expensive searches
@@ -44,16 +50,16 @@ export const getLightness = (color: string): number => {
 // level, kSigned（符号で膨らみ反転）, アンカー(level, lightness)を渡す版
 const getLightnessFromLevel = (
   level: number,
-  kSigned: number = 0.18, // +で左上凸寄り / -で左下凸寄り
+  kSigned: number = DEFAULT_K_SIGNED, // +で左上凸寄り / -で左下凸寄り
   anchorLevel: number = 500, // 通したいレベル
   anchorLightness: number = DEFAULT_LEVEL_500_LIGHTNESS, // 通したい明度 (0-1 range)
-  vBase: number = 2.0, // 非対称ベース（決め打ち）
-  kMin: number = 1e-6 // 極小傾きガード
+  vBase: number = DEFAULT_V_BASE, // 非対称ベース（決め打ち）
+  kMin: number = DEFAULT_K_MIN // 極小傾きガード
 ): number => {
   // 1) level→x 正規化（0..1000 → 0..10）
   const minLevel = 0;
   const maxLevel = 1000;
-  const xRange = 10;
+  const xRange = SIGMOID_X_RANGE;
   const x = ((level - minLevel) / (maxLevel - minLevel)) * xRange;
 
   // 2) アンカーを (xAnchor, yAnchor) に設定
@@ -93,7 +99,7 @@ const getLightnessFromLevel = (
   // 4) 区分線形リマップで 0..1 に正規化
   //    - 下側（s <= yAnchor）： sL950 → 0, yAnchor → yAnchor
   //    - 上側（s >  yAnchor）： yAnchor → yAnchor, sL50 → 1
-  const eps = 1e-12;
+  const eps = SIGMOID_EPSILON;
   let sNorm: number;
   if (sVal <= yAnchor) {
     const denom = Math.max(eps, yAnchor - sL950);
@@ -119,11 +125,11 @@ const getLightnessFromLevel = (
  */
 export const getLevelFromLightness = (
   targetLightness: number,
-  kSigned: number = 0.18,
+  kSigned: number = DEFAULT_K_SIGNED,
   anchorLevel: number = 500,
   anchorLightness: number = DEFAULT_LEVEL_500_LIGHTNESS,
-  vBase: number = 2.0,
-  kMin: number = 1e-6
+  vBase: number = DEFAULT_V_BASE,
+  kMin: number = DEFAULT_K_MIN
 ): number => {
   // Clamp target lightness to valid range
   const clampedTarget = Math.max(
@@ -193,8 +199,8 @@ const sigmoidRichardsThrough = (
   kSigned: number, // 符号つき k: 符号=膨らみ方向, 大きさ=強さ
   xAnchor: number,
   yAnchor: number, // 0<y<1 を想定
-  vBase: number = 2.0, // 非対称ベース（決め打ち）
-  kMin: number = 1e-6, // 最小傾き（右下がり死守）
+  vBase: number = DEFAULT_V_BASE, // 非対称ベース（決め打ち）
+  kMin: number = DEFAULT_K_MIN, // 最小傾き（右下がり死守）
   zeroSign: 1 | -1 = 1 // k=0 のときの向き既定
 ): number => {
   const yClamped = Math.min(Math.max(yAnchor, 1e-9), 1 - 1e-9);
@@ -261,7 +267,7 @@ const findMaxChromaAndLightness = (
   }
 
   const result = {
-    maxChroma: maxChroma || 0.2, // Fallback value
+    maxChroma: maxChroma || FALLBACK_MAX_CHROMA, // Fallback value
     maxChromaLightness,
   };
 

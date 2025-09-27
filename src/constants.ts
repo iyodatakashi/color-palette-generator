@@ -36,6 +36,8 @@ export const NATURAL_CHROMA_CURVE_PARAMS = {
   order: 1.5,
 };
 
+export const MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR = 1.4;
+
 /**
  * Alpha value definitions
  */
@@ -70,6 +72,51 @@ export const DEFAULT_BASE_COLOR_CONFIG = {
 
 export const TEXT_LIGHTNESS_ON_LIGHT = 0.6;
 export const TEXT_LIGHTNESS_ON_DARK = 0.4;
+
+/**
+ * Sigmoid function parameters
+ */
+export const DEFAULT_K_SIGNED = 0.18; // Sigmoid steepness
+export const DEFAULT_V_BASE = 2.0; // Asymmetric base
+export const DEFAULT_K_MIN = 1e-6; // Minimum slope guard
+export const SIGMOID_X_RANGE = 10; // Normalization range for x values
+export const SIGMOID_EPSILON = 1e-12; // Small value for division safety
+
+/**
+ * Base color generation parameters
+ */
+export const BASE_CHROMA_MIN = 0.02;
+export const BASE_CHROMA_MAX = 0.06;
+export const BASE_CHROMA_MULTIPLIER = 0.08;
+export const NEUTRAL_CHROMA = 0.01;
+export const CONTRASTING_HUE_SHIFT = 180;
+
+/**
+ * Hue shift parameters
+ */
+export const MAX_HUE_SHIFT = 30;
+
+/**
+ * Variation level offsets
+ */
+export const VARIATION_OFFSETS = {
+  lighter: -2,
+  light: -1,
+  dark: 1,
+  darker: 2,
+} as const;
+
+/**
+ * Fallback values
+ */
+export const FALLBACK_HEX_COLOR = "#000000";
+export const FALLBACK_MAX_CHROMA = 0.2;
+
+/**
+ * Text color search parameters
+ */
+export const FALLBACK_TEXT_LEVEL_LIGHT = 950;
+export const FALLBACK_TEXT_LEVEL_DARK = 50;
 
 /**
  * Default options
