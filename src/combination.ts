@@ -6,6 +6,7 @@ import {
   oklchToHexAdjustChroma,
   oklchToHexPerceptual,
   normalizeOklch,
+  hexToOklch,
 } from "./colorUtils";
 import { findClosestLevel, getLightness } from "./lightness";
 import {
@@ -36,12 +37,7 @@ export const generateCombination = (
   combinationConfig: CombinationConfig
 ): Combination => {
   const combinationType = combinationConfig.combinationType || "complementary";
-  // Parse and convert primary color to OKLCH
-  const primaryColorObj = culori.parse(combinationConfig.primaryColor);
-  if (!primaryColorObj) {
-    throw new Error("Invalid primary color");
-  }
-  const primaryOklch = culori.converter("oklch")(primaryColorObj);
+  const primaryOklch = hexToOklch(combinationConfig.seedColor);
   if (!primaryOklch) {
     throw new Error("Failed to convert color to OKLCH");
   }
@@ -59,7 +55,7 @@ export const generateCombination = (
 
   // Find primary base level using findClosestLevel
   const primaryOriginLevel = findClosestLevel({
-    seedLightness: getLightness(combinationConfig.primaryColor),
+    seedLightness: getLightness(combinationConfig.seedColor),
     seedChroma: primaryOklch.c,
     seedHue: primaryOklch.h,
   });

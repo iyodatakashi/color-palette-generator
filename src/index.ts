@@ -11,7 +11,7 @@ export { generateColorPalette, resolveVariable } from "./palette";
 export { generateCombination, generateSameToneColor } from "./combination";
 
 // Random color generation features
-export { generateRandomPrimaryColor } from "./randomColor";
+export { generateRandomSeedColor } from "./randomColor";
 
 // Lightness calculation features
 export {

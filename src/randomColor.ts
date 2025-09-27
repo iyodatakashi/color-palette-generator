@@ -9,11 +9,11 @@ import { DEFAULT_RANDOM_COLOR_CONFIG } from "./constants";
 // =============================================================================
 
 /**
- * Generate random primary color
+ * Generate random seed color
  * @param options Generation options
  * @returns HEX string
  */
-export const generateRandomPrimaryColor = (
+export const generateRandomSeedColor = (
   config: RandomColorConfig = {}
 ): string => {
   const perfectConfig = { ...DEFAULT_RANDOM_COLOR_CONFIG, ...config };

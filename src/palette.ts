@@ -162,7 +162,7 @@ const calculateNaturalChromaCurve = ({
 
   // 基準色の彩度に基づいて彩度カーブの上限を抑制
   // 基準色の彩度が高い場合、ガウシアンカーブのピークを抑制
-  const maxAllowedChroma = seedChroma * MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR; // 基準色の1.5倍を上限とする
+  const maxAllowedChroma = seedChroma * MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR;
   if (result > maxAllowedChroma) {
     result = maxAllowedChroma;
   }

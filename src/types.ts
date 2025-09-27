@@ -50,7 +50,7 @@ export type HuePaletteConfig = {
 
 // Color combination configuration (input)
 export type CombinationConfig = {
-  primaryColor: string;
+  seedColor: string;
   combinationType?: CombinationType;
   baseColorStrategy?: BaseColorStrategy;
   includeTransparent?: boolean;
