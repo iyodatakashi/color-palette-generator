@@ -25,22 +25,22 @@ export const calculateHueShift = ({
   adjustedLightnessScale: Record<number, number>;
 }): number => {
   // Validate input OKLCH
-  let originalOklch = colorConfig.oklch;
-  if (!originalOklch || !isValidOklch(originalOklch)) {
-    originalOklch = hexToOklch(colorConfig.color) as Oklch;
+  let seedOklch = colorConfig.seedOklch;
+  if (!seedOklch || !isValidOklch(seedOklch)) {
+    seedOklch = hexToOklch(colorConfig.seedColor) as Oklch;
   }
-  const originalHue = originalOklch.h ?? 0;
-  const originalLightness = originalOklch.l;
+  const seedHue = seedOklch.h ?? 0;
+  const seedLightness = seedOklch.l;
 
   // No change in fixed mode
   if (colorConfig.hueShiftMode === "fixed") {
-    return originalHue;
+    return seedHue;
   }
 
-  const lightnessDiff = targetLightness - originalLightness;
+  const lightnessDiff = targetLightness - seedLightness;
 
   // Use perception-based dynamic calculation
-  const hueBasedIntensity = calculateHueIntensityByHue(originalHue);
+  const hueBasedIntensity = calculateHueIntensityByHue(seedHue);
   const lightnessBasedIntensity = calculateHueIntensityByLightness(
     lightnessDiff,
     adjustedLightnessScale
@@ -54,7 +54,7 @@ export const calculateHueShift = ({
     hueShift = -hueShift;
   }
 
-  const newHue = originalHue + hueShift;
+  const newHue = seedHue + hueShift;
   return normalizeHue(newHue);
 };
 
@@ -128,13 +128,13 @@ export const getHueShiftExplanation = ({
   // Parse color and get hue value
 
   // Validate input OKLCH
-  let originalOklch = colorConfig.oklch;
-  if (!originalOklch || !isValidOklch(originalOklch)) {
-    originalOklch = hexToOklch(colorConfig.color) as Oklch;
+  let seedOklch = colorConfig.seedOklch;
+  if (!seedOklch || !isValidOklch(seedOklch)) {
+    seedOklch = hexToOklch(colorConfig.seedColor) as Oklch;
   }
-  const originalHue = originalOklch.h || 0;
-  const hueCategory = getHueCategory(originalHue);
-  const category = getHueCategoryJapanese(originalHue);
+  const seedHue = seedOklch.h || 0;
+  const hueCategory = getHueCategory(seedHue);
+  const category = getHueCategoryJapanese(seedHue);
 
   // Fixed mode has no change
   if (hueShiftMode === "fixed") {
@@ -148,7 +148,7 @@ export const getHueShiftExplanation = ({
   }
 
   // Get intensity value from dynamic calculation
-  const intensity = calculateHueIntensityByHue(originalHue);
+  const intensity = calculateHueIntensityByHue(seedHue);
   const directions =
     HUE_DIRECTION_EXPLANATION_MAP[
       hueCategory as keyof typeof HUE_DIRECTION_EXPLANATION_MAP

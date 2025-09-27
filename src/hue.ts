@@ -66,8 +66,8 @@ export const generateHuePalette = ({
   const colorConfigs: ColorConfig[] = baseColors.map(({ name, oklch }) => ({
     id: name.toLowerCase(),
     prefix: name.toLowerCase(),
-    color: oklchToHexAdjustChroma(oklch),
-    oklch,
+    seedColor: oklchToHexAdjustChroma(oklch),
+    seedOklch: oklch,
     hueShiftMode,
     includeTransparent,
     bgColorLight,

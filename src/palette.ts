@@ -61,21 +61,21 @@ const generateEachPalette = ({
   colorConfig: ColorConfig;
 }): Palette => {
   // Validate input OKLCH
-  let oklch = colorConfig.oklch;
-  if (!oklch || !isValidOklch(oklch)) {
-    oklch = hexToOklch(colorConfig.color) as Oklch;
+  let seedOklch = colorConfig.seedOklch;
+  if (!seedOklch || !isValidOklch(seedOklch)) {
+    seedOklch = hexToOklch(colorConfig.seedColor) as Oklch;
   }
 
   const closestLevel = findClosestLevel({
-    inputLightness: oklch.l,
-    inputChroma: oklch.c,
-    inputHue: oklch.h,
+    seedLightness: seedOklch.l,
+    seedChroma: seedOklch.c,
+    seedHue: seedOklch.h,
   });
 
   const adjustedLightnessScale = generateLightnessScale({
-    inputLightness: oklch.l,
-    inputChroma: oklch.c ?? 0,
-    inputHue: oklch.h ?? 0,
+    seedLightness: seedOklch.l,
+    seedChroma: seedOklch.c ?? 0,
+    seedHue: seedOklch.h ?? 0,
     enableLightnessAdjustment: true,
   });
 
@@ -127,11 +127,11 @@ const superGaussianGain = (
 const calculateNaturalChromaCurve = ({
   targetLevel,
   referenceLevel,
-  referenceChroma,
+  seedChroma,
 }: {
   targetLevel: number;
   referenceLevel: number;
-  referenceChroma: number;
+  seedChroma: number;
   maxChromaForLevel?: number;
 }): number => {
   // Convert levels to 0-1 range for super-Gaussian
@@ -158,11 +158,11 @@ const calculateNaturalChromaCurve = ({
   const scaledMultiplier = targetMultiplier / actualReferenceMultiplier;
 
   // 基準色を通るガウシアンカーブを適用
-  let result = referenceChroma * scaledMultiplier;
+  let result = seedChroma * scaledMultiplier;
 
   // 基準色の彩度に基づいて彩度カーブの上限を抑制
   // 基準色の彩度が高い場合、ガウシアンカーブのピークを抑制
-  const maxAllowedChroma = referenceChroma * MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR; // 基準色の1.5倍を上限とする
+  const maxAllowedChroma = seedChroma * MAX_CHROMA_RATIO_FROM_ORIGIN_COLOR; // 基準色の1.5倍を上限とする
   if (result > maxAllowedChroma) {
     result = maxAllowedChroma;
   }
@@ -185,9 +185,9 @@ const generateSolidPalette = ({
   const palette: Palette = {};
 
   // Validate input OKLCH
-  let oklch = colorConfig.oklch;
-  if (!oklch || !isValidOklch(oklch)) {
-    oklch = hexToOklch(colorConfig.color) as Oklch;
+  let seedOklch = colorConfig.seedOklch;
+  if (!seedOklch || !isValidOklch(seedOklch)) {
+    seedOklch = hexToOklch(colorConfig.seedColor) as Oklch;
   }
 
   // Helper function to convert OKLCH to HEX with perceptual gamut mapping
@@ -199,7 +199,7 @@ const generateSolidPalette = ({
     const level = parseInt(key);
 
     // Use base hue and chroma from reference color
-    const baseChroma = oklch.c || 0;
+    const seedChroma = seedOklch.c || 0;
 
     // Apply hue shift mode
     const adjustedHue = calculateHueShift({
@@ -215,7 +215,7 @@ const generateSolidPalette = ({
         : adjustedHue;
 
     // Apply NaturalChromaCurve for chroma suppression
-    let targetChroma = baseChroma;
+    let targetChroma = seedChroma;
     if (colorConfig.enableChromaAdjustment) {
       // Use the closestLevel passed from generateEachPalette to avoid duplicate calculation
       const referenceLevel = closestLevel;
@@ -223,7 +223,7 @@ const generateSolidPalette = ({
       targetChroma = calculateNaturalChromaCurve({
         targetLevel: level,
         referenceLevel: referenceLevel, // Use adjusted scale to find reference level
-        referenceChroma: baseChroma,
+        seedChroma: seedChroma,
       });
     }
 

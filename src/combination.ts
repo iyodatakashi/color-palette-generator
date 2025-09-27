@@ -59,9 +59,9 @@ export const generateCombination = (
 
   // Find primary base level using findClosestLevel
   const primaryOriginLevel = findClosestLevel({
-    inputLightness: getLightness(combinationConfig.primaryColor),
-    inputChroma: primaryOklch.c,
-    inputHue: primaryOklch.h,
+    seedLightness: getLightness(combinationConfig.primaryColor),
+    seedChroma: primaryOklch.c,
+    seedHue: primaryOklch.h,
   });
 
   // Generate secondary palettes
@@ -98,8 +98,8 @@ const getBaseColorConfig = ({
   return {
     id: "base",
     prefix: "base",
-    color: oklchToHexAdjustChroma(baseColor), // あとで直す
-    oklch: baseColor,
+    seedColor: oklchToHexAdjustChroma(baseColor), // あとで直す
+    seedOklch: baseColor,
     hueShiftMode: DEFAULT_BASE_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
       combinationConfig.includeTransparent ??
@@ -131,8 +131,8 @@ const getPrimaryColorConfig = ({
   return {
     id: "primary",
     prefix: "primary",
-    color: oklchToHexAdjustChroma(primaryOklch), // あとで直す
-    oklch: primaryOklch,
+    seedColor: oklchToHexAdjustChroma(primaryOklch), // あとで直す
+    seedOklch: primaryOklch,
     hueShiftMode:
       combinationConfig.hueShiftMode ?? DEFAULT_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
@@ -263,8 +263,8 @@ const generateSecondaryConfigss = ({
       const secondaryConfig = {
         id: id,
         prefix: prefix,
-        color: oklchToHexPerceptual(secondaryOklch),
-        oklch: secondaryOklch,
+        seedColor: oklchToHexPerceptual(secondaryOklch),
+        seedOklch: secondaryOklch,
         hueShiftMode:
           combinationConfig.hueShiftMode ?? DEFAULT_COLOR_CONFIG.hueShiftMode,
         enableLightnessAdjustment: false,
@@ -356,7 +356,7 @@ const getBaseColor = ({
       baseHue: normalizeHue((primaryOklch.h || 0) + 180),
       finalChroma: baseChroma,
     },
-    neutral: { baseHue: undefined, finalChroma: BASE_COLOR_NEUTRAL_CHROMA },
+    neutral: { baseHue: 0, finalChroma: BASE_COLOR_NEUTRAL_CHROMA },
   };
 
   const { baseHue, finalChroma } =

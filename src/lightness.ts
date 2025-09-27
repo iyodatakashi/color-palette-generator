@@ -287,25 +287,25 @@ const getMaxChromaForHue = (hue: number): number => {
  * Find the target level using the same logic as generateAdjustedLightnessScale
  */
 export const findClosestLevel = ({
-  inputLightness,
-  inputChroma,
-  inputHue,
+  seedLightness,
+  seedChroma,
+  seedHue,
 }: {
-  inputLightness: number;
-  inputChroma?: number;
-  inputHue?: number;
+  seedLightness: number;
+  seedChroma?: number;
+  seedHue?: number;
 }): number => {
-  if (!isFinite(inputLightness)) inputLightness = 0.5; // 0-1 range
-  if (!inputChroma || !isFinite(inputChroma)) inputChroma = 0;
-  if (!inputHue || !isFinite(inputHue)) inputHue = 0;
+  if (!isFinite(seedLightness)) seedLightness = 0.5; // 0-1 range
+  if (!seedChroma || !isFinite(seedChroma)) seedChroma = 0;
+  if (!seedHue || !isFinite(seedHue)) seedHue = 0;
 
   // Use the same logic as generateAdjustedLightnessScale
-  const maxChroma = getMaxChromaForHue(inputHue);
-  const relativeChroma = inputChroma / maxChroma;
+  const maxChroma = getMaxChromaForHue(seedHue);
+  const relativeChroma = seedChroma / maxChroma;
 
   // Step 1: Find initial level using getLevelFromLightness (efficient)
   const initialLevel = getLevelFromLightness(
-    inputLightness,
+    seedLightness,
     0.18,
     500,
     DEFAULT_LEVEL_500_LIGHTNESS
@@ -333,19 +333,19 @@ export const findClosestLevel = ({
  * Calculate even scale based on the specified color
  */
 export const generateLightnessScale = ({
-  inputLightness,
-  inputChroma,
-  inputHue,
+  seedLightness,
+  seedChroma,
+  seedHue,
   enableLightnessAdjustment = true,
 }: {
-  inputLightness: number;
-  inputChroma: number;
-  inputHue: number;
+  seedLightness: number;
+  seedChroma: number;
+  seedHue: number;
   enableLightnessAdjustment?: boolean;
 }): Record<number, number> => {
-  if (!isFinite(inputLightness)) inputLightness = 0.5; // 0-1 range
-  if (!inputChroma || !isFinite(inputChroma)) inputChroma = 0;
-  if (!inputHue || !isFinite(inputHue)) inputHue = 0;
+  if (!isFinite(seedLightness)) seedLightness = 0.5; // 0-1 range
+  if (!seedChroma || !isFinite(seedChroma)) seedChroma = 0;
+  if (!seedHue || !isFinite(seedHue)) seedHue = 0;
 
   // Always use default sigmoid scale without adjustment
   const scale: Record<number, number> = {};
@@ -355,7 +355,7 @@ export const generateLightnessScale = ({
 
   // Apply hue-specific maximum chroma lightness correction by adjusting anchor lightness level
   if (enableLightnessAdjustment) {
-    const maxChromaLightness = getMaxChromaLightnessForHue(inputHue);
+    const maxChromaLightness = getMaxChromaLightnessForHue(seedHue);
 
     // Find which level corresponds to the max chroma lightness
     const maxChromaLightnessLevel = getLevelFromLightness(maxChromaLightness);
