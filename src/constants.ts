@@ -5,6 +5,7 @@ import type {
   RandomColorConfig,
   CombinationType,
   BaseColorStrategy,
+  ColorConfig,
 } from "./types";
 
 // =============================================================================
@@ -46,7 +47,11 @@ export const DEFAULT_COMBINATION_CONFIG = {
 // -----------------------------------------------------------------------------
 
 // Default color configuration for primary and secondary palette generation
-export const DEFAULT_COLOR_CONFIG = {
+export const DEFAULT_COLOR_CONFIG: ColorConfig = {
+  id: "",
+  prefix: "",
+  seedColor: "",
+  originLevel: 500,
   hueShiftMode: "natural" as HueShiftMode,
   includeTransparent: false,
   includeTextColors: false,
@@ -58,7 +63,11 @@ export const DEFAULT_COLOR_CONFIG = {
 };
 
 // Default color configuration for base palette generation
-export const DEFAULT_BASE_COLOR_CONFIG = {
+export const DEFAULT_BASE_COLOR_CONFIG: ColorConfig = {
+  id: "",
+  prefix: "",
+  seedColor: "",
+  originLevel: 500,
   hueShiftMode: "fixed" as HueShiftMode,
   includeTransparent: false,
   includeTextColors: false,

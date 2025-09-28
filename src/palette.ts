@@ -76,6 +76,8 @@ const generateEachPalette = ({
     seedHue: seedOklch.h,
   });
 
+  colorConfig.originLevel = closestLevel;
+
   //
   const adjustedLightnessScale = generateLightnessScale({
     seedLightness: seedOklch.l,

@@ -8,10 +8,11 @@ import type { Oklch, Rgb } from "culori";
 
 // Color configuration (input)
 export type ColorConfig = {
+  id?: string;
   prefix: string;
   seedOklch?: Oklch | null;
   seedColor: string;
-  id?: string;
+  originLevel: number;
   hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;
   bgColorLight?: string;
@@ -34,7 +35,8 @@ export type Palette = {
 
 // Hue palette configuration (input)
 export type HuePaletteConfig = {
-  oklch: Oklch;
+  seedOklch: Oklch;
+  originLevel: number;
   divisions?: number;
   hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;

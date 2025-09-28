@@ -1,7 +1,5 @@
 // hue.ts
 
-import * as culori from "culori";
-import { getLightness } from "./lightness";
 import type { HuePaletteConfig, ColorConfig, Palette } from "./types";
 import { generateColorPalette } from "./palette";
 import type { Oklch } from "culori";
@@ -54,7 +52,8 @@ export const HUE_NAMES = {
  * Generate complete color palettes for each hue division
  */
 export const generateHuePalette = ({
-  oklch,
+  seedOklch,
+  originLevel,
   divisions = 24,
   hueShiftMode = "natural",
   includeTransparent = false,
@@ -64,7 +63,7 @@ export const generateHuePalette = ({
   includeTextColors = false,
 }: HuePaletteConfig): Palette => {
   // Get base colors for each hue
-  const baseColors = generateHueColors({ oklch, divisions });
+  const baseColors = generateHueColors({ seedOklch, divisions });
 
   // Create ColorConfig array for all base colors
   const colorConfigs: ColorConfig[] = baseColors.map(({ name, oklch }) => ({
@@ -72,6 +71,7 @@ export const generateHuePalette = ({
     prefix: name.toLowerCase(),
     seedColor: oklchToHexAdjustChroma(oklch),
     seedOklch: oklch,
+    originLevel,
     hueShiftMode,
     includeTransparent,
     bgColorLight,
@@ -88,10 +88,10 @@ export const generateHuePalette = ({
  * Generate evenly spaced base colors for each hue division
  */
 export const generateHueColors = ({
-  oklch,
+  seedOklch,
   divisions = 24,
 }: {
-  oklch: Oklch;
+  seedOklch: Oklch;
   divisions: number;
 }): Array<{
   name: string;
@@ -111,8 +111,8 @@ export const generateHueColors = ({
     // Create target color and normalize using colorUtils functions
     const targetColor = normalizeOklch({
       mode: "oklch" as const,
-      l: oklch.l,
-      c: oklch.c || 0,
+      l: seedOklch.l,
+      c: seedOklch.c || 0,
       h: hue,
     });
 
