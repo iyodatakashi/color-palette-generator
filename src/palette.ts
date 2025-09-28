@@ -78,7 +78,7 @@ const generateEachPalette = ({
       seedHue: seedOklch.h,
     });
 
-  //
+  // Generate adjusted lightness scale
   const adjustedLightnessScale = generateLightnessScale({
     seedLightness: seedOklch.l,
     seedChroma: seedOklch.c ?? 0,
