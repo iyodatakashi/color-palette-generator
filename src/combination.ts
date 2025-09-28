@@ -289,13 +289,13 @@ const getSecondaryHues = ({
       secondary2: (primaryHue + 210) % 360,
     },
     doubleComplementary: {
-      secondary: (primaryHue + 180) % 360,
-      secondary2: (primaryHue + 30) % 360,
+      secondary: (primaryHue + 30) % 360,
+      secondary2: (primaryHue + 180) % 360,
       secondary3: (primaryHue + 210) % 360,
     },
     doubleComplementaryReverse: {
-      secondary: (primaryHue + 180) % 360,
-      secondary2: (primaryHue - 30 + 360) % 360,
+      secondary: (primaryHue - 30 + 360) % 360,
+      secondary2: (primaryHue + 180) % 360,
       secondary3: (primaryHue + 150) % 360,
     },
     monochromatic: {},
