@@ -76,7 +76,7 @@ const generateEachPalette = ({
     seedLightness: seedOklch.l,
     seedChroma: seedOklch.c ?? 0,
     seedHue: seedOklch.h ?? 0,
-    enableLightnessAdjustment: true,
+    enableLightnessAdjustment: colorConfig.enableLightnessAdjustment,
   });
 
   const palette = generateSolidPalette({

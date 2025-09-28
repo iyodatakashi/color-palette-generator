@@ -125,6 +125,8 @@ const getBaseColorConfig = ({
     transparentOriginLevel:
       combinationConfig.baseTransparentOriginLevel ??
       DEFAULT_BASE_COLOR_CONFIG.transparentOriginLevel,
+    enableLightnessAdjustment:
+      DEFAULT_BASE_COLOR_CONFIG.enableLightnessAdjustment,
     enableChromaAdjustment: DEFAULT_BASE_COLOR_CONFIG.enableChromaAdjustment,
   };
 };
