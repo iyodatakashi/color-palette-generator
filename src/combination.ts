@@ -57,22 +57,22 @@ export const generateCombination = (
     };
   }
 
-  const baseColorConfig = getBaseColorConfig({
-    primaryOklch: adjustedSeedOklch,
-    combinationConfig,
-  });
-  const primaryColorConfig = getPrimaryColorConfig({
-    primaryOklch: adjustedSeedOklch,
-    combinationConfig,
-  });
-
-  // Generate base and primary palettes first
-
   // Find primary base level using findClosestLevel
   const primaryOriginLevel = findClosestLevel({
     seedLightness: getLightness(combinationConfig.seedColor),
     seedChroma: adjustedSeedOklch.c,
     seedHue: adjustedSeedOklch.h,
+  });
+
+  const baseColorConfig = getBaseColorConfig({
+    primaryOklch: adjustedSeedOklch,
+    combinationConfig,
+  });
+
+  const primaryColorConfig = getPrimaryColorConfig({
+    primaryOklch: adjustedSeedOklch,
+    primaryOriginLevel,
+    combinationConfig,
   });
 
   // Generate secondary palettes
@@ -111,6 +111,7 @@ const getBaseColorConfig = ({
     prefix: "base",
     seedColor: oklchToHexAdjustChroma(baseColor), // あとで直す
     seedOklch: baseColor,
+    originLevel: 500,
     hueShiftMode: DEFAULT_BASE_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
       combinationConfig.includeTransparent ??
@@ -136,9 +137,11 @@ const getBaseColorConfig = ({
  */
 const getPrimaryColorConfig = ({
   primaryOklch,
+  primaryOriginLevel,
   combinationConfig,
 }: {
   primaryOklch: Oklch;
+  primaryOriginLevel: number;
   combinationConfig: CombinationConfig;
 }): ColorConfig => {
   return {
@@ -146,6 +149,7 @@ const getPrimaryColorConfig = ({
     prefix: "primary",
     seedColor: oklchToHexAdjustChroma(primaryOklch), // あとで直す
     seedOklch: primaryOklch,
+    originLevel: primaryOriginLevel,
     hueShiftMode:
       combinationConfig.hueShiftMode ?? DEFAULT_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
@@ -219,11 +223,12 @@ const generateSecondaryConfigss = ({
       };
 
       // 3. Generate complete secondary palette using provisional base OKLCH directly
-      const secondaryConfig = {
+      const secondaryConfig: ColorConfig = {
         id: id,
         prefix: prefix,
         seedColor: oklchToHexPerceptual(secondaryOklch),
         seedOklch: secondaryOklch,
+        originLevel: primaryOriginLevel,
         hueShiftMode:
           combinationConfig.hueShiftMode ?? DEFAULT_COLOR_CONFIG.hueShiftMode,
         enableLightnessAdjustment: false,

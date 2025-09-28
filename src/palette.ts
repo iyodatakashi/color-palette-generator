@@ -70,13 +70,13 @@ const generateEachPalette = ({
   // Get level
   const exactLevel = getLevelFromLightness(seedOklch.l);
 
-  const closestLevel = findClosestLevel({
-    seedLightness: seedOklch.l,
-    seedChroma: seedOklch.c,
-    seedHue: seedOklch.h,
-  });
-
-  colorConfig.originLevel = closestLevel;
+  colorConfig.originLevel =
+    colorConfig.originLevel ??
+    findClosestLevel({
+      seedLightness: seedOklch.l,
+      seedChroma: seedOklch.c,
+      seedHue: seedOklch.h,
+    });
 
   //
   const adjustedLightnessScale = generateLightnessScale({
@@ -94,14 +94,13 @@ const generateEachPalette = ({
 
   setVariationColors({
     colorConfig,
-    closestLevel,
     palette,
   });
 
   if (colorConfig.includeTransparent) {
     setTransparentPalette({
-      palette,
       colorConfig,
+      palette,
     });
   }
 
@@ -109,7 +108,6 @@ const generateEachPalette = ({
   setTextColor({
     colorConfig,
     palette,
-    closestLevel, // Pass closestLevel to avoid duplicate calculation
   });
 
   return palette;
@@ -252,18 +250,16 @@ const generateSolidPalette = ({
  */
 const setVariationColors = ({
   colorConfig,
-  closestLevel,
   palette,
 }: {
   colorConfig: ColorConfig;
-  closestLevel: number;
   palette: Palette;
 }): void => {
   palette[
     `--${colorConfig.prefix}-color`
-  ] = `var(--${colorConfig.prefix}-${closestLevel})`;
+  ] = `var(--${colorConfig.prefix}-${colorConfig.originLevel})`;
 
-  const currentIndex = SCALE_LEVELS.indexOf(closestLevel);
+  const currentIndex = SCALE_LEVELS.indexOf(colorConfig.originLevel);
 
   const variations = [
     { name: "lighter", offset: VARIATION_COLOR_OFFSETS.lighter },
@@ -292,22 +288,18 @@ const setVariationColors = ({
 const setTextColor = ({
   colorConfig,
   palette,
-  closestLevel,
 }: {
   colorConfig: ColorConfig;
   palette: Palette;
-  closestLevel: number;
 }): void => {
   // Only generate text colors if includeTextColors is enabled
   if (!colorConfig.includeTextColors) {
     return;
   }
 
-  // Use the closestLevel passed from generateEachPalette to avoid duplicate calculation
-  const primaryLevel = closestLevel;
-
-  // Get primary color and its lightness
-  const primaryColor = palette[`--${colorConfig.prefix}-${primaryLevel}`];
+  // Get origin color and its lightness
+  const primaryColor =
+    palette[`--${colorConfig.prefix}-${colorConfig.originLevel}`];
   if (!primaryColor) {
     return;
   }
@@ -316,7 +308,7 @@ const setTextColor = ({
 
   // Find text color for light background (dark text on light background)
   const textColorForLightBackground = findTextColorLevel({
-    primaryLevel,
+    originLevel: colorConfig.originLevel,
     primaryLightness,
     palette,
     prefix: colorConfig.prefix,
@@ -326,7 +318,7 @@ const setTextColor = ({
 
   // Find text color for dark background (light text on dark background)
   const textColorForDarkBackground = findTextColorLevel({
-    primaryLevel,
+    originLevel: colorConfig.originLevel,
     primaryLightness,
     palette,
     prefix: colorConfig.prefix,
@@ -349,14 +341,14 @@ const setTextColor = ({
  * Find appropriate text color level based on lightness criteria
  */
 const findTextColorLevel = ({
-  primaryLevel,
+  originLevel,
   primaryLightness,
   palette,
   prefix,
   targetLightness,
   isLighter,
 }: {
-  primaryLevel: number;
+  originLevel: number;
   primaryLightness: number;
   palette: Palette;
   prefix: string;
@@ -369,11 +361,11 @@ const findTextColorLevel = ({
     : primaryLightness <= targetLightness;
 
   if (meetsCriteria) {
-    return primaryLevel;
+    return originLevel;
   }
 
   // Search for appropriate color level
-  const primaryIndex = SCALE_LEVELS.indexOf(primaryLevel);
+  const primaryIndex = SCALE_LEVELS.indexOf(originLevel);
   const startIndex = isLighter ? primaryIndex - 1 : primaryIndex + 1;
   const endIndex = isLighter ? 0 : SCALE_LEVELS.length;
   const step = isLighter ? -1 : 1;
