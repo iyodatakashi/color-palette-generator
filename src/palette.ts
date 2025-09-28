@@ -22,6 +22,7 @@ import {
 } from "./constants";
 import type { ColorConfig } from "./types";
 import { oklchToHexPerceptual, isValidOklch, hexToOklch } from "./colorUtils";
+import { getLevelFromLightness } from "./lightness";
 
 // =============================================================================
 // Main Functions
@@ -66,12 +67,16 @@ const generateEachPalette = ({
     seedOklch = hexToOklch(colorConfig.seedColor) as Oklch;
   }
 
+  // Get level
+  const exactLevel = getLevelFromLightness(seedOklch.l);
+
   const closestLevel = findClosestLevel({
     seedLightness: seedOklch.l,
     seedChroma: seedOklch.c,
     seedHue: seedOklch.h,
   });
 
+  //
   const adjustedLightnessScale = generateLightnessScale({
     seedLightness: seedOklch.l,
     seedChroma: seedOklch.c ?? 0,
@@ -81,7 +86,7 @@ const generateEachPalette = ({
 
   const palette = generateSolidPalette({
     colorConfig,
-    closestLevel,
+    exactLevel,
     adjustedLightnessScale,
   });
 
@@ -124,15 +129,14 @@ const superGaussianGain = (
   return Math.exp(-Math.pow(z, order)); // Higher order = flatter center
 };
 
-const calculateNaturalChromaCurve = ({
+const getChromaFromLevel = ({
   targetLevel,
-  referenceLevel,
+  anchorLevel,
   seedChroma,
 }: {
   targetLevel: number;
-  referenceLevel: number;
+  anchorLevel: number;
   seedChroma: number;
-  maxChromaForLevel?: number;
 }): number => {
   // Convert levels to 0-1 range for super-Gaussian
   const minLevel = 50;
@@ -148,7 +152,7 @@ const calculateNaturalChromaCurve = ({
   );
 
   // 基準色の実際のレベルでのガウシアン乗数を計算
-  const actualReferencePosition = (referenceLevel - minLevel) / range;
+  const actualReferencePosition = (anchorLevel - minLevel) / range;
   const actualReferenceMultiplier = superGaussianGain(
     actualReferencePosition,
     NATURAL_CHROMA_CURVE_PARAMS
@@ -175,11 +179,11 @@ const calculateNaturalChromaCurve = ({
  */
 const generateSolidPalette = ({
   colorConfig,
-  closestLevel,
+  exactLevel,
   adjustedLightnessScale,
 }: {
   colorConfig: ColorConfig;
-  closestLevel: number;
+  exactLevel: number;
   adjustedLightnessScale: Record<number, number>;
 }): Palette => {
   const palette: Palette = {};
@@ -217,12 +221,9 @@ const generateSolidPalette = ({
     // Apply NaturalChromaCurve for chroma suppression
     let targetChroma = seedChroma;
     if (colorConfig.enableChromaAdjustment) {
-      // Use the closestLevel passed from generateEachPalette to avoid duplicate calculation
-      const referenceLevel = closestLevel;
-
-      targetChroma = calculateNaturalChromaCurve({
+      targetChroma = getChromaFromLevel({
         targetLevel: level,
-        referenceLevel: referenceLevel, // Use adjusted scale to find reference level
+        anchorLevel: exactLevel,
         seedChroma: seedChroma,
       });
     }
