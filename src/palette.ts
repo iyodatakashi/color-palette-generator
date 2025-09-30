@@ -21,7 +21,12 @@ import {
   FALLBACK_TEXT_LEVEL_DARK,
 } from "./constants";
 import type { ColorConfig } from "./types";
-import { oklchToHexPerceptual, isValidOklch, hexToOklch } from "./colorUtils";
+import {
+  oklchToHexPerceptual,
+  isValidOklch,
+  hexToOklch,
+  oklchToHexAdjustChroma,
+} from "./colorUtils";
 import { getLevelFromLightness } from "./lightness";
 
 // =============================================================================
@@ -38,8 +43,8 @@ export const generateColorPalette = (
   if (Array.isArray(input)) {
     const allPalette: Palette = {};
 
-    input.forEach((config) => {
-      const palette = generateColorPalette(config);
+    input.forEach((colorConfig) => {
+      const palette = generateEachPalette({ colorConfig });
       Object.assign(allPalette, palette);
     });
 
@@ -194,15 +199,10 @@ const generateSolidPalette = ({
     seedOklch = hexToOklch(colorConfig.seedColor) as Oklch;
   }
 
-  // Helper function to convert OKLCH to HEX with perceptual gamut mapping
-  const oklchToHex = (oklch: Oklch): string => {
-    return oklchToHexPerceptual(oklch);
-  };
-
   Object.entries(adjustedLightnessScale).forEach(([key, targetLightness]) => {
     const level = parseInt(key);
 
-    // Use base hue and chroma from reference color
+    // Use sheed hue and chroma from seed color
     const seedChroma = seedOklch.c || 0;
 
     // Apply hue shift mode
@@ -213,10 +213,6 @@ const generateSolidPalette = ({
     });
 
     // Apply combination hue shift if present (for secondary colors)
-    const finalHue =
-      colorConfig.combinationHueShift !== undefined
-        ? colorConfig.combinationHueShift
-        : adjustedHue;
 
     // Apply NaturalChromaCurve for chroma suppression
     let targetChroma = seedChroma;
@@ -236,10 +232,11 @@ const generateSolidPalette = ({
       mode: "oklch" as const,
       l: finalLightness,
       c: targetChroma,
-      h: finalHue,
+      h: adjustedHue,
     };
 
-    palette[`--${colorConfig.prefix}-${key}`] = oklchToHex(oklchColor);
+    palette[`--${colorConfig.prefix}-${key}`] =
+      oklchToHexAdjustChroma(oklchColor);
   });
 
   return palette;

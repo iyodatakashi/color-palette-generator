@@ -232,7 +232,6 @@ const generateSecondaryConfigss = ({
         hueShiftMode:
           combinationConfig.hueShiftMode ?? DEFAULT_COLOR_CONFIG.hueShiftMode,
         enableLightnessAdjustment: false,
-        combinationHueShift: hue,
         includeTransparent:
           combinationConfig.includeTransparent ??
           DEFAULT_COLOR_CONFIG.includeTransparent,
