@@ -21,12 +21,7 @@ import {
   FALLBACK_TEXT_LEVEL_DARK,
 } from "./constants";
 import type { ColorConfig } from "./types";
-import {
-  oklchToHexPerceptual,
-  isValidOklch,
-  hexToOklch,
-  oklchToHexAdjustChroma,
-} from "./colorUtils";
+import { isValidOklch, hexToOklch, oklchToHexAdjustChroma } from "./colorUtils";
 import { getLevelFromLightness } from "./lightness";
 
 // =============================================================================
@@ -70,6 +65,9 @@ const generateEachPalette = ({
   let seedOklch = colorConfig.seedOklch;
   if (!seedOklch || !isValidOklch(seedOklch)) {
     seedOklch = hexToOklch(colorConfig.seedColor) as Oklch;
+  } else {
+    // Sync seedColor when seedOklch is changed
+    colorConfig.seedColor = oklchToHexAdjustChroma(seedOklch);
   }
 
   // Get level
