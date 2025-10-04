@@ -14,7 +14,6 @@ import {
   NATURAL_CHROMA_CURVE_PARAMS,
   TEXT_LIGHTNESS_ON_LIGHT,
   TEXT_LIGHTNESS_ON_DARK,
-  MAX_CHROMA_RATIO_FROM_SEED_COLOR,
   VARIATION_COLOR_OFFSETS,
   FALLBACK_HEX_COLOR,
   FALLBACK_TEXT_LEVEL_LIGHT,
@@ -142,10 +141,14 @@ const getChromaFromLevel = ({
   targetLevel,
   anchorLevel,
   seedChroma,
+  enableChromaLimit,
+  maxChroma,
 }: {
   targetLevel: number;
   anchorLevel: number;
   seedChroma: number;
+  enableChromaLimit?: boolean;
+  maxChroma?: number;
 }): number => {
   // Convert levels to 0-1 range for super-Gaussian
   const minLevel = 50;
@@ -173,11 +176,9 @@ const getChromaFromLevel = ({
   // 基準色を通るガウシアンカーブを適用
   let result = seedChroma * scaledMultiplier;
 
-  // 基準色の彩度に基づいて彩度カーブの上限を抑制
-  // 基準色の彩度が高い場合、ガウシアンカーブのピークを抑制
-  const maxAllowedChroma = seedChroma * MAX_CHROMA_RATIO_FROM_SEED_COLOR;
-  if (result > maxAllowedChroma) {
-    result = maxAllowedChroma;
+  // Apply chroma limit if enabled
+  if (enableChromaLimit && maxChroma !== undefined) {
+    result = Math.min(result, maxChroma);
   }
 
   return result;
@@ -218,19 +219,16 @@ const generateSolidPalette = ({
 
     // Apply combination hue shift if present (for secondary colors)
 
-    // Apply NaturalChromaCurve for chroma suppression
+    // Calculate target chroma
     let targetChroma = seedChroma;
     if (colorConfig.enableChromaAdjustment) {
       targetChroma = getChromaFromLevel({
         targetLevel: level,
         anchorLevel: exactLevel,
         seedChroma: seedChroma,
+        enableChromaLimit: colorConfig.enableChromaLimit,
+        maxChroma: colorConfig.maxChroma,
       });
-    }
-
-    // Apply chroma limit if enabled
-    if (colorConfig.enableChromaLimit && colorConfig.maxChroma !== undefined) {
-      targetChroma = Math.min(targetChroma, colorConfig.maxChroma);
     }
 
     // Use scale lightness for all levels (default sigmoid curve)

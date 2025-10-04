@@ -121,9 +121,6 @@ export const NATURAL_CHROMA_CURVE_PARAMS = {
   order: 1.5,
 };
 
-// Max chroma ratio from seed color
-export const MAX_CHROMA_RATIO_FROM_SEED_COLOR = 1.5;
-
 // Base color generation parameters
 export const BASE_COLOR_NEUTRAL_CHROMA = 0.0;
 
