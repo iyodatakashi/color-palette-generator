@@ -9,6 +9,7 @@ import {
 import { findClosestLevel, getLightness } from "./lightness";
 import {
   DEFAULT_LEVEL_500_LIGHTNESS,
+  BASE_COLOR_SEED_CHROMA,
   BASE_COLOR_NEUTRAL_CHROMA,
   DEFAULT_COMBINATION_CONFIG,
 } from "./constants";
@@ -341,7 +342,7 @@ const getSeedColorForBase = ({
   const targetLightness = DEFAULT_LEVEL_500_LIGHTNESS;
 
   let seedHue = primaryOklch.h || 0;
-  let seedChroma = 0.04;
+  let seedChroma = BASE_COLOR_SEED_CHROMA;
 
   switch (strategy) {
     case "contrasting":
