@@ -1,6 +1,5 @@
 // combination.ts
 
-import * as culori from "culori";
 import { normalizeHue } from "./hueShift";
 import {
   oklchToHexAdjustChroma,
@@ -101,16 +100,21 @@ const getBaseColorConfig = ({
   primaryOklch: Oklch;
   combinationConfig: CombinationConfig;
 }): ColorConfig => {
-  const baseColor = getBaseColor({
+  const strategy = combinationConfig.baseColorStrategy || "harmonic";
+
+  const seedOklch = getSeedColorForBase({
     primaryOklch,
-    strategy: combinationConfig.baseColorStrategy,
+    strategy: strategy,
   });
+
+  // Disable chroma adjustment for neutral strategy to maintain chroma at 0
+  const isNeutral = strategy === "neutral";
 
   return {
     id: "base",
     prefix: "base",
-    seedColor: oklchToHexAdjustChroma(baseColor), // あとで直す
-    seedOklch: baseColor,
+    seedColor: oklchToHexAdjustChroma(seedOklch), // あとで直す
+    seedOklch: seedOklch,
     originLevel: 500,
     hueShiftMode: DEFAULT_BASE_COLOR_CONFIG.hueShiftMode,
     includeTransparent:
@@ -128,7 +132,9 @@ const getBaseColorConfig = ({
       DEFAULT_BASE_COLOR_CONFIG.transparentOriginLevel,
     enableLightnessAdjustment:
       DEFAULT_BASE_COLOR_CONFIG.enableLightnessAdjustment,
-    enableChromaAdjustment: DEFAULT_BASE_COLOR_CONFIG.enableChromaAdjustment,
+    enableChromaAdjustment: isNeutral
+      ? false
+      : DEFAULT_BASE_COLOR_CONFIG.enableChromaAdjustment,
   };
 };
 
@@ -310,18 +316,11 @@ const getSecondaryHues = ({
   return combinationMap[combinationType] || {};
 };
 
-// =============================================================================
-// Gamut Mapping for Combination Colors
-// =============================================================================
-
-// =============================================================================
-// Color Generation
-// =============================================================================
-
 /**
- * Get base color (final color string)
+ * Get seed color for base
  */
-const getBaseColor = ({
+
+const getSeedColorForBase = ({
   primaryOklch,
   strategy = "harmonic",
 }: {
@@ -348,7 +347,13 @@ const getBaseColor = ({
       baseHue: normalizeHue((primaryOklch.h || 0) + 180),
       finalChroma: baseChroma,
     },
-    neutral: { baseHue: 0, finalChroma: BASE_COLOR_NEUTRAL_CHROMA },
+    // Note: For neutral (achromatic) colors, hue can be any value (0 is fine)
+    // because chroma is 0. In OKLCH, when chroma is 0, the color is achromatic
+    // regardless of the hue value. No need to set hue to undefined.
+    neutral: {
+      baseHue: primaryOklch.h || 0,
+      finalChroma: BASE_COLOR_NEUTRAL_CHROMA,
+    },
   };
 
   const { baseHue, finalChroma } =
@@ -361,5 +366,6 @@ const getBaseColor = ({
     c: finalChroma,
     h: baseHue,
   };
+
   return newOklchObj;
 };
