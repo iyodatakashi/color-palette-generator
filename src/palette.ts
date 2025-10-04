@@ -228,6 +228,11 @@ const generateSolidPalette = ({
       });
     }
 
+    // Apply chroma limit if enabled
+    if (colorConfig.enableChromaLimit && colorConfig.maxChroma !== undefined) {
+      targetChroma = Math.min(targetChroma, colorConfig.maxChroma);
+    }
+
     // Use scale lightness for all levels (default sigmoid curve)
     const finalLightness = targetLightness;
 

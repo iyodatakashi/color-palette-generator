@@ -4,7 +4,6 @@ import { normalizeHue } from "./hueShift";
 import {
   oklchToHexAdjustChroma,
   oklchToHexPerceptual,
-  normalizeOklch,
   hexToOklch,
 } from "./colorUtils";
 import { findClosestLevel, getLightness } from "./lightness";
@@ -132,6 +131,11 @@ const getBaseColorConfig = ({
     enableChromaAdjustment: isNeutral
       ? false
       : DEFAULT_BASE_COLOR_CONFIG.enableChromaAdjustment,
+    enableChromaLimit:
+      combinationConfig.enableChromaLimit ??
+      DEFAULT_COMBINATION_CONFIG.enableChromaLimit,
+    maxChroma:
+      combinationConfig.maxChroma ?? DEFAULT_COMBINATION_CONFIG.maxChroma,
   };
 };
 
@@ -169,6 +173,11 @@ const getPrimaryColorConfig = ({
       combinationConfig.baseTransparentOriginLevel ??
       DEFAULT_COLOR_CONFIG.transparentOriginLevel,
     enableChromaAdjustment: DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
+    enableChromaLimit:
+      combinationConfig.enableChromaLimit ??
+      DEFAULT_COMBINATION_CONFIG.enableChromaLimit,
+    maxChroma:
+      combinationConfig.maxChroma ?? DEFAULT_COMBINATION_CONFIG.maxChroma,
   };
 };
 
@@ -249,6 +258,11 @@ const generateSecondaryConfigss = ({
           combinationConfig.transparentOriginLevel ??
           DEFAULT_COLOR_CONFIG.transparentOriginLevel,
         enableChromaAdjustment: DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
+        enableChromaLimit:
+          combinationConfig.enableChromaLimit ??
+          DEFAULT_COMBINATION_CONFIG.enableChromaLimit,
+        maxChroma:
+          combinationConfig.maxChroma ?? DEFAULT_COMBINATION_CONFIG.maxChroma,
       };
 
       // 4. Add secondary color config

@@ -21,6 +21,8 @@ export type ColorConfig = {
   includeTextColors?: boolean;
   enableChromaAdjustment?: boolean; // Whether to apply chroma adjustment in palette generation
   enableLightnessAdjustment?: boolean; // Whether to apply K-value lightness adjustment in palette generation
+  enableChromaLimit?: boolean; // Whether to limit maximum chroma in palette generation
+  maxChroma?: number; // Maximum chroma value when enableChromaLimit is true (0-1)
 };
 
 // Color palette (output)
