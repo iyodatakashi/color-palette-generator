@@ -122,7 +122,7 @@ export const NATURAL_CHROMA_CURVE_PARAMS = {
 };
 
 // Base color generation parameters
-export const BASE_COLOR_SEED_CHROMA = 0.03;
+export const BASE_COLOR_SEED_CHROMA = 0.025;
 export const BASE_COLOR_NEUTRAL_CHROMA = 0.0;
 
 // -----------------------------------------------------------------------------

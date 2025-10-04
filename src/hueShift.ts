@@ -1,6 +1,6 @@
 // hueShift.ts
 
-import type { ColorConfig, HueShiftMode } from "./types";
+import type { ColorConfig } from "./types";
 import { isValidOklch, hexToOklch } from "./colorUtils";
 import {
   MAX_HUE_SHIFT,

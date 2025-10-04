@@ -14,15 +14,7 @@ export { generateCombination } from "./combination";
 export { generateRandomSeedColor } from "./randomColor";
 
 // Lightness calculation features
-export {
-  getLightness,
-  generateLightnessScale,
-  getLevelFromLightness,
-  findClosestLevel,
-} from "./lightness";
-
-// Hue change features
-// export { generateHuePalette, HUE_NAMES } from "./hue";
+export { getLightness } from "./lightness";
 
 // Color utility features
 export {

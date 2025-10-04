@@ -3,13 +3,7 @@
 import type { Palette, ColorConfig } from "./types";
 import * as culori from "culori";
 import { createContextLogger } from "./logger";
-import {
-  SCALE_LEVELS,
-  MAX_LEVEL,
-  MIN_LEVEL,
-  MAX_ALPHA,
-  MIN_ALPHA,
-} from "./constants";
+import { SCALE_LEVELS, MAX_ALPHA, MIN_ALPHA } from "./constants";
 
 const log = createContextLogger("TransparentColor");
 
