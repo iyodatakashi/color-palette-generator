@@ -125,9 +125,6 @@ export const NATURAL_CHROMA_CURVE_PARAMS = {
 export const MAX_CHROMA_RATIO_FROM_SEED_COLOR = 1.2;
 
 // Base color generation parameters
-export const BASE_COLOR_CHROMA_MIN = 0.02;
-export const BASE_COLOR_CHROMA_MAX = 0.06;
-export const BASE_COLOR_CHROMA_MULTIPLIER = 0.08;
 export const BASE_COLOR_NEUTRAL_CHROMA = 0.0;
 
 // -----------------------------------------------------------------------------

@@ -20,14 +20,16 @@ const log = createContextLogger("TransparentColor");
 /**
  * Generate transparent color palette
  */
-export const setTransparentPalette = ({
+export const getTransparentPalette = ({
   colorConfig,
   palette,
 }: {
   colorConfig: ColorConfig;
   palette: Palette;
-}): void => {
-  if (!colorConfig.transparentOriginLevel) return;
+}): Palette => {
+  const colors: Palette = {};
+
+  if (!colorConfig.transparentOriginLevel) return colors;
 
   SCALE_LEVELS.forEach((level) => {
     const transparentOriginLevel = colorConfig.transparentOriginLevel as number;
@@ -69,8 +71,10 @@ export const setTransparentPalette = ({
       fixedAlpha,
     });
 
-    palette[`--${colorConfig.prefix}-${level}-transparent`] = transparentColor;
+    colors[`--${colorConfig.prefix}-${level}-transparent`] = transparentColor;
   });
+
+  return colors;
 };
 
 // =============================================================================

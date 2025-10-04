@@ -8,7 +8,7 @@ import {
   generateLightnessScale,
 } from "./lightness";
 import { calculateHueShift } from "./hueShift";
-import { setTransparentPalette } from "./transparentColor";
+import { getTransparentPalette } from "./transparentColor";
 import {
   SCALE_LEVELS,
   NATURAL_CHROMA_CURVE_PARAMS,
@@ -89,31 +89,37 @@ const generateEachPalette = ({
     enableLightnessAdjustment: colorConfig.enableLightnessAdjustment,
   });
 
-  const palette = generateSolidPalette({
+  const solidPalette = generateSolidPalette({
     colorConfig,
     exactLevel,
     adjustedLightnessScale,
   });
 
-  setVariationColors({
+  const variationColors = getVariationColors({
     colorConfig,
-    palette,
   });
 
-  if (colorConfig.includeTransparent) {
-    setTransparentPalette({
-      colorConfig,
-      palette,
-    });
-  }
+  const paletteWithVariations = { ...solidPalette, ...variationColors };
+
+  const transparentColors = colorConfig.includeTransparent
+    ? getTransparentPalette({
+        colorConfig,
+        palette: paletteWithVariations,
+      })
+    : {};
+
+  const paletteWithTransparent = {
+    ...paletteWithVariations,
+    ...transparentColors,
+  };
 
   // Generate text colors last to ensure proper order
-  setTextColor({
+  const textColors = getTextColor({
     colorConfig,
-    palette,
+    palette: paletteWithTransparent,
   });
 
-  return palette;
+  return { ...paletteWithTransparent, ...textColors };
 };
 
 /**
@@ -241,16 +247,16 @@ const generateSolidPalette = ({
 };
 
 /**
- * Set Variation Colors
+ * Get Variation Colors
  */
-const setVariationColors = ({
+const getVariationColors = ({
   colorConfig,
-  palette,
 }: {
   colorConfig: ColorConfig;
-  palette: Palette;
-}): void => {
-  palette[
+}): Palette => {
+  const colors: Palette = {};
+
+  colors[
     `--${colorConfig.prefix}-color`
   ] = `var(--${colorConfig.prefix}-${colorConfig.originLevel})`;
 
@@ -269,34 +275,38 @@ const setVariationColors = ({
       Math.min(SCALE_LEVELS.length - 1, currentIndex + offset)
     );
     const targetLevel = SCALE_LEVELS[targetIndex];
-    palette[
+    colors[
       `--${colorConfig.prefix}-${name}`
     ] = `var(--${colorConfig.prefix}-${targetLevel})`;
   });
+
+  return colors;
 };
 
 /**
- * Set Text Color
+ * Get Text Color
  * Generate appropriate text colors for both light and dark backgrounds
  * Only generate text colors if includeTextColors is enabled
  */
-const setTextColor = ({
+const getTextColor = ({
   colorConfig,
   palette,
 }: {
   colorConfig: ColorConfig;
   palette: Palette;
-}): void => {
+}): Palette => {
+  const colors: Palette = {};
+
   // Only generate text colors if includeTextColors is enabled
   if (!colorConfig.includeTextColors) {
-    return;
+    return colors;
   }
 
   // Get origin color and its lightness
   const primaryColor =
     palette[`--${colorConfig.prefix}-${colorConfig.originLevel}`];
   if (!primaryColor) {
-    return;
+    return colors;
   }
 
   const primaryLightness = getLightness(primaryColor);
@@ -322,14 +332,16 @@ const setTextColor = ({
   });
 
   // Set light theme text color (dark text on light background)
-  palette[
+  colors[
     `--${colorConfig.prefix}-text-color-on-light`
   ] = `var(--${colorConfig.prefix}-${textColorForLightBackground})`;
 
   // Set dark theme text color (light text on dark background)
-  palette[
+  colors[
     `--${colorConfig.prefix}-text-color-on-dark`
   ] = `var(--${colorConfig.prefix}-${textColorForDarkBackground})`;
+
+  return colors;
 };
 
 /**

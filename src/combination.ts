@@ -10,9 +10,6 @@ import {
 import { findClosestLevel, getLightness } from "./lightness";
 import {
   DEFAULT_LEVEL_500_LIGHTNESS,
-  BASE_COLOR_CHROMA_MIN,
-  BASE_COLOR_CHROMA_MAX,
-  BASE_COLOR_CHROMA_MULTIPLIER,
   BASE_COLOR_NEUTRAL_CHROMA,
   DEFAULT_COMBINATION_CONFIG,
 } from "./constants";
@@ -327,45 +324,24 @@ const getSeedColorForBase = ({
   primaryOklch: Oklch;
   strategy?: BaseColorStrategy;
 }): Oklch => {
-  const targetLightness = DEFAULT_LEVEL_500_LIGHTNESS; // Level 500 equivalent (middle lightness, 0-1 range)
+  const targetLightness = DEFAULT_LEVEL_500_LIGHTNESS;
 
-  // Calculate base chroma (moderate chroma for base colors)
-  const baseChroma = Math.max(
-    BASE_COLOR_CHROMA_MIN,
-    Math.min(
-      BASE_COLOR_CHROMA_MAX,
-      (primaryOklch.c || 0) * BASE_COLOR_CHROMA_MULTIPLIER
-    )
-  );
+  let seedHue = primaryOklch.h || 0;
+  let seedChroma = 0.04;
 
-  const strategyMap: Record<
-    BaseColorStrategy,
-    { baseHue: number; finalChroma: number }
-  > = {
-    harmonic: { baseHue: primaryOklch.h || 0, finalChroma: baseChroma },
-    contrasting: {
-      baseHue: normalizeHue((primaryOklch.h || 0) + 180),
-      finalChroma: baseChroma,
-    },
-    // Note: For neutral (achromatic) colors, hue can be any value (0 is fine)
-    // because chroma is 0. In OKLCH, when chroma is 0, the color is achromatic
-    // regardless of the hue value. No need to set hue to undefined.
-    neutral: {
-      baseHue: primaryOklch.h || 0,
-      finalChroma: BASE_COLOR_NEUTRAL_CHROMA,
-    },
-  };
+  switch (strategy) {
+    case "contrasting":
+      seedHue = normalizeHue(seedHue + 180);
+      break;
+    case "neutral":
+      seedChroma = BASE_COLOR_NEUTRAL_CHROMA;
+      break;
+  }
 
-  const { baseHue, finalChroma } =
-    strategyMap[strategy] || strategyMap.harmonic;
-
-  // Create OKLCH color with target lightness
-  const newOklchObj = {
+  return {
     mode: "oklch" as const,
-    l: targetLightness, // 0-1 range // Convert to 0-1 range
-    c: finalChroma,
-    h: baseHue,
+    l: targetLightness,
+    c: seedChroma,
+    h: seedHue,
   };
-
-  return newOklchObj;
 };
