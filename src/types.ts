@@ -31,11 +31,11 @@ export type Palette = {
 };
 
 // =============================================================================
-// Hue Palette Generation Types
+// Swatch Generation Types
 // =============================================================================
 
-// Hue palette configuration (input)
-export type HuePaletteConfig = {
+// Swatch palette configuration (input)
+export type SwatchConfig = {
   seedOklch: Oklch;
   originLevel: number;
   divisions?: number;

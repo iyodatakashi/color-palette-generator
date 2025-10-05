@@ -7,6 +7,9 @@
 // Palette generation features
 export { generateColorPalette, resolveVariable } from "./palette";
 
+// Swatch palette generation features
+export { generateSwatch } from "./swatch";
+
 // Color combination features
 export { generateCombination } from "./combination";
 
@@ -49,12 +52,14 @@ export {
   MIN_LIGHTNESS,
   MAX_LIGHTNESS,
   DEFAULT_LEVEL_500_LIGHTNESS,
+  SWATCH_NAMES,
 } from "./constants";
 
 // Type definitions
 export type {
   Palette,
   ColorConfig,
+  SwatchConfig,
   HueShiftMode,
   CombinationType,
   BaseColorStrategy,

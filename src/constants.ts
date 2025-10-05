@@ -132,11 +132,39 @@ export const BASE_COLOR_NEUTRAL_CHROMA = 0.0;
 // Default hue shift mode
 export const DEFAULT_HUE_SHIFT_MODE = "natural" as const;
 
+// Named swatch positions on the color wheel (24 divisions, every 15°)
+export const SWATCH_NAMES = {
+  0: "crimson",
+  15: "ruby",
+  30: "red",
+  45: "scarlet",
+  60: "orange",
+  75: "amber",
+  90: "yellow",
+  105: "peridot",
+  120: "lime",
+  135: "sage",
+  150: "green",
+  165: "jade",
+  180: "emerald",
+  195: "turquoise",
+  210: "cyan",
+  225: "cerulean",
+  240: "azure",
+  255: "cobalt",
+  270: "blue",
+  285: "violet",
+  300: "purple",
+  315: "orchid",
+  330: "magenta",
+  345: "rose",
+} as const;
+
 // Max hue shift
 export const MAX_HUE_SHIFT = 50;
 
 // Hue shift direction offset degrees
-export const TEMPERATURE_DIRECTION_OFFSET_DEGREES = 45;
+export const TEMPERATURE_DIRECTION_OFFSET_DEGREES = 30;
 
 // =============================================================================
 // 4. バリエーションカラー生成
