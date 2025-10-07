@@ -31,23 +31,6 @@ export type Palette = {
 };
 
 // =============================================================================
-// Swatch Generation Types
-// =============================================================================
-
-// Swatch palette configuration (input)
-export type SwatchConfig = {
-  seedOklch: Oklch;
-  originLevel: number;
-  divisions?: number;
-  hueShiftMode?: HueShiftMode;
-  includeTransparent?: boolean;
-  bgColorLight?: string;
-  bgColorDark?: string;
-  transparentOriginLevel?: number;
-  includeTextColors?: boolean;
-};
-
-// =============================================================================
 // Color Combination Types
 // =============================================================================
 
@@ -108,7 +91,25 @@ export type GeneratedColor = {
 };
 
 // =============================================================================
-// Calculation Method Types
+// Swatch Generation Types
+// =============================================================================
+
+// Swatch palette configuration (input)
+export type SwatchConfig = {
+  seedColor: string;
+  includeTransparent?: boolean;
+  includeTextColors?: boolean;
+  bgColorLight?: string;
+  bgColorDark?: string;
+  transparentOriginLevel?: number;
+  divisions?: number;
+  hueShiftMode?: HueShiftMode;
+  enableChromaLimit?: boolean; // Whether to limit high chroma in seed color
+  maxChroma?: number; // Maximum chroma value for seed color when enableChromaLimit is true (0-1)
+};
+
+// =============================================================================
+// Hue Shift Mode Tpes
 // =============================================================================
 
 // Hue shift mode type definition

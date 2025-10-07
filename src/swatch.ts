@@ -5,9 +5,13 @@
 // or generating comprehensive design systems.
 
 import type { SwatchConfig, ColorConfig } from "./types";
-import { generateColorPalette } from "./palette";
 import type { Oklch } from "culori";
-import { oklchToHexAdjustChroma, normalizeOklch } from "./colorUtils";
+import {
+  oklchToHexAdjustChroma,
+  normalizeOklch,
+  hexToOklch,
+  isValidOklch,
+} from "./colorUtils";
 import { SWATCH_NAMES } from "./constants";
 
 // =============================================================================
@@ -34,25 +38,15 @@ import { SWATCH_NAMES } from "./constants";
  *
  * @example
  * const palette = generateSwatch({
- *   seedOklch: { mode: "oklch", l: 0.6, c: 0.15, h: 0 },
+ *   seedColor: #ff0000,
  *   originLevel: 500,
  *   divisions: 24,
  * });
  * // Result: { "--red-50": "...", "--red-100": "...", ..., "--ruby-950": "..." }
  */
-export const generateSwatch = ({
-  seedOklch,
-  originLevel,
-  divisions = 24,
-  hueShiftMode = "natural",
-  includeTransparent = false,
-  bgColorLight = "#ffffff",
-  bgColorDark = "#000000",
-  transparentOriginLevel = 500,
-  includeTextColors = false,
-}: SwatchConfig): ColorConfig[] => {
+export const generateSwatch = (swatchConfig: SwatchConfig): ColorConfig[] => {
   // Generate base colors for each hue division
-  const seeds = getSwatchSeeds({ seedOklch, divisions });
+  const seeds = getSwatchSeeds(swatchConfig);
 
   // Create ColorConfig for each hue to generate full palettes
   const colorConfigs: ColorConfig[] = seeds.map((seed) => ({
@@ -60,13 +54,17 @@ export const generateSwatch = ({
     prefix: seed.prefix,
     seedColor: oklchToHexAdjustChroma(seed.oklch),
     seedOklch: seed.oklch,
-    originLevel,
-    hueShiftMode,
-    includeTransparent,
-    bgColorLight,
-    bgColorDark,
-    transparentOriginLevel,
-    includeTextColors,
+    originLevel: 500,
+    hueShiftMode: swatchConfig.hueShiftMode,
+    includeTransparent: swatchConfig.includeTransparent,
+    includeTextColors: swatchConfig.includeTextColors,
+    bgColorLight: swatchConfig.bgColorLight,
+    bgColorDark: swatchConfig.bgColorDark,
+    transparentOriginLevel: swatchConfig.transparentOriginLevel,
+    enableLightnessAdjustment: true,
+    enableChromaAdjustment: true,
+    enableChromaLimit: true,
+    maxChroma: 0.2,
   }));
 
   return colorConfigs;
@@ -79,17 +77,20 @@ export const generateSwatch = ({
  * @param divisions - Number of hue divisions (default: 24)
  * @returns Array of named colors with their OKLCH values
  */
-export const getSwatchSeeds = ({
-  seedOklch,
-  divisions = 24,
-}: {
-  seedOklch: Oklch;
-  divisions: number;
-}): Array<{
+export const getSwatchSeeds = (
+  swatchConfig: SwatchConfig
+): Array<{
   id: string;
   prefix: string;
   oklch: Oklch;
 }> => {
+  const seedOklch = hexToOklch(swatchConfig.seedColor);
+  if (!isValidOklch(seedOklch)) {
+    throw Error("Invalid OKLCH");
+  }
+
+  const divisions = swatchConfig.divisions ?? 24;
+
   const hueStep = 360 / divisions;
   const colors: Array<{
     id: string;
@@ -111,9 +112,10 @@ export const getSwatchSeeds = ({
     });
 
     // Get name from predefined names or generate generic name
-    const id =
-      SWATCH_NAMES[normalizedHue as keyof typeof SWATCH_NAMES] ||
-      `swatch-${normalizedHue}`;
+    const swatchName = SWATCH_NAMES.find(
+      (item) => item.degree === normalizedHue
+    );
+    const id = swatchName?.prefix || `swatch-${normalizedHue}`;
 
     colors.push({
       id,

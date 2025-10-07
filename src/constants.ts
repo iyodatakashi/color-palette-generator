@@ -129,39 +129,33 @@ export const BASE_COLOR_NEUTRAL_CHROMA = 0.0;
 // 3.4 Hue shift parameters
 // -----------------------------------------------------------------------------
 
+/**
+ * HUE SHIFT の定義:
+ *
+ * Hue Shift = 明度に応じて色相を動的に調整する機能
+ *
+ * 目的:
+ * - 基準色（seed color）の色相を起点とする
+ * - 明度が変化すると色相も連動して変化する
+ * - 変化の方向と強度は色相カテゴリと明度差に基づいて計算される
+ *
+ * 3つのモード:
+ * - "fixed": 色相変化なし（常に基準色の色相を維持）
+ * - "natural": 自然な色相変化（暖色→明るくすると黄色寄り、暗くすると赤寄り）
+ * - "unnatural": 不自然な色相変化（naturalの逆方向）
+ *
+ * 注意:
+ * - Swatch（色相環上の固定位置の命名）とは全く異なる概念
+ * - 色相の動的調整専用の機能
+ */
+
 // Default hue shift mode
 export const DEFAULT_HUE_SHIFT_MODE = "natural" as const;
 
 // Named swatch positions on the color wheel (24 divisions, every 15°)
-export const SWATCH_NAMES = {
-  0: "crimson",
-  15: "ruby",
-  30: "red",
-  45: "scarlet",
-  60: "orange",
-  75: "amber",
-  90: "yellow",
-  105: "peridot",
-  120: "lime",
-  135: "sage",
-  150: "green",
-  165: "jade",
-  180: "emerald",
-  195: "turquoise",
-  210: "cyan",
-  225: "cerulean",
-  240: "azure",
-  255: "cobalt",
-  270: "blue",
-  285: "violet",
-  300: "purple",
-  315: "orchid",
-  330: "magenta",
-  345: "rose",
-} as const;
 
 // Max hue shift
-export const MAX_HUE_SHIFT = 50;
+export const MAX_HUE_SHIFT = 30;
 
 // Hue shift direction offset degrees
 export const TEMPERATURE_DIRECTION_OFFSET_DEGREES = 30;
@@ -202,10 +196,39 @@ export const VARIATION_COLOR_OFFSETS = {
   darker: 2,
 } as const;
 
-// 3.2 パレット生成デフォルト設定
+// =============================================================================
+// 5. Swatch生成
+// =============================================================================
+
+export const SWATCH_NAMES = [
+  { prefix: "crimson", degree: 0 },
+  { prefix: "ruby", degree: 15 },
+  { prefix: "red", degree: 30 },
+  { prefix: "scarlet", degree: 45 },
+  { prefix: "orange", degree: 60 },
+  { prefix: "amber", degree: 75 },
+  { prefix: "yellow", degree: 90 },
+  { prefix: "peridot", degree: 105 },
+  { prefix: "lime", degree: 120 },
+  { prefix: "sage", degree: 135 },
+  { prefix: "green", degree: 150 },
+  { prefix: "jade", degree: 165 },
+  { prefix: "emerald", degree: 180 },
+  { prefix: "turquoise", degree: 195 },
+  { prefix: "cyan", degree: 210 },
+  { prefix: "cerulean", degree: 225 },
+  { prefix: "azure", degree: 240 },
+  { prefix: "cobalt", degree: 255 },
+  { prefix: "blue", degree: 270 },
+  { prefix: "indigo", degree: 285 },
+  { prefix: "violet", degree: 300 },
+  { prefix: "purple", degree: 315 },
+  { prefix: "magenta", degree: 330 },
+  { prefix: "rose", degree: 345 },
+] as const;
 
 // =============================================================================
-// 4. その他共通
+// 6. その他共通
 // =============================================================================
 
 // -----------------------------------------------------------------------------
