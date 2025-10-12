@@ -260,7 +260,7 @@ const palette = generateColorPalette({
 - `enableLightnessAdjustment` (boolean, optional): Apply sigmoid curve for lightness (default: true)
 - `enableChromaAdjustment` (boolean, optional): Apply chroma suppression at extremes (default: true)
 - `enableChromaLimit` (boolean, optional): Limit maximum chroma (default: false)
-- `maxChroma` (number, optional): Maximum chroma value when enableChromaLimit is true (typically 0-0.4 for sRGB gamut)
+- `maxChroma` (number, optional): Maximum chroma value when enableChromaLimit is true (typical range: 0-0.4 for sRGB gamut)
 
 ### `generateCombination(config)`
 
