@@ -8,13 +8,14 @@ describe("palette", () => {
       const config: ColorConfig = {
         id: "primary",
         prefix: "primary",
-        color: "#3b82f6", // Blue color
-        oklch: {
+        seedColor: "#3b82f6", // Blue color
+        seedOklch: {
           mode: "oklch",
           l: 0.5,
           c: 0.15,
           h: 240,
         },
+        originLevel: 500,
         hueShiftMode: "natural",
         includeTransparent: false,
         includeTextColors: false,
@@ -48,28 +49,30 @@ describe("palette", () => {
         {
           id: "primary",
           prefix: "primary",
-          color: "#3b82f6",
-          oklch: {
+          seedColor: "#3b82f6",
+          seedOklch: {
             mode: "oklch",
             l: 0.5,
             c: 0.15,
             h: 240,
           },
+          originLevel: 500,
           hueShiftMode: "natural",
           includeTransparent: false,
           includeTextColors: false,
           enableChromaAdjustment: true,
         },
         {
-          id: "primary",
+          id: "secondary",
           prefix: "secondary",
-          color: "#ef4444",
-          oklch: {
+          seedColor: "#ef4444",
+          seedOklch: {
             mode: "oklch",
             l: 0.5,
             c: 0.2,
             h: 0,
           },
+          originLevel: 500,
           hueShiftMode: "natural",
           includeTransparent: false,
           includeTextColors: false,
@@ -95,16 +98,20 @@ describe("palette", () => {
       const config: ColorConfig = {
         id: "primary",
         prefix: "primary",
-        color: "#3b82f6",
-        oklch: {
+        seedColor: "#3b82f6",
+        seedOklch: {
           mode: "oklch",
           l: 0.5,
           c: 0.15,
           h: 240,
         },
+        originLevel: 500,
         hueShiftMode: "natural",
         includeTransparent: true,
         includeTextColors: false,
+        transparentOriginLevel: 500,
+        bgColorLight: "#ffffff",
+        bgColorDark: "#000000",
         enableChromaAdjustment: true,
       };
 
@@ -130,16 +137,19 @@ describe("palette", () => {
       const config: ColorConfig = {
         id: "primary",
         prefix: "primary",
-        color: "#3b82f6",
-        oklch: {
+        seedColor: "#3b82f6",
+        seedOklch: {
           mode: "oklch",
           l: 0.5,
           c: 0.15,
           h: 240,
         },
+        originLevel: 500,
         hueShiftMode: "natural",
         includeTransparent: false,
         includeTextColors: true,
+        bgColorLight: "#ffffff",
+        bgColorDark: "#000000",
         enableChromaAdjustment: true,
       };
 
@@ -154,13 +164,14 @@ describe("palette", () => {
       const baseConfig: ColorConfig = {
         id: "primary",
         prefix: "primary",
-        color: "#3b82f6",
-        oklch: {
+        seedColor: "#3b82f6",
+        seedOklch: {
           mode: "oklch",
           l: 0.5,
           c: 0.15,
           h: 240,
         },
+        originLevel: 500,
         includeTransparent: false,
         includeTextColors: false,
         enableChromaAdjustment: true,
@@ -189,6 +200,7 @@ describe("palette", () => {
           c: 0.15,
           h: 120,
         },
+        originLevel: 500,
         hueShiftMode: "natural",
         includeTransparent: false,
         includeTextColors: false,
@@ -206,13 +218,14 @@ describe("palette", () => {
       const config: ColorConfig = {
         id: "primary",
         prefix: "primary",
-        color: "invalid-color", // Invalid HEX format
-        oklch: {
+        seedColor: "invalid-color", // Invalid HEX format
+        seedOklch: {
           mode: "oklch",
           l: NaN, // Invalid lightness to trigger error
           c: 0.15,
           h: 240,
         },
+        originLevel: 500,
         hueShiftMode: "natural",
         includeTransparent: false,
         includeTextColors: false,
@@ -226,13 +239,14 @@ describe("palette", () => {
       const config: ColorConfig = {
         id: "primary",
         prefix: "primary",
-        color: "#3b82f6",
-        oklch: {
+        seedColor: "#3b82f6",
+        seedOklch: {
           mode: "oklch",
           l: 0.5,
           c: 0.15,
           h: 240,
         },
+        originLevel: 500,
         hueShiftMode: "natural",
         includeTransparent: false,
         includeTextColors: false,
@@ -250,13 +264,14 @@ describe("palette", () => {
       const config: ColorConfig = {
         id: "primary",
         prefix: "primary",
-        color: "#3b82f6",
-        oklch: {
+        seedColor: "#3b82f6",
+        seedOklch: {
           mode: "oklch",
           l: 0.5,
           c: 0.15,
           h: 240,
         },
+        originLevel: 500,
         hueShiftMode: "natural",
         includeTransparent: false,
         includeTextColors: false,
@@ -280,15 +295,16 @@ describe("palette", () => {
 
       colors.forEach((color, index) => {
         const config: ColorConfig = {
-          id: "primary",
+          id: `color-${index}`,
           prefix: `color-${index}`,
-          color,
-          oklch: {
+          seedColor: color,
+          seedOklch: {
             mode: "oklch",
             l: 0.5,
             c: 0.15,
             h: 240,
           },
+          originLevel: 500,
           hueShiftMode: "natural",
           includeTransparent: false,
           includeTextColors: false,

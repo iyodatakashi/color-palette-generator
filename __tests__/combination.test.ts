@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateCombination } from "../src/combination";
+import { generateColorPalette } from "../src/palette";
 import { normalizeOklch, oklchToHexPerceptual } from "../src/colorUtils";
 import type {
   CombinationConfig,
@@ -10,7 +11,7 @@ import type {
 describe("combination", () => {
   describe("generateCombination", () => {
     const baseConfig: CombinationConfig = {
-      primaryColor: "#7c3bff", // Purple color for testing
+      seedColor: "#7c3bff", // Purple color for testing
       includeTransparent: false,
       includeTextColors: false,
     };
@@ -21,34 +22,34 @@ describe("combination", () => {
         combinationType: "complementary",
       };
 
-      const result = generateCombination(config);
+      const colorConfigs = generateCombination(config);
 
-      expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThanOrEqual(2); // base + primary + at least one secondary
+      expect(colorConfigs).toBeDefined();
+      expect(Array.isArray(colorConfigs)).toBe(true);
+      expect(colorConfigs.length).toBeGreaterThanOrEqual(2); // base + primary + at least one secondary
 
       // Check that we have base, primary, and secondary colors
-      const baseColor = result.find((color) => color.id === "base");
-      const primaryColor = result.find((color) => color.id === "primary");
-      const secondaryColor = result.find((color) => color.id === "secondary");
+      const baseColor = colorConfigs.find((color) => color.id === "base");
+      const primaryColor = colorConfigs.find((color) => color.id === "primary");
+      const secondaryColor = colorConfigs.find(
+        (color) => color.id === "secondary"
+      );
 
       expect(baseColor).toBeDefined();
       expect(primaryColor).toBeDefined();
       expect(secondaryColor).toBeDefined();
 
-      // Check that each color has a palette
-      expect(baseColor?.palette).toBeDefined();
-      expect(primaryColor?.palette).toBeDefined();
-      expect(secondaryColor?.palette).toBeDefined();
+      // Generate palettes from configs
+      const palette = generateColorPalette(colorConfigs);
 
       // Check that palettes have expected scale levels
       const expectedLevels = [
         50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950,
       ];
       expectedLevels.forEach((level) => {
-        expect(baseColor?.palette[`--base-${level}`]).toBeDefined();
-        expect(primaryColor?.palette[`--primary-${level}`]).toBeDefined();
-        expect(secondaryColor?.palette[`--secondary-${level}`]).toBeDefined();
+        expect(palette[`--base-${level}`]).toBeDefined();
+        expect(palette[`--primary-${level}`]).toBeDefined();
+        expect(palette[`--secondary-${level}`]).toBeDefined();
       });
     });
 
@@ -58,16 +59,21 @@ describe("combination", () => {
         combinationType: "triadic",
       };
 
-      const result = generateCombination(config);
+      const colorConfigs = generateCombination(config);
 
-      expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThanOrEqual(4); // base + primary + secondary + secondary2
+      expect(colorConfigs).toBeDefined();
+      expect(Array.isArray(colorConfigs)).toBe(true);
+      expect(colorConfigs.length).toBeGreaterThanOrEqual(4); // base + primary + secondary + secondary2
 
       // Check for secondary2 color
-      const secondary2Color = result.find((color) => color.id === "secondary2");
+      const secondary2Color = colorConfigs.find(
+        (color) => color.id === "secondary2"
+      );
       expect(secondary2Color).toBeDefined();
-      expect(secondary2Color?.palette).toBeDefined();
+
+      // Generate palette and verify
+      const palette = generateColorPalette(colorConfigs);
+      expect(palette["--secondary2-500"]).toBeDefined();
     });
 
     it("should generate tetradic color combination", () => {
@@ -76,16 +82,22 @@ describe("combination", () => {
         combinationType: "tetradic",
       };
 
-      const result = generateCombination(config);
+      const colorConfigs = generateCombination(config);
 
-      expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThanOrEqual(5); // base + primary + secondary + secondary2 + secondary3
+      expect(colorConfigs).toBeDefined();
+      expect(Array.isArray(colorConfigs)).toBe(true);
+      expect(colorConfigs.length).toBeGreaterThanOrEqual(5); // base + primary + secondary + secondary2 + secondary3
 
       // Check for all secondary colors
-      const secondaryColor = result.find((color) => color.id === "secondary");
-      const secondary2Color = result.find((color) => color.id === "secondary2");
-      const secondary3Color = result.find((color) => color.id === "secondary3");
+      const secondaryColor = colorConfigs.find(
+        (color) => color.id === "secondary"
+      );
+      const secondary2Color = colorConfigs.find(
+        (color) => color.id === "secondary2"
+      );
+      const secondary3Color = colorConfigs.find(
+        (color) => color.id === "secondary3"
+      );
 
       expect(secondaryColor).toBeDefined();
       expect(secondary2Color).toBeDefined();
@@ -98,14 +110,18 @@ describe("combination", () => {
         combinationType: "analogous",
       };
 
-      const result = generateCombination(config);
+      const colorConfigs = generateCombination(config);
 
-      expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThanOrEqual(4); // base + primary + secondary + secondary2
+      expect(colorConfigs).toBeDefined();
+      expect(Array.isArray(colorConfigs)).toBe(true);
+      expect(colorConfigs.length).toBeGreaterThanOrEqual(4); // base + primary + secondary + secondary2
 
-      const secondaryColor = result.find((color) => color.id === "secondary");
-      const secondary2Color = result.find((color) => color.id === "secondary2");
+      const secondaryColor = colorConfigs.find(
+        (color) => color.id === "secondary"
+      );
+      const secondary2Color = colorConfigs.find(
+        (color) => color.id === "secondary2"
+      );
 
       expect(secondaryColor).toBeDefined();
       expect(secondary2Color).toBeDefined();
@@ -117,14 +133,18 @@ describe("combination", () => {
         combinationType: "splitComplementary",
       };
 
-      const result = generateCombination(config);
+      const colorConfigs = generateCombination(config);
 
-      expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThanOrEqual(4); // base + primary + secondary + secondary2
+      expect(colorConfigs).toBeDefined();
+      expect(Array.isArray(colorConfigs)).toBe(true);
+      expect(colorConfigs.length).toBeGreaterThanOrEqual(4); // base + primary + secondary + secondary2
 
-      const secondaryColor = result.find((color) => color.id === "secondary");
-      const secondary2Color = result.find((color) => color.id === "secondary2");
+      const secondaryColor = colorConfigs.find(
+        (color) => color.id === "secondary"
+      );
+      const secondary2Color = colorConfigs.find(
+        (color) => color.id === "secondary2"
+      );
 
       expect(secondaryColor).toBeDefined();
       expect(secondary2Color).toBeDefined();
@@ -136,14 +156,14 @@ describe("combination", () => {
         combinationType: "monochromatic",
       };
 
-      const result = generateCombination(config);
+      const colorConfigs = generateCombination(config);
 
-      expect(result).toBeDefined();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThanOrEqual(2); // base + primary (no secondary colors for monochromatic)
+      expect(colorConfigs).toBeDefined();
+      expect(Array.isArray(colorConfigs)).toBe(true);
+      expect(colorConfigs.length).toBeGreaterThanOrEqual(2); // base + primary (no secondary colors for monochromatic)
 
-      const baseColor = result.find((color) => color.id === "base");
-      const primaryColor = result.find((color) => color.id === "primary");
+      const baseColor = colorConfigs.find((color) => color.id === "base");
+      const primaryColor = colorConfigs.find((color) => color.id === "primary");
 
       expect(baseColor).toBeDefined();
       expect(primaryColor).toBeDefined();
@@ -163,14 +183,17 @@ describe("combination", () => {
           baseColorStrategy: strategy,
         };
 
-        const result = generateCombination(config);
+        const colorConfigs = generateCombination(config);
 
-        expect(result).toBeDefined();
-        expect(Array.isArray(result)).toBe(true);
+        expect(colorConfigs).toBeDefined();
+        expect(Array.isArray(colorConfigs)).toBe(true);
 
-        const baseColor = result.find((color) => color.id === "base");
+        const baseColor = colorConfigs.find((color) => color.id === "base");
         expect(baseColor).toBeDefined();
-        expect(baseColor?.palette).toBeDefined();
+
+        // Generate palette and verify
+        const palette = generateColorPalette(colorConfigs);
+        expect(palette["--base-500"]).toBeDefined();
       });
     });
 
@@ -181,27 +204,28 @@ describe("combination", () => {
         includeTransparent: true,
       };
 
-      const result = generateCombination(config);
+      const colorConfigs = generateCombination(config);
 
-      expect(result).toBeDefined();
+      expect(colorConfigs).toBeDefined();
 
-      const primaryColor = result.find((color) => color.id === "primary");
+      const primaryColor = colorConfigs.find((color) => color.id === "primary");
       expect(primaryColor).toBeDefined();
+      expect(primaryColor?.includeTransparent).toBe(true);
 
-      // Check for transparent color variants (may not be generated if conditions aren't met)
-      const transparentKeys = Object.keys(primaryColor?.palette || {}).filter(
+      // Generate palette and check for transparent colors
+      const palette = generateColorPalette(colorConfigs);
+      const transparentKeys = Object.keys(palette).filter(
         (key) =>
-          key.includes("-10") || key.includes("-20") || key.includes("-30")
+          key.startsWith("--primary-") &&
+          (key.includes("-10") || key.includes("-20") || key.includes("-30"))
       );
 
       // If transparent colors are generated, they should be valid
       if (transparentKeys.length > 0) {
         transparentKeys.forEach((key) => {
-          expect(primaryColor?.palette[key]).toBeDefined();
+          expect(palette[key]).toBeDefined();
           // Transparent colors might be in hex format, so check for valid color format
-          expect(primaryColor?.palette[key]).toMatch(
-            /^(#[0-9a-fA-F]{6}|rgba?\([^)]+\))$/
-          );
+          expect(palette[key]).toMatch(/^(#[0-9a-fA-F]{6}|rgba?\([^)]+\))$/);
         });
       }
     });
@@ -213,33 +237,31 @@ describe("combination", () => {
         includeTextColors: true,
       };
 
-      const result = generateCombination(config);
+      const colorConfigs = generateCombination(config);
 
-      expect(result).toBeDefined();
+      expect(colorConfigs).toBeDefined();
 
-      const primaryColor = result.find((color) => color.id === "primary");
+      const primaryColor = colorConfigs.find((color) => color.id === "primary");
       expect(primaryColor).toBeDefined();
+      expect(primaryColor?.includeTextColors).toBe(true);
 
-      // Check for text color variants
-      expect(
-        primaryColor?.palette["--primary-text-color-on-light"]
-      ).toBeDefined();
-      expect(
-        primaryColor?.palette["--primary-text-color-on-dark"]
-      ).toBeDefined();
+      // Generate palette and check for text colors
+      const palette = generateColorPalette(colorConfigs);
+      expect(palette["--primary-text-color-on-light"]).toBeDefined();
+      expect(palette["--primary-text-color-on-dark"]).toBeDefined();
     });
 
-    it("should throw error for invalid primary color", () => {
+    it("should throw error for invalid seed color", () => {
       const config: CombinationConfig = {
         ...baseConfig,
-        primaryColor: "invalid-color",
+        seedColor: "invalid-color",
         combinationType: "complementary",
       };
 
       expect(() => generateCombination(config)).toThrow();
     });
 
-    it("should handle different primary colors", () => {
+    it("should handle different seed colors", () => {
       const colors = [
         "#3b82f6", // Blue
         "#ef4444", // Red
@@ -251,19 +273,18 @@ describe("combination", () => {
       colors.forEach((color) => {
         const config: CombinationConfig = {
           ...baseConfig,
-          primaryColor: color,
+          seedColor: color,
           combinationType: "complementary",
         };
 
-        const result = generateCombination(config);
+        const colorConfigs = generateCombination(config);
 
-        expect(result).toBeDefined();
-        expect(Array.isArray(result)).toBe(true);
-        expect(result.length).toBeGreaterThanOrEqual(2);
+        expect(colorConfigs).toBeDefined();
+        expect(Array.isArray(colorConfigs)).toBe(true);
+        expect(colorConfigs.length).toBeGreaterThanOrEqual(2);
 
-        const primaryColor = result.find((c) => c.id === "primary");
+        const primaryColor = colorConfigs.find((c) => c.id === "primary");
         expect(primaryColor).toBeDefined();
-        expect(primaryColor?.palette).toBeDefined();
       });
     });
 
@@ -273,10 +294,10 @@ describe("combination", () => {
         combinationType: "complementary",
       };
 
-      const result1 = generateCombination(config);
-      const result2 = generateCombination(config);
+      const colorConfigs1 = generateCombination(config);
+      const colorConfigs2 = generateCombination(config);
 
-      expect(result1).toEqual(result2);
+      expect(colorConfigs1).toEqual(colorConfigs2);
     });
 
     it("should handle all combination types", () => {
@@ -297,19 +318,62 @@ describe("combination", () => {
           combinationType,
         };
 
-        const result = generateCombination(config);
+        const colorConfigs = generateCombination(config);
 
-        expect(result).toBeDefined();
-        expect(Array.isArray(result)).toBe(true);
-        expect(result.length).toBeGreaterThanOrEqual(2);
+        expect(colorConfigs).toBeDefined();
+        expect(Array.isArray(colorConfigs)).toBe(true);
+        expect(colorConfigs.length).toBeGreaterThanOrEqual(2);
 
         // Check that we have at least base and primary colors
-        const baseColor = result.find((color) => color.id === "base");
-        const primaryColor = result.find((color) => color.id === "primary");
+        const baseColor = colorConfigs.find((color) => color.id === "base");
+        const primaryColor = colorConfigs.find(
+          (color) => color.id === "primary"
+        );
 
         expect(baseColor).toBeDefined();
         expect(primaryColor).toBeDefined();
       });
+    });
+
+    it("should respect enableChromaAdjustment option", () => {
+      const config: CombinationConfig = {
+        ...baseConfig,
+        combinationType: "complementary",
+        enableChromaAdjustment: false,
+      };
+
+      const colorConfigs = generateCombination(config);
+      const primaryColor = colorConfigs.find((c) => c.id === "primary");
+
+      expect(primaryColor?.enableChromaAdjustment).toBe(false);
+    });
+
+    it("should respect enableLightnessAdjustment option", () => {
+      const config: CombinationConfig = {
+        ...baseConfig,
+        combinationType: "complementary",
+        enableLightnessAdjustment: false,
+      };
+
+      const colorConfigs = generateCombination(config);
+      const primaryColor = colorConfigs.find((c) => c.id === "primary");
+
+      expect(primaryColor?.enableLightnessAdjustment).toBe(false);
+    });
+
+    it("should respect enableChromaLimit option", () => {
+      const config: CombinationConfig = {
+        ...baseConfig,
+        combinationType: "complementary",
+        enableChromaLimit: true,
+        maxChroma: 0.15,
+      };
+
+      const colorConfigs = generateCombination(config);
+      const primaryColor = colorConfigs.find((c) => c.id === "primary");
+
+      expect(primaryColor?.enableChromaLimit).toBe(true);
+      expect(primaryColor?.maxChroma).toBe(0.15);
     });
   });
 
