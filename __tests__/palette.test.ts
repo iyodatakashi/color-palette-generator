@@ -182,8 +182,8 @@ describe("palette", () => {
       const config: ColorConfig = {
         id: "secondary",
         prefix: "secondary",
-        color: "#10b981",
-        oklch: {
+        seedColor: "#10b981",
+        seedOklch: {
           mode: "oklch",
           l: 0.6,
           c: 0.15,

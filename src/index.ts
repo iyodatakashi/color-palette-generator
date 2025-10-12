@@ -45,6 +45,7 @@ export { applyColorPaletteToDom } from "./applyToDom";
 export {
   DEFAULT_COLOR_CONFIG,
   DEFAULT_BASE_COLOR_CONFIG,
+  DEFAULT_SWATCH_CONFIG,
   SCALE_LEVELS,
   DEFAULT_HUE_SHIFT_MODE,
   MIN_LEVEL,

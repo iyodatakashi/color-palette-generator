@@ -13,16 +13,16 @@ export type ColorConfig = {
   seedOklch?: Oklch | null;
   seedColor: string;
   originLevel: number;
+  enableLightnessAdjustment?: boolean; // Whether to apply K-value lightness adjustment in palette generation
+  enableChromaAdjustment?: boolean; // Whether to apply chroma adjustment in palette generation
+  enableChromaLimit?: boolean; // Whether to limit maximum chroma in palette generation
+  maxChroma?: number; // Maximum chroma value when enableChromaLimit is true (0-1)
   hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;
   bgColorLight?: string;
   bgColorDark?: string;
   transparentOriginLevel?: number;
   includeTextColors?: boolean;
-  enableChromaAdjustment?: boolean; // Whether to apply chroma adjustment in palette generation
-  enableLightnessAdjustment?: boolean; // Whether to apply K-value lightness adjustment in palette generation
-  enableChromaLimit?: boolean; // Whether to limit maximum chroma in palette generation
-  maxChroma?: number; // Maximum chroma value when enableChromaLimit is true (0-1)
 };
 
 // Color palette (output)
@@ -39,6 +39,10 @@ export type CombinationConfig = {
   seedColor: string;
   combinationType?: CombinationType;
   baseColorStrategy?: BaseColorStrategy;
+  enableLightnessAdjustment?: boolean; // Whether to apply K-value lightness adjustment in palette generation
+  enableChromaAdjustment?: boolean; // Whether to apply chroma adjustment in palette generation
+  enableChromaLimit?: boolean; // Whether to limit high chroma in seed color
+  maxChroma?: number; // Maximum chroma value for seed color when enableChromaLimit is true (0-1)
   includeTransparent?: boolean;
   includeTextColors?: boolean;
   bgColorLight?: string;
@@ -46,8 +50,6 @@ export type CombinationConfig = {
   transparentOriginLevel?: number;
   baseTransparentOriginLevel?: number;
   hueShiftMode?: HueShiftMode;
-  enableChromaLimit?: boolean; // Whether to limit high chroma in seed color
-  maxChroma?: number; // Maximum chroma value for seed color when enableChromaLimit is true (0-1)
 };
 
 // Color combination result (output) - ColorConfig only
@@ -96,16 +98,18 @@ export type GeneratedColor = {
 
 // Swatch palette configuration (input)
 export type SwatchConfig = {
-  seedColor: string;
+  seedChroma: number;
+  originLevel?: number;
+  enableLightnessAdjustment?: boolean;
+  enableChromaAdjustment?: boolean;
+  enableChromaLimit?: boolean; // Whether to limit high chroma in seed color
+  maxChroma?: number; // Maximum chroma value for seed color when enableChromaLimit is true (0-1)
+  hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;
   includeTextColors?: boolean;
   bgColorLight?: string;
   bgColorDark?: string;
   transparentOriginLevel?: number;
-  divisions?: number;
-  hueShiftMode?: HueShiftMode;
-  enableChromaLimit?: boolean; // Whether to limit high chroma in seed color
-  maxChroma?: number; // Maximum chroma value for seed color when enableChromaLimit is true (0-1)
 };
 
 // =============================================================================

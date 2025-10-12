@@ -6,6 +6,7 @@ import type {
   CombinationType,
   BaseColorStrategy,
   ColorConfig,
+  SwatchConfig,
 } from "./types";
 
 // =============================================================================
@@ -27,6 +28,8 @@ export const DEFAULT_RANDOM_COLOR_CONFIG: Required<RandomColorConfig> = {
 export const DEFAULT_COMBINATION_CONFIG = {
   combinationType: "complementary" as CombinationType,
   baseColorStrategy: "harmonic" as BaseColorStrategy,
+  enableLightnessAdjustment: true,
+  enableChromaAdjustment: true,
   includeTransparent: false,
   includeTextColors: false,
   bgColorLight: "#ffffff",
@@ -200,31 +203,47 @@ export const VARIATION_COLOR_OFFSETS = {
 // 5. Swatch生成
 // =============================================================================
 
+// Default swatch configuration
+export const DEFAULT_SWATCH_CONFIG: SwatchConfig = {
+  seedChroma: 0.2,
+  originLevel: 500,
+  enableLightnessAdjustment: true,
+  enableChromaAdjustment: true,
+  hueShiftMode: "natural",
+  includeTransparent: true,
+  includeTextColors: true,
+  bgColorLight: "#ffffff",
+  bgColorDark: "#000000",
+  transparentOriginLevel: 500,
+  enableChromaLimit: true,
+  maxChroma: 0.2,
+};
+
 export const SWATCH_NAMES = [
-  { prefix: "crimson", degree: 0 },
-  { prefix: "ruby", degree: 15 },
-  { prefix: "red", degree: 30 },
-  { prefix: "scarlet", degree: 45 },
-  { prefix: "orange", degree: 60 },
-  { prefix: "amber", degree: 75 },
-  { prefix: "yellow", degree: 90 },
-  { prefix: "peridot", degree: 105 },
-  { prefix: "lime", degree: 120 },
-  { prefix: "sage", degree: 135 },
-  { prefix: "green", degree: 150 },
-  { prefix: "jade", degree: 165 },
-  { prefix: "emerald", degree: 180 },
-  { prefix: "turquoise", degree: 195 },
-  { prefix: "cyan", degree: 210 },
-  { prefix: "cerulean", degree: 225 },
-  { prefix: "azure", degree: 240 },
-  { prefix: "cobalt", degree: 255 },
-  { prefix: "blue", degree: 270 },
-  { prefix: "indigo", degree: 285 },
-  { prefix: "violet", degree: 300 },
-  { prefix: "purple", degree: 315 },
-  { prefix: "magenta", degree: 330 },
-  { prefix: "rose", degree: 345 },
+  { prefix: "ruby", hue: 7 },
+  { prefix: "red", hue: 22 },
+  { prefix: "scarlet", hue: 37 },
+  { prefix: "orange", hue: 52 },
+  { prefix: "amber", hue: 67 },
+  { prefix: "honey", hue: 82 },
+  { prefix: "yellow", hue: 97 },
+  { prefix: "peridot", hue: 112 },
+  { prefix: "sage", hue: 127 },
+  { prefix: "green", hue: 142 },
+  { prefix: "jade", hue: 157 },
+  { prefix: "emerald", hue: 172 },
+  { prefix: "turquoise", hue: 187 },
+  { prefix: "cyan", hue: 202 },
+  { prefix: "cerulean", hue: 217 },
+  { prefix: "azure", hue: 232 },
+  { prefix: "cobalt", hue: 247 },
+  { prefix: "blue", hue: 262 },
+  { prefix: "indigo", hue: 277 },
+  { prefix: "violet", hue: 292 },
+  { prefix: "purple", hue: 307 },
+  { prefix: "magenta", hue: 322 },
+  { prefix: "rose", hue: 337 },
+  { prefix: "crimson", hue: 352 },
 ] as const;
 
 // =============================================================================

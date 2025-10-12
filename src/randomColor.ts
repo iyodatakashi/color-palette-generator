@@ -14,9 +14,12 @@ import { DEFAULT_RANDOM_COLOR_CONFIG } from "./constants";
  * @returns HEX string
  */
 export const generateRandomSeedColor = (
-  config: RandomColorConfig = {}
+  randomColorConfig: RandomColorConfig = {}
 ): string => {
-  const perfectConfig = { ...DEFAULT_RANDOM_COLOR_CONFIG, ...config };
+  const perfectConfig = {
+    ...DEFAULT_RANDOM_COLOR_CONFIG,
+    ...randomColorConfig,
+  };
 
   // Generate random hue
   const [minHue, maxHue] = perfectConfig.hueRange;

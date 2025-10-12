@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { generateRandomPrimaryColor } from "../src/randomColor";
+import { generateRandomSeedColor } from "../src/randomColor";
 import type { RandomColorConfig } from "../src/types";
 
 describe("randomColor", () => {
   describe("generateRandomPrimaryColor", () => {
     it("should generate a random color with default config", () => {
-      const result = generateRandomPrimaryColor();
+      const result = generateRandomSeedColor();
 
       expect(result).toBeDefined();
       expect(typeof result).toBe("string");
@@ -19,7 +19,7 @@ describe("randomColor", () => {
         chromaRange: [20, 60],
       };
 
-      const result = generateRandomPrimaryColor(config);
+      const result = generateRandomSeedColor(config);
 
       expect(result).toBeDefined();
       expect(typeof result).toBe("string");
@@ -28,7 +28,7 @@ describe("randomColor", () => {
 
     it("should generate different colors on multiple calls", () => {
       const results = Array.from({ length: 10 }, () =>
-        generateRandomPrimaryColor()
+        generateRandomSeedColor()
       );
 
       // Check that we get different colors (very unlikely to get 10 identical colors)
@@ -52,7 +52,7 @@ describe("randomColor", () => {
       const mockRandom = vi.spyOn(Math, "random");
       mockRandom.mockReturnValue(0.5); // This should give us hue = 90
 
-      const result = generateRandomPrimaryColor(config);
+      const result = generateRandomSeedColor(config);
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -68,7 +68,7 @@ describe("randomColor", () => {
       };
 
       const results = Array.from({ length: 20 }, () =>
-        generateRandomPrimaryColor(config)
+        generateRandomSeedColor(config)
       );
 
       // All results should be valid hex colors
@@ -86,7 +86,7 @@ describe("randomColor", () => {
       };
 
       const results = Array.from({ length: 20 }, () =>
-        generateRandomPrimaryColor(config)
+        generateRandomSeedColor(config)
       );
 
       // All results should be valid hex colors
@@ -103,7 +103,7 @@ describe("randomColor", () => {
         chromaRange: [20, 20], // Single chroma
       };
 
-      const result = generateRandomPrimaryColor(config);
+      const result = generateRandomSeedColor(config);
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -116,7 +116,7 @@ describe("randomColor", () => {
         chromaRange: [0, 100],
       };
 
-      const result = generateRandomPrimaryColor(config);
+      const result = generateRandomSeedColor(config);
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -127,7 +127,7 @@ describe("randomColor", () => {
         hueRange: [120, 240], // Only specify hue range
       };
 
-      const result = generateRandomPrimaryColor(config);
+      const result = generateRandomSeedColor(config);
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -136,14 +136,14 @@ describe("randomColor", () => {
     it("should handle empty config object", () => {
       const config: RandomColorConfig = {};
 
-      const result = generateRandomPrimaryColor(config);
+      const result = generateRandomSeedColor(config);
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
     });
 
     it("should handle undefined config", () => {
-      const result = generateRandomPrimaryColor(undefined as any);
+      const result = generateRandomSeedColor(undefined as any);
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -161,13 +161,13 @@ describe("randomColor", () => {
 
       // Test minimum hue
       mockRandom.mockReturnValue(0);
-      const minHueResult = generateRandomPrimaryColor(config);
+      const minHueResult = generateRandomSeedColor(config);
       expect(minHueResult).toBeDefined();
       expect(minHueResult).toMatch(/^#[0-9a-fA-F]{6}$/);
 
       // Test maximum hue
       mockRandom.mockReturnValue(1);
-      const maxHueResult = generateRandomPrimaryColor(config);
+      const maxHueResult = generateRandomSeedColor(config);
       expect(maxHueResult).toBeDefined();
       expect(maxHueResult).toMatch(/^#[0-9a-fA-F]{6}$/);
 
@@ -186,13 +186,13 @@ describe("randomColor", () => {
 
       // Test minimum lightness
       mockRandom.mockReturnValue(0);
-      const minLightnessResult = generateRandomPrimaryColor(config);
+      const minLightnessResult = generateRandomSeedColor(config);
       expect(minLightnessResult).toBeDefined();
       expect(minLightnessResult).toMatch(/^#[0-9a-fA-F]{6}$/);
 
       // Test maximum lightness
       mockRandom.mockReturnValue(1);
-      const maxLightnessResult = generateRandomPrimaryColor(config);
+      const maxLightnessResult = generateRandomSeedColor(config);
       expect(maxLightnessResult).toBeDefined();
       expect(maxLightnessResult).toMatch(/^#[0-9a-fA-F]{6}$/);
 
@@ -211,13 +211,13 @@ describe("randomColor", () => {
 
       // Test minimum chroma
       mockRandom.mockReturnValue(0);
-      const minChromaResult = generateRandomPrimaryColor(config);
+      const minChromaResult = generateRandomSeedColor(config);
       expect(minChromaResult).toBeDefined();
       expect(minChromaResult).toMatch(/^#[0-9a-fA-F]{6}$/);
 
       // Test maximum chroma
       mockRandom.mockReturnValue(1);
-      const maxChromaResult = generateRandomPrimaryColor(config);
+      const maxChromaResult = generateRandomSeedColor(config);
       expect(maxChromaResult).toBeDefined();
       expect(maxChromaResult).toMatch(/^#[0-9a-fA-F]{6}$/);
 
@@ -231,7 +231,7 @@ describe("randomColor", () => {
         chromaRange: [100, 0], // Reversed range
       };
 
-      const result = generateRandomPrimaryColor(config);
+      const result = generateRandomSeedColor(config);
 
       expect(result).toBeDefined();
       expect(result).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -248,8 +248,8 @@ describe("randomColor", () => {
       const mockRandom = vi.spyOn(Math, "random");
       mockRandom.mockReturnValue(0.5);
 
-      const result1 = generateRandomPrimaryColor(config);
-      const result2 = generateRandomPrimaryColor(config);
+      const result1 = generateRandomSeedColor(config);
+      const result2 = generateRandomSeedColor(config);
 
       expect(result1).toBe(result2);
       expect(result1).toMatch(/^#[0-9a-fA-F]{6}$/);

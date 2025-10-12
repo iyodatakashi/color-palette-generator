@@ -173,7 +173,12 @@ const getPrimaryColorConfig = ({
     transparentOriginLevel:
       combinationConfig.baseTransparentOriginLevel ??
       DEFAULT_COLOR_CONFIG.transparentOriginLevel,
-    enableChromaAdjustment: DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
+    enableLightnessAdjustment:
+      combinationConfig.enableLightnessAdjustment ??
+      DEFAULT_COMBINATION_CONFIG.enableLightnessAdjustment,
+    enableChromaAdjustment:
+      combinationConfig.enableChromaAdjustment ??
+      DEFAULT_COMBINATION_CONFIG.enableChromaAdjustment,
     enableChromaLimit:
       combinationConfig.enableChromaLimit ??
       DEFAULT_COMBINATION_CONFIG.enableChromaLimit,
@@ -244,7 +249,12 @@ const generateSecondaryConfigss = ({
         originLevel: primaryOriginLevel,
         hueShiftMode:
           combinationConfig.hueShiftMode ?? DEFAULT_COLOR_CONFIG.hueShiftMode,
-        enableLightnessAdjustment: false,
+        enableLightnessAdjustment:
+          combinationConfig.enableLightnessAdjustment ??
+          DEFAULT_COMBINATION_CONFIG.enableLightnessAdjustment,
+        enableChromaAdjustment:
+          combinationConfig.enableChromaAdjustment ??
+          DEFAULT_COMBINATION_CONFIG.enableChromaAdjustment,
         includeTransparent:
           combinationConfig.includeTransparent ??
           DEFAULT_COLOR_CONFIG.includeTransparent,
@@ -258,7 +268,6 @@ const generateSecondaryConfigss = ({
         transparentOriginLevel:
           combinationConfig.transparentOriginLevel ??
           DEFAULT_COLOR_CONFIG.transparentOriginLevel,
-        enableChromaAdjustment: DEFAULT_COLOR_CONFIG.enableChromaAdjustment,
         enableChromaLimit:
           combinationConfig.enableChromaLimit ??
           DEFAULT_COMBINATION_CONFIG.enableChromaLimit,
