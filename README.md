@@ -248,12 +248,19 @@ const palette = generateColorPalette({
 
 - `prefix` (string, required): CSS variable prefix
 - `seedColor` (string, required): Base color in HEX format
-- `originLevel` (number, required): Reference level (50-950)
-- `hueShiftMode` (optional): "fixed" | "natural" | "unnatural" (default: "natural")
-- `includeTransparent` (optional): boolean (default: false)
-- `includeTextColors` (optional): boolean (default: false)
-- `enableLightnessAdjustment` (optional): boolean (default: true)
-- `enableChromaAdjustment` (optional): boolean (default: true)
+- `originLevel` (number, required): Reference level (typically one of: 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950)
+- `id` (string, optional): Identifier for the color
+- `seedOklch` (Oklch, optional): Pre-calculated OKLCH color
+- `hueShiftMode` (string, optional): "fixed" | "natural" | "unnatural" (default: "natural")
+- `includeTransparent` (boolean, optional): Generate transparent variants (default: false)
+- `includeTextColors` (boolean, optional): Generate text colors (default: false)
+- `bgColorLight` (string, optional): Background color for light mode (default: "#ffffff")
+- `bgColorDark` (string, optional): Background color for dark mode (default: "#000000")
+- `transparentOriginLevel` (number, optional): Reference level for transparent colors (default: 500)
+- `enableLightnessAdjustment` (boolean, optional): Apply sigmoid curve for lightness (default: true)
+- `enableChromaAdjustment` (boolean, optional): Apply chroma suppression at extremes (default: true)
+- `enableChromaLimit` (boolean, optional): Limit maximum chroma (default: false)
+- `maxChroma` (number, optional): Maximum chroma value when enableChromaLimit is true (typically 0-0.4 for sRGB gamut)
 
 ### `generateCombination(config)`
 
@@ -274,10 +281,19 @@ const colorConfigs = generateCombination({
 #### Parameters
 
 - `seedColor` (string, required): Base color in HEX format
-- `combinationType` (optional): Combination type (default: "complementary")
-- `baseColorStrategy` (optional): "harmonic" | "contrasting" | "neutral" (default: "harmonic")
-- `enableLightnessAdjustment` (optional): boolean (default: true)
-- `enableChromaAdjustment` (optional): boolean (default: true)
+- `combinationType` (string, optional): Combination type (default: "complementary")
+- `baseColorStrategy` (string, optional): "harmonic" | "contrasting" | "neutral" (default: "harmonic")
+- `enableLightnessAdjustment` (boolean, optional): Apply to primary/secondary (default: true)
+- `enableChromaAdjustment` (boolean, optional): Apply to primary/secondary (default: true)
+- `includeTransparent` (boolean, optional): Generate transparent variants (default: false)
+- `includeTextColors` (boolean, optional): Generate text colors (default: false)
+- `bgColorLight` (string, optional): Background color for light mode (default: "#ffffff")
+- `bgColorDark` (string, optional): Background color for dark mode (default: "#000000")
+- `transparentOriginLevel` (number, optional): Reference for primary/secondary transparent colors (default: 500)
+- `baseTransparentOriginLevel` (number, optional): Reference for base transparent colors (default: 950)
+- `hueShiftMode` (string, optional): "fixed" | "natural" | "unnatural" (default: "natural")
+- `enableChromaLimit` (boolean, optional): Limit maximum chroma (default: true)
+- `maxChroma` (number, optional): Maximum chroma value (default: 0.2, typical range: 0-0.4)
 
 ### `generateSwatch(config)`
 
@@ -294,16 +310,41 @@ const swatchConfigs = generateSwatch({
 });
 ```
 
+#### Parameters
+
+- `seedChroma` (number, required): Base chroma value for all hues (0-1)
+- `originLevel` (number, optional): Reference level (default: 500)
+- `enableLightnessAdjustment` (boolean, optional): Apply sigmoid curve (default: true)
+- `enableChromaAdjustment` (boolean, optional): Apply chroma suppression (default: true)
+- `hueShiftMode` (string, optional): "fixed" | "natural" | "unnatural" (default: "natural")
+- `includeTransparent` (boolean, optional): Generate transparent variants (default: true)
+- `includeTextColors` (boolean, optional): Generate text colors (default: true)
+- `bgColorLight` (string, optional): Background for light mode (default: "#ffffff")
+- `bgColorDark` (string, optional): Background for dark mode (default: "#000000")
+- `transparentOriginLevel` (number, optional): Reference for transparent colors (default: 500)
+- `enableChromaLimit` (boolean, optional): Limit maximum chroma (default: true)
+- `maxChroma` (number, optional): Maximum chroma value (default: 0.2, typical range: 0-0.4)
+
 ### `generateRandomSeedColor(config)`
 
-Generate a random color with constraints.
+Generate a random color with constraints. Returns a HEX string.
 
 ```typescript
+import { generateRandomSeedColor } from "@14ch/color-palette-generator";
+
+const randomColor = generateRandomSeedColor({
   chromaRange: [0.15, 0.25],
   lightnessRange: [0.47, 0.82],
   hueRange: [0, 360],
 });
+// Returns: '#a855f7'
 ```
+
+#### Parameters
+
+- `chromaRange` ([number, number], optional): Chroma range (0-1) (default: [0.15, 0.25])
+- `lightnessRange` ([number, number], optional): Lightness range (0-1) (default: [0.82, 0.47])
+- `hueRange` ([number, number], optional): Hue range (0-360) (default: [0, 360])
 
 ### `getLightness(color)`
 
@@ -369,6 +410,11 @@ interface CombinationConfig {
   enableChromaAdjustment?: boolean;
   includeTransparent?: boolean;
   includeTextColors?: boolean;
+  bgColorLight?: string;
+  bgColorDark?: string;
+  transparentOriginLevel?: number;
+  baseTransparentOriginLevel?: number;
+  hueShiftMode?: HueShiftMode;
   enableChromaLimit?: boolean;
   maxChroma?: number;
 }
@@ -381,6 +427,9 @@ interface SwatchConfig {
   hueShiftMode?: HueShiftMode;
   includeTransparent?: boolean;
   includeTextColors?: boolean;
+  bgColorLight?: string;
+  bgColorDark?: string;
+  transparentOriginLevel?: number;
   enableChromaLimit?: boolean;
   maxChroma?: number;
 }
@@ -467,45 +516,21 @@ Generate color combinations based on color theory.
 
 Generate 24-hue color system configurations.
 
-#### `generateRandomSeedColor(config?: RandomColorConfig): GeneratedColor`
+#### `generateRandomSeedColor(config?: RandomColorConfig): string`
 
-Generate a random color with constraints.
+Generate a random color with constraints. Returns a HEX string.
 
 #### `getLightness(color: string): number`
 
-Calculates the lightness of a color using the specified method.
-
-#### `getSaturation({ color: string, saturationMethod?: "hsl" | "perceptual" }): number`
-
-Calculates the saturation of a color using the specified method. Default is "perceptual" (OKLCH-based) for more accurate results.
-
-#### `adjustToLightness({ h, s, targetLightness, lightnessMethod?, enableSaturationAdjustment? }): string`
-
-Adjusts HSL values to achieve a target lightness with optional perceptual saturation optimization, returning a HEX string.
-
-#### `resolveVariable(options: { variableName: string; palette: Palette; fallback?: string }): string`
-
-Resolves CSS variable references to their final HEX values by following all variable references recursively. Handles circular references and provides fallback values.
-
-```typescript
-const resolved = resolveVariable({
-  variableName: "--primary-color",
-  palette,
-  fallback: "#000000", // Optional, defaults to "#000000"
-});
-```
+Get the lightness value of a color (0-100).
 
 #### `applyColorPaletteToDom(palette: Palette): void`
 
-Applies CSS custom properties to the document root element.
+Apply CSS custom properties to the document root.
 
-#### Color Conversion Utilities
+#### `resolveVariable({ variableName, palette, fallback? }): string`
 
-- `hexToRGB(hex: string): RGB`
-- `rgbToHex(rgb: RGB): string`
-- `hexToHSL(hex: string): HSL`
-- `hslToRGB(hsl: HSL): RGB`
-- `rgbToHSL(rgb: RGB): HSL`
+Resolve nested CSS variable references to final HEX values.
 
 ## License
 
