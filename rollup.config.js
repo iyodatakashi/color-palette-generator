@@ -15,6 +15,7 @@ export default defineConfig([
         tsconfig: "./tsconfig.json",
         declaration: true,
         declarationDir: "./dist",
+        sourceMap: false,
       }),
     ],
     external: ["culori"],
@@ -31,6 +32,7 @@ export default defineConfig([
       typescript({
         tsconfig: "./tsconfig.json",
         declaration: false,
+        sourceMap: false,
       }),
     ],
     external: ["culori"],

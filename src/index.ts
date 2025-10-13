@@ -13,6 +13,9 @@ export { generateSwatch } from "./swatch";
 // Color combination features
 export { generateCombination } from "./combination";
 
+// Random color generation features
+export { generateRandomSeedColor } from "./randomColor";
+
 // Lightness calculation features
 export { getLightness } from "./lightness";
 
@@ -64,7 +67,6 @@ export type {
   Combination,
   CombinationConfig,
   RandomColorConfig,
-  GeneratedColor,
 } from "./types";
 
 // Culori types
