@@ -5,6 +5,7 @@ import {
   oklchToHexAdjustChroma,
   oklchToHexPerceptual,
   hexToOklch,
+  isValidOklch,
 } from "./colorUtils";
 import { findClosestLevel, getLightness } from "./lightness";
 import {
@@ -22,6 +23,7 @@ import type {
 } from "./types";
 import type { Oklch } from "culori";
 import { DEFAULT_COLOR_CONFIG, DEFAULT_BASE_COLOR_CONFIG } from "./constants";
+import { logger } from "./logger";
 
 // =============================================================================
 // Color Combination Generation
@@ -35,8 +37,18 @@ export const generateCombination = (
 ): Combination => {
   const combinationType = combinationConfig.combinationType || "complementary";
   let seedOklch = hexToOklch(combinationConfig.seedColor);
-  if (!seedOklch) {
-    throw new Error("Failed to convert color to OKLCH");
+  if (!seedOklch || !isValidOklch(seedOklch)) {
+    // Fallback to neutral gray instead of throwing error
+    logger.warn(
+      "combination",
+      `Invalid seed color: ${combinationConfig.seedColor}. Using default neutral gray (L=0.5, C=0.0).`
+    );
+    seedOklch = {
+      mode: "oklch",
+      l: 0.5,
+      c: 0.0,
+      h: 0,
+    };
   }
 
   // Create adjusted seed OKLCH with optional chroma limit

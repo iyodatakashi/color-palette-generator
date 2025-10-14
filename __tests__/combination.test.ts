@@ -251,14 +251,27 @@ describe("combination", () => {
       expect(palette["--primary-text-color-on-dark"]).toBeDefined();
     });
 
-    it("should throw error for invalid seed color", () => {
+    it("should handle invalid seed color with fallback", () => {
       const config: CombinationConfig = {
         ...baseConfig,
         seedColor: "invalid-color",
         combinationType: "complementary",
       };
 
-      expect(() => generateCombination(config)).toThrow();
+      // Should not throw, but use fallback gray color
+      const colorConfigs = generateCombination(config);
+      
+      expect(colorConfigs).toBeDefined();
+      expect(Array.isArray(colorConfigs)).toBe(true);
+      expect(colorConfigs.length).toBeGreaterThanOrEqual(2);
+      
+      const primaryColor = colorConfigs.find((c) => c.id === "primary");
+      expect(primaryColor).toBeDefined();
+      
+      // Should have a valid palette even with invalid input
+      const palette = generateColorPalette(colorConfigs);
+      expect(palette["--primary-500"]).toBeDefined();
+      expect(palette["--primary-500"]).toMatch(/^#[0-9a-fA-F]{6}$/);
     });
 
     it("should handle different seed colors", () => {
